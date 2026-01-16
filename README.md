@@ -9,10 +9,7 @@
 
 ```bash
 git clone https://github.com/Madduxv/FairTix.git
-```
-or 
-```bash
-git clone git@github.com:Madduxv/FairTix.git
+cd FairTix
 ```
 
 2. Create a .env file in the root of the project
@@ -25,7 +22,7 @@ cp .env.example .env
 POSTGRES_PASSWORD=changeme
 ```
 
-To start the backend:
+To start:
 ```
 docker compose up --build
 ```
