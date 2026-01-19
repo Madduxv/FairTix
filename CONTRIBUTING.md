@@ -35,9 +35,9 @@ Closes #67
 
 ## PR Title Format
 ```
-\[backend\] Add event creation endpoint
-\[frontend\] Implement seat-map UI
-\[infrastructure\] Configure Redis caching
+[backend] Add event creation endpoint
+[frontend] Implement seat-map UI
+[infrastructure] Configure Redis caching
 ```
 
 ## Environment Variables and Secrets
