@@ -1,3 +1,8 @@
 **/.env
 .env
 backend/target
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings
+backend/target
