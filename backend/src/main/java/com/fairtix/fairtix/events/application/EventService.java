@@ -21,16 +21,32 @@ public class EventService {
     this.repository = repository;
   }
 
+  /**
+   * Creates and persists a new {@link Event}
+   *
+   * @param title     the title or name of the event
+   * @param startTime the {@link Instant} start time of the event in UTC
+   * @param venue     the name of the venue for the event
+   * @return a newly created event
+   */
   public Event createEvent(String title, Instant startTime, String venue) {
     Event event = new Event(title, venue, startTime);
     return repository.save(event);
   }
 
+  /**
+   * @param id the id of the event
+   * @throws IllegalArgumentException if the event is not found
+   * @return the requested {@link Event}
+   */
   public Event getEvent(UUID id) {
     return repository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("Event not found"));
   }
 
+  /**
+   * @return a list containing all events
+   */
   public List<Event> getAllEvents() {
     return repository.findAll();
   }
