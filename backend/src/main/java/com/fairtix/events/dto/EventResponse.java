@@ -1,9 +1,9 @@
-package com.fairtix.fairtix.events.dto;
+package com.fairtix.events.dto;
 
 import java.time.Instant;
 import java.util.UUID;
 
-import com.fairtix.fairtix.events.domain.Event;
+import com.fairtix.events.domain.Event;
 
 /**
  * Response payload for an event
