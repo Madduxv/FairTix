@@ -1,4 +1,4 @@
-package com.fairtix.fairtix.config;
+package com.fairtix.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

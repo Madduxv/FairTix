@@ -1,7 +1,6 @@
-package com.fairtix.fairtix.events.domain;
+package com.fairtix.events.domain;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;

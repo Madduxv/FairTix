@@ -1,7 +1,7 @@
-package com.fairtix.fairtix.events.application;
+package com.fairtix.events.application;
 
-import com.fairtix.fairtix.events.domain.Event;
-import com.fairtix.fairtix.events.infrastructure.EventRepository;
+import com.fairtix.events.domain.Event;
+import com.fairtix.events.infrastructure.EventRepository;
 
 import jakarta.transaction.Transactional;
 

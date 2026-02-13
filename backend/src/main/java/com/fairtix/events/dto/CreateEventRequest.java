@@ -1,4 +1,4 @@
-package com.fairtix.fairtix.events.dto;
+package com.fairtix.events.dto;
 
 import java.time.Instant;
 

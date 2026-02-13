@@ -1,11 +1,11 @@
-package com.fairtix.fairtix.events.api;
+package com.fairtix.events.api;
 
 import org.springframework.web.bind.annotation.*;
 
-import com.fairtix.fairtix.events.application.EventService;
-import com.fairtix.fairtix.events.domain.Event;
-import com.fairtix.fairtix.events.dto.CreateEventRequest;
-import com.fairtix.fairtix.events.dto.EventResponse;
+import com.fairtix.events.application.EventService;
+import com.fairtix.events.domain.Event;
+import com.fairtix.events.dto.CreateEventRequest;
+import com.fairtix.events.dto.EventResponse;
 
 import java.util.List;
 import java.util.UUID;
