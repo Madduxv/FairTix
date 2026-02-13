@@ -1,4 +1,4 @@
-package com.fairtix.fairtix.inventory.dto;
+package com.fairtix.inventory.dto;
 
 /**
  * Request payload for creating a seat.
@@ -8,7 +8,7 @@ package com.fairtix.fairtix.inventory.dto;
  * @param seatNumber the seat identifier within the row (e.g. "101")
  */
 public record CreateSeatRequest(
-        String section,
-        String rowLabel,
-        String seatNumber) {
+    String section,
+    String rowLabel,
+    String seatNumber) {
 }
