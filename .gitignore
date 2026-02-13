@@ -1,5 +1,6 @@
 **/.env
 .env
+.vscode
 backend/target
 backend/.classpath
 backend/.factorypath
