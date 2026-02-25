@@ -6,7 +6,10 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "seat_holds")
+@Table(name = "seat_holds", indexes = {
+    @Index(name = "idx_hold_status_expires", columnList = "status, expires_at"),
+    @Index(name = "idx_hold_holder_id",      columnList = "holder_id")
+})
 public class SeatHold {
 
   @Id

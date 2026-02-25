@@ -1,9 +1,9 @@
 package com.fairtix.inventory.application;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-@ResponseStatus(HttpStatus.NOT_FOUND)
+/**
+ * Thrown when a hold is not found for the given id + holderId combination.
+ * Mapped to HTTP 404 by {@link com.fairtix.config.GlobalExceptionHandler}.
+ */
 public class SeatHoldNotFoundException extends RuntimeException {
 
   public SeatHoldNotFoundException(String message) {
