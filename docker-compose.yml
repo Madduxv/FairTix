@@ -14,7 +14,7 @@ services:
     volumes:
       - fairtix-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fairtix_user -d fairtix"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d fairtix"]
       interval: 10s
       timeout: 5s
       retries: 10
