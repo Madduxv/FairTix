@@ -71,7 +71,8 @@ public class SeatHoldService {
 
     // Soft limit: reject before acquiring any locks
     long activeCount = seatHoldRepository.countByHolderIdAndStatus(holderId, HoldStatus.ACTIVE);
-    if (activeCount >= maxActivePerHolder) {
+    long requestedDistinctSeats = seatIds.stream().distinct().count();
+    if (activeCount + requestedDistinctSeats > maxActivePerHolder) {
       throw new SeatHoldConflictException(
           "Hold limit reached: " + holderId + " already has " + activeCount + " active hold(s)");
     }
