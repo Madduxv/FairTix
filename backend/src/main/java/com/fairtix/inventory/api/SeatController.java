@@ -3,7 +3,11 @@ package com.fairtix.inventory.api;
 import com.fairtix.inventory.application.SeatService;
 import com.fairtix.inventory.dto.CreateSeatRequest;
 import com.fairtix.inventory.dto.SeatResponse;
+
+import jakarta.annotation.security.PermitAll;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +31,7 @@ public class SeatController {
    * @param request the seat details
    * @return the created seat
    */
+  @PreAuthorize("hasRoll('ADMIN')")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public SeatResponse createSeat(
@@ -43,6 +48,7 @@ public class SeatController {
    * @param availableOnly when {@code true} only AVAILABLE seats are returned
    * @return list of matching seats
    */
+  @PermitAll
   @GetMapping
   public List<SeatResponse> getSeats(
       @PathVariable UUID eventId,

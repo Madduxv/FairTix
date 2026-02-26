@@ -1,11 +1,14 @@
 package com.fairtix.events.api;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import com.fairtix.events.application.EventService;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.dto.CreateEventRequest;
 import com.fairtix.events.dto.EventResponse;
+
+import jakarta.annotation.security.PermitAll;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +31,7 @@ public class EventController {
    * @param request the requested event as a json payload
    * @return the newly created event
    */
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   public EventResponse createEvent(@RequestBody CreateEventRequest request) {
     Event event = service.createEvent(
@@ -42,6 +46,7 @@ public class EventController {
    *
    * @return a list of all events
    */
+  @PermitAll
   @GetMapping
   public List<EventResponse> getAllEvents() {
     return service.getAllEvents()

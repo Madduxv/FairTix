@@ -6,6 +6,7 @@ import com.fairtix.inventory.dto.CreateHoldRequest;
 import com.fairtix.inventory.dto.SeatHoldResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class SeatHoldController {
    *
    * @return 201 Created with the list of created holds
    */
+  @PreAuthorize("isAuthenticated()")
   @PostMapping("/api/events/{eventId}/holds")
   @ResponseStatus(HttpStatus.CREATED)
   public List<SeatHoldResponse> createHold(
@@ -64,6 +66,7 @@ public class SeatHoldController {
    *
    * @return 200 OK with the hold, or 404 if not found for this holder
    */
+  @PermitAll
   @GetMapping("/api/holds/{holdId}")
   public SeatHoldResponse getHold(
       @PathVariable UUID holdId,
@@ -79,6 +82,7 @@ public class SeatHoldController {
    *
    * @return 200 OK with the updated hold
    */
+  @PreAuthorize("isAuthenticated()")
   @PostMapping("/api/holds/{holdId}/release")
   public SeatHoldResponse releaseHold(
       @PathVariable UUID holdId,
@@ -94,6 +98,7 @@ public class SeatHoldController {
    *
    * @return 200 OK with the updated hold
    */
+  @PreAuthorize("isAuthenticated()")
   @PostMapping("/api/holds/{holdId}/confirm")
   public SeatHoldResponse confirmHold(
       @PathVariable UUID holdId,
