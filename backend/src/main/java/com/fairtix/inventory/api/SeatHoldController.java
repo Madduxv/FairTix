@@ -4,7 +4,10 @@ import com.fairtix.inventory.application.SeatHoldService;
 import com.fairtix.inventory.domain.HoldStatus;
 import com.fairtix.inventory.dto.CreateHoldRequest;
 import com.fairtix.inventory.dto.SeatHoldResponse;
+
+import jakarta.annotation.security.PermitAll;
 import jakarta.validation.Valid;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

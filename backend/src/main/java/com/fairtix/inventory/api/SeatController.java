@@ -31,7 +31,7 @@ public class SeatController {
    * @param request the seat details
    * @return the created seat
    */
-  @PreAuthorize("hasRoll('ADMIN')")
+  @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public SeatResponse createSeat(
