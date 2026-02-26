@@ -86,6 +86,12 @@ public class SeatHoldService {
     // De-duplicate and sort for consistent lock ordering (deadlock prevention)
     List<UUID> sortedIds = seatIds.stream().distinct().sorted().toList();
 
+    // Enforce configurable max seats per hold before acquiring any locks
+    if (sortedIds.size() > maxSeatsPerHold) {
+      throw new IllegalArgumentException(
+          "Too many seats requested for a single hold: requested " + sortedIds.size()
+              + ", maximum is " + maxSeatsPerHold);
+    }
     // Lock all seats in one batch query — ORDER BY s.id matches our sort above
     List<Seat> lockedSeats = seatRepository.findAndLockByIdIn(sortedIds);
 
