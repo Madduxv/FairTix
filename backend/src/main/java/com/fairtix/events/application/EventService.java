@@ -1,6 +1,7 @@
 package com.fairtix.events.application;
 
 import com.fairtix.events.domain.Event;
+import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.infrastructure.EventRepository;
 
 import jakarta.transaction.Transactional;
@@ -58,10 +59,19 @@ public class EventService {
   }
 
   /**
-   * @return a list containing all events
+   * Updates the title or start time of an event
+   *
+   * @param id      the id of the event
+   * @param request an {@link UpdateEventRequest} containing the title and start
+   *                time of the event
+   *
+   * @throws IllegalArgumentException if the event is not found
+   * @return the newly updated event
    */
-  public List<Event> getAllEvents() {
-    return repository.findAll();
+  public Event update(UUID id, UpdateEventRequest request) {
+    Event event = repository.findById(id)
+        .orElseThrow(() -> new IllegalArgumentException("Event not found: " + id));
+    event.update(request.title(), request.startTime());
+    return event;
   }
-
 }
