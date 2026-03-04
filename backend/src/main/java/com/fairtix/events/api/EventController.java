@@ -1,5 +1,6 @@
 package com.fairtix.events.api;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,20 +46,28 @@ public class EventController {
   }
 
   /**
-   * Takes page number and number of items per page and returns the requested page
-   * of events
+   * Takes details about the types of events requested and returns a page of that
+   * type of event
    *
-   * @param page the page number
-   * @param size the number of items per page
+   * @param venue    the name of the venue
+   * @param title    the title of the event
+   * @param upcoming whether or not to only display upcoming events
+   *                 (true by default)
+   * @param page     the page number
+   * @param size     the number of items per page
    * @return the requested page
    */
   @PermitAll
   @GetMapping
   public Page<EventResponse> list(
+      @RequestParam(required = false) String venue,
+      @RequestParam(required = false) String title,
+      @RequestParam(required = false) Boolean upcoming,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
-    Page<Event> events = service.findAll(PageRequest.of(page, size));
-    return (Page<EventResponse>) events.map(EventResponse::from);
+
+    Page<Event> events = service.search(venue, title, upcoming, PageRequest.of(page, size));
+    return events.map(EventResponse::from);
   }
 
   /**
@@ -88,5 +97,17 @@ public class EventController {
       @Valid @RequestBody UpdateEventRequest request) {
     Event updated = service.update(id, request);
     return EventResponse.from(updated);
+  }
+
+  /**
+   * Deletes the requested event
+   *
+   * @param id the UUID id of the event
+   */
+  @PreAuthorize("hasRole('ADMIN')")
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable UUID id) {
+    service.delete(id);
   }
 }
