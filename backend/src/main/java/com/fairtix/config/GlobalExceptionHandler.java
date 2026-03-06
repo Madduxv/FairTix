@@ -1,5 +1,6 @@
 package com.fairtix.config;
 
+import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,6 +60,12 @@ public class GlobalExceptionHandler {
         .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
         .orElse("Validation failed");
     return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", firstError, req);
+  }
+
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<Map<String, Object>> handleResourceNotFound(
+      ResourceNotFoundException ex, HttpServletRequest req) {
+    return error(HttpStatus.NOT_FOUND, "HOLD_NOT_FOUND", ex.getMessage(), req);
   }
 
   // -------------------------------------------------------------------------
