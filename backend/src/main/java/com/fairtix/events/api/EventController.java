@@ -37,7 +37,8 @@ public class EventController {
    */
   @PreAuthorize("hasRole('ADMIN')")
   @PostMapping
-  public EventResponse createEvent(@RequestBody CreateEventRequest request) {
+  @ResponseStatus(HttpStatus.CREATED)
+  public EventResponse createEvent(@Valid @RequestBody CreateEventRequest request) {
     Event event = service.createEvent(
         request.title(),
         request.startTime(),
@@ -49,24 +50,24 @@ public class EventController {
    * Takes details about the types of events requested and returns a page of that
    * type of event
    *
-   * @param venue    the name of the venue
-   * @param title    the title of the event
-   * @param upcoming whether or not to only display upcoming events
-   *                 (true by default)
-   * @param page     the page number
-   * @param size     the number of items per page
+   * @param venueName the name of the venue
+   * @param title     the title of the event
+   * @param upcoming  whether or not to only display upcoming events
+   *                  (true by default)
+   * @param page      the page number
+   * @param size      the number of items per page
    * @return the requested page
    */
   @PermitAll
   @GetMapping
-  public Page<EventResponse> list(
-      @RequestParam(required = false) String venue,
+  public Page<EventResponse> search(
+      @RequestParam(required = false) String venueName,
       @RequestParam(required = false) String title,
       @RequestParam(required = false) Boolean upcoming,
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size) {
 
-    Page<Event> events = service.search(venue, title, upcoming, PageRequest.of(page, size));
+    Page<Event> events = service.search(venueName, title, upcoming, PageRequest.of(page, Math.min(size, 100)));
     return events.map(EventResponse::from);
   }
 
