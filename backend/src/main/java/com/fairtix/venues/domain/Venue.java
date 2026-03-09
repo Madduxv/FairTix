@@ -19,20 +19,10 @@ public class Venue {
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = false)
-    @ManyToOne
-    @JoinColumn(name = "event_id")
-    private String event;
 
-    @Column(nullable = false)
-    private Instant startTime;
-
-
-    public Venue(String name, String address, String event, Instant startTime){
+    public Venue(String name, String address){
         this.name = name;
         this.address = address;
-        this.event = event;
-        this.startTime = startTime;
 
     }
 
@@ -51,10 +41,4 @@ public class Venue {
         return address;
     }
 
-    public String getEvent(){
-        return event;
-    }
-    public Instant getStartTime(){
-        return startTime;
-    }
 }

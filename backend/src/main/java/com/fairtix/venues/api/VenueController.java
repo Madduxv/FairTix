@@ -27,8 +27,7 @@ public class VenueController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public VenueResponse createVenue(@RequestBody CreateVenueRequest request){
-        Venue venue = service.createVenue(request.name(), request.address(), request.address(),
-                request.startTime());
+        Venue venue = service.createVenue(request.name(), request.address());
         return VenueResponse.from(venue);
     }
 

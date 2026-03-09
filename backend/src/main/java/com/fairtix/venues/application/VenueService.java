@@ -22,8 +22,8 @@ public class VenueService {
         this.repository = repository;
     }
 
-    public Venue createVenue(String name, String address, String event, Instant startTime){
-        Venue venue = new Venue(name, address, event, startTime);
+    public Venue createVenue(String name, String address){
+        Venue venue = new Venue(name, address);
         return repository.save(venue);
     }
 
