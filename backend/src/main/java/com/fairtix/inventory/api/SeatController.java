@@ -13,10 +13,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/api/events/{eventId}/seats")
 public class SeatController {
 
+  private static final Logger log = LoggerFactory.getLogger(SeatController.class);
   private final SeatService seatService;
 
   public SeatController(SeatService seatService) {
@@ -37,6 +41,10 @@ public class SeatController {
   public SeatResponse createSeat(
       @PathVariable UUID eventId,
       @RequestBody CreateSeatRequest request) {
+
+    log.info("Request to create seat for event {} section={} row={} seat={}",
+            eventId, request.section(), request.rowLabel(), request.seatNumber());
+
     return SeatResponse.from(
         seatService.createSeat(eventId, request.section(), request.rowLabel(), request.seatNumber()));
   }
@@ -53,6 +61,10 @@ public class SeatController {
   public List<SeatResponse> getSeats(
       @PathVariable UUID eventId,
       @RequestParam(required = false, defaultValue = "false") boolean availableOnly) {
+
+    log.info("Request to fetch seats for event {} (availableOnly={}",
+            eventId, availableOnly);
+
     var seats = availableOnly
         ? seatService.getAvailableSeatsForEvent(eventId)
         : seatService.getSeatsForEvent(eventId);

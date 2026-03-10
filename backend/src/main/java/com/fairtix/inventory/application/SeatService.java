@@ -10,9 +10,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 @Transactional
 public class SeatService {
+
+  private static final Logger log = LoggerFactory.getLogger(SeatService.class);
 
   private final SeatRepository seatRepository;
   private final EventRepository eventRepository;
@@ -33,8 +38,12 @@ public class SeatService {
    * @throws IllegalArgumentException if the event is not found
    */
   public Seat createSeat(UUID eventId, String section, String rowLabel, String seatNumber) {
+
+    log.info("Creating seat for event {} section={} row={} seat={}",
+            eventId, section, rowLabel, seatNumber);
+
     var event = eventRepository.findById(eventId)
-        .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+        .orElseThrow(() -> {new IllegalArgumentException("Event not found: " + eventId));
     return seatRepository.save(new Seat(event, section, rowLabel, seatNumber));
   }
 
@@ -45,6 +54,12 @@ public class SeatService {
    * @return list of seats
    */
   public List<Seat> getSeatsForEvent(UUID eventId) {
+
+    log.info("Fetching all seats for event {}", eventId);
+
+    var seats = seatRepository.findByEvent_Id(eventId);
+
+    log.info("Found {} seats for event {}", seats.size(), eventId);
     return seatRepository.findByEvent_Id(eventId);
   }
 
@@ -55,6 +70,13 @@ public class SeatService {
    * @return list of available seats
    */
   public List<Seat> getAvailableSeatsForEvent(UUID eventId) {
+
+    log.info("Fetching available seats for event {}", eventId);
+
+    var seats = seatRepository.findByEvent_IdAndStatus(eventId, SeatStatus.AVAILABLE);
+
+    log.info("Found {} available seats for event {}", seats.size(), eventId);
+    }
     return seatRepository.findByEvent_IdAndStatus(eventId, SeatStatus.AVAILABLE);
   }
 }
