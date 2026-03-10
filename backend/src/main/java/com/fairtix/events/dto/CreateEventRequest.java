@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
  * @param venue     the venue name
  */
 public record CreateEventRequest(
-        @NotBlank String title,
-        @NotNull Instant startTime,
-        @NotNull String venue) {
+                @NotBlank String title,
+                @NotNull Instant startTime,
+                @NotBlank String venue) {
 }

@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ResourceNotFoundException.class)
   public ResponseEntity<Map<String, Object>> handleResourceNotFound(
       ResourceNotFoundException ex, HttpServletRequest req) {
-    return error(HttpStatus.NOT_FOUND, "HOLD_NOT_FOUND", ex.getMessage(), req);
+    return error(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", ex.getMessage(), req);
   }
 
   // -------------------------------------------------------------------------
