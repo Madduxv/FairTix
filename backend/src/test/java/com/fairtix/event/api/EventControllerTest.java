@@ -143,11 +143,11 @@ class EventControllerTest {
 
   @Test
   @WithMockUser
-  void getEvent_nonexistentEvent_returns400() throws Exception {
+  void getEvent_nonexistentEvent_returns404() throws Exception {
 
     mockMvc.perform(get(EVENT_URL, UUID.randomUUID()))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
         .andExpect(jsonPath("$.message").value(containsString("Event")));
   }
 

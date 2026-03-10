@@ -78,7 +78,7 @@ class EventServiceTest {
     UUID id = UUID.randomUUID();
 
     assertThatThrownBy(() -> eventService.getEvent(id))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessageContaining("Event not found");
   }
 
@@ -105,7 +105,7 @@ class EventServiceTest {
     UpdateEventRequest request = new UpdateEventRequest("Updated", Instant.now());
 
     assertThatThrownBy(() -> eventService.update(UUID.randomUUID(), request))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(ResourceNotFoundException.class)
         .hasMessageContaining("Event not found");
   }
 
