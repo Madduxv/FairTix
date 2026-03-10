@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +20,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for {@link SeatHoldController} focused on HTTP-layer concerns:
+ * Integration tests for {@link SeatHoldController} focused on HTTP-layer
+ * concerns:
  * request validation, error response shape, and status codes.
  *
- * <p>Uses a full Spring context (H2) so GlobalExceptionHandler and bean
- * validation are both active. MockMvc is built with the Spring Security
- * filter chain enabled.
+ * <p>
+ * Uses a full Spring context (H2) so GlobalExceptionHandler and bean
+ * validation are both active. MockMvc is built manually from the
+ * WebApplicationContext to avoid any autoconfigure package dependencies
+ * that may vary between Spring Boot versions.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @Transactional
@@ -49,6 +53,7 @@ class SeatHoldControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void createHold_emptySeatIds_returns400WithValidationError() throws Exception {
     String body = """
         {
@@ -58,9 +63,8 @@ class SeatHoldControllerTest {
         """;
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-            .with(user("test-user"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
@@ -69,6 +73,7 @@ class SeatHoldControllerTest {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void createHold_missingSeatIds_returns400WithValidationError() throws Exception {
     String body = """
         {
@@ -77,14 +82,14 @@ class SeatHoldControllerTest {
         """;
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-            .with(user("test-user"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void createHold_blankHolderId_returns400WithValidationError() throws Exception {
     String body = """
         {
@@ -94,15 +99,15 @@ class SeatHoldControllerTest {
         """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-            .with(user("test-user"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
         .andExpect(jsonPath("$.message").value(containsString("holderId")));
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void createHold_durationZero_returns400WithValidationError() throws Exception {
     String body = """
         {
@@ -113,16 +118,18 @@ class SeatHoldControllerTest {
         """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-            .with(user("test-user"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
         .andExpect(jsonPath("$.message").value(containsString("durationMinutes")));
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void createHold_nonExistentEvent_returns400WithBadRequest() throws Exception {
+    // Valid body but event doesn't exist → IllegalArgumentException → 400
+    // BAD_REQUEST
     String body = """
         {
           "seatIds":  ["%s"],
@@ -131,9 +138,8 @@ class SeatHoldControllerTest {
         """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-            .with(user("test-user"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
         .andExpect(jsonPath("$.status").value(400))
@@ -141,6 +147,7 @@ class SeatHoldControllerTest {
   }
 
   @Test
+  @WithMockUser(roles = "ADMIN")
   void errorResponse_alwaysContainsRequiredFields() throws Exception {
     String body = """
         {
@@ -150,9 +157,8 @@ class SeatHoldControllerTest {
         """;
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-            .with(user("test-user"))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.status").exists())
         .andExpect(jsonPath("$.code").exists())

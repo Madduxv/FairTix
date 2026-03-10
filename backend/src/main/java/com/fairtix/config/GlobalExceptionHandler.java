@@ -1,5 +1,6 @@
 package com.fairtix.config;
 
+import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -74,6 +75,10 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleAccessDenied(
       AccessDeniedException ex, HttpServletRequest req) {
     return error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Access denied", req);
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<Map<String, Object>> handleResourceNotFound(
+      ResourceNotFoundException ex, HttpServletRequest req) {
+    return error(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", ex.getMessage(), req);
   }
 
   // -------------------------------------------------------------------------
