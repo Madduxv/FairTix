@@ -9,8 +9,6 @@ import com.fairtix.events.application.EventService;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.dto.CreateEventRequest;
 import com.fairtix.events.dto.EventResponse;
-import com.sun.jdi.request.EventRequest;
-
 import jakarta.annotation.security.PermitAll;
 
 import java.util.UUID;

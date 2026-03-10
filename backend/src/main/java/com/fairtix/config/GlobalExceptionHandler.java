@@ -5,9 +5,11 @@ import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Map;
@@ -59,6 +61,19 @@ public class GlobalExceptionHandler {
         .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
         .orElse("Validation failed");
     return error(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", firstError, req);
+  }
+
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<Map<String, Object>> handleResponseStatus(
+      ResponseStatusException ex, HttpServletRequest req) {
+    HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+    return error(status, status.name(), ex.getReason(), req);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<Map<String, Object>> handleAccessDenied(
+      AccessDeniedException ex, HttpServletRequest req) {
+    return error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Access denied", req);
   }
 
   // -------------------------------------------------------------------------

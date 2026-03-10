@@ -25,7 +25,7 @@ public class AdminController {
   @PreAuthorize("hasRole('ADMIN')")
   public void promoteUser(@PathVariable UUID id) {
     User user = userRepository.findById(id)
-        .orElseThrow();
+        .orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
 
     user.setRole(Role.ADMIN);
     userRepository.save(user);
