@@ -2,15 +2,15 @@ package com.fairtix.auth.application;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
+
+import javax.crypto.SecretKey;
 
 @Service
 public class JwtService {
@@ -19,27 +19,27 @@ public class JwtService {
   private String SECRET;
   private static final long EXPIRATION = 1000 * 60 * 15; // 15 minutes
 
-  private Key getSigningKey() {
+  private SecretKey getSigningKey() {
     return Keys.hmacShaKeyFor(SECRET.getBytes());
   }
 
   public String generateToken(UUID userId, String email, String role) {
     return Jwts.builder()
-        .setSubject(email)
+        .subject(email)
         .claim("userId", userId.toString())
         .claim("role", role)
-        .setIssuedAt(new Date())
-        .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
-        .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+        .issuedAt(new Date())
+        .expiration(new Date(System.currentTimeMillis() + EXPIRATION))
+        .signWith(getSigningKey())
         .compact();
   }
 
   public Claims extractAllClaims(String token) {
-    return Jwts.parserBuilder()
-        .setSigningKey(getSigningKey())
+    return Jwts.parser()
+        .verifyWith(getSigningKey())
         .build()
-        .parseClaimsJws(token)
-        .getBody();
+        .parseSignedClaims(token)
+        .getPayload();
   }
 
   public String extractEmail(String token) {
@@ -48,8 +48,8 @@ public class JwtService {
 
   public boolean isTokenValid(String token) {
     try {
-      extractAllClaims(token);
-      return true;
+      Claims claims = extractAllClaims(token);
+      return claims.getExpiration().after(new Date());
     } catch (Exception e) {
       return false;
     }

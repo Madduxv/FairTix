@@ -28,16 +28,18 @@ jobs:
         run: mvn clean verify
 
   dependency-scan:
+    name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Run OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@v4
         with:
           project: "fairtix"
           path: "./backend"
+          format: "HTML"
 
   container-scan:
     runs-on: ubuntu-latest
