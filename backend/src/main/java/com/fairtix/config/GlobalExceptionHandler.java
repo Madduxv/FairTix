@@ -67,8 +67,18 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ResponseStatusException.class)
   public ResponseEntity<Map<String, Object>> handleResponseStatus(
       ResponseStatusException ex, HttpServletRequest req) {
-    HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
-    return error(status, status.name(), ex.getReason(), req);
+    HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+    if (status == null) {
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+    }
+    String message = ex.getReason();
+    if (message == null || message.isBlank()) {
+      message = ex.getMessage();
+      if (message == null || message.isBlank()) {
+        message = status.getReasonPhrase();
+      }
+    }
+    return error(status, status.name(), message, req);
   }
 
   @ExceptionHandler(AccessDeniedException.class)

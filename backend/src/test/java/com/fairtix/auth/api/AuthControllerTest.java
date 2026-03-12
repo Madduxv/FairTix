@@ -14,6 +14,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -106,7 +107,7 @@ class AuthControllerTest {
     // Token should be parseable and contain the registered email
     assertDoesNotThrow(() -> jwtService.extractAllClaims(token));
     String email = jwtService.extractEmail(token);
-    assert email.equals("jwtcheck@test.com");
+    assertEquals("jwtcheck@test.com", email);
   }
 
   // -------------------------------------------------------------------------
