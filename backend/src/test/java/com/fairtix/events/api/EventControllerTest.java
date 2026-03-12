@@ -131,8 +131,8 @@ class EventControllerTest {
             .param("upcoming", "false"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content", hasSize(2)))
-        .andExpect(jsonPath("$.totalElements").value(3))
-        .andExpect(jsonPath("$.totalPages").value(2));
+        .andExpect(jsonPath("$.page.totalElements").value(3))
+        .andExpect(jsonPath("$.page.totalPages").value(2));
   }
 
   // -------------------------------------------------------------------------
