@@ -1,18 +1,35 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import UseDeviceSize from '../UseDeviceSize'
+import { useAuth } from '../auth/useAuth';
+import UseDeviceSize from '../UseDeviceSize';
 import logo from '../logo.png';
 
 function Home() {
-   const [width, height] = UseDeviceSize();
-   let navigate = useNavigate();
-   return (
+  const [width] = UseDeviceSize();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  return (
+    <div>
+      <br /><br /><br />
       <div>
-         <br></br><br></br><br></br>
-         <div> <img width={width} src={logo} alt="really cool logo, trust"/></div>
-         <div><button onClick={() => { navigate("/login"); }}>Log in</button> <button onClick={() => { navigate("/signup"); }}>Sign up</button> <button>Continue as guest</button></div>
+        <img width={width} src={logo} alt="FairTix logo" />
       </div>
-   );
+      <div>
+        {user ? (
+          <>
+            <button onClick={() => navigate('/events')}>Browse Events</button>{' '}
+            <button onClick={() => navigate('/dashboard')}>Dashboard</button>
+          </>
+        ) : (
+          <>
+            <button onClick={() => navigate('/login')}>Log In</button>{' '}
+            <button onClick={() => navigate('/signup')}>Sign Up</button>{' '}
+            <button onClick={() => navigate('/events')}>Continue as guest</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default Home;

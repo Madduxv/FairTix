@@ -1,0 +1,10 @@
+{
+  "name": "fairtix-frontend",
+  "private": true,
+  "scripts": {
+    "start": "npm start --prefix webpages",
+    "build": "npm run build --prefix webpages",
+    "test": "npm test --prefix webpages",
+    "install:all": "cd webpages && npm install"
+  }
+}
