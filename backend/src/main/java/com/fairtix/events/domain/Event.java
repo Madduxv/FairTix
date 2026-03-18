@@ -9,7 +9,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "Events")
 public class Event {
@@ -39,22 +41,6 @@ public class Event {
   public void update(String title, Instant startTime) {
     this.title = title;
     this.startTime = startTime;
-  }
-
-  public UUID getId() {
-    return id;
-  }
-
-  public String getTitle() {
-    return title;
-  }
-
-  public String getVenue() {
-    return venue;
-  }
-
-  public Instant getStartTime() {
-    return startTime;
   }
 
 }
