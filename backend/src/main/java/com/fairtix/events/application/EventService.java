@@ -43,12 +43,12 @@ public class EventService {
 
   /**
    * @param id the id of the event
-   * @throws IllegalArgumentException if the event is not found
+   * @throws ResourceNotFoundException if the event is not found
    * @return the requested {@link Event}
    */
   public Event getEvent(UUID id) {
     return repository.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
   }
 
   /**
@@ -58,12 +58,12 @@ public class EventService {
    * @param request an {@link UpdateEventRequest} containing the title and start
    *                time of the event
    *
-   * @throws IllegalArgumentException if the event is not found
+   * @throws ResourceNotFoundException if the event is not found
    * @return the newly updated event
    */
   public Event update(UUID id, UpdateEventRequest request) {
     Event event = repository.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("Event not found: " + id));
+        .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
     event.update(request.title(), request.startTime());
     return event;
   }
