@@ -62,7 +62,7 @@ public class SeatController {
       @PathVariable UUID eventId,
       @RequestParam(required = false, defaultValue = "false") boolean availableOnly) {
 
-    log.info("Request to fetch seats for event {} (availableOnly={}",
+    log.info("Request to fetch seats for event {} (availableOnly={})",
             eventId, availableOnly);
 
     var seats = availableOnly

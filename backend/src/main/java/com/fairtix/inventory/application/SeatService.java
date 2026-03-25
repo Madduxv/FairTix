@@ -43,7 +43,7 @@ public class SeatService {
             eventId, section, rowLabel, seatNumber);
 
     var event = eventRepository.findById(eventId)
-        .orElseThrow(() -> {new IllegalArgumentException("Event not found: " + eventId));
+        .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
     return seatRepository.save(new Seat(event, section, rowLabel, seatNumber));
   }
 
@@ -60,7 +60,7 @@ public class SeatService {
     var seats = seatRepository.findByEvent_Id(eventId);
 
     log.info("Found {} seats for event {}", seats.size(), eventId);
-    return seatRepository.findByEvent_Id(eventId);
+    return seats;
   }
 
   /**
@@ -76,7 +76,6 @@ public class SeatService {
     var seats = seatRepository.findByEvent_IdAndStatus(eventId, SeatStatus.AVAILABLE);
 
     log.info("Found {} available seats for event {}", seats.size(), eventId);
-    }
-    return seatRepository.findByEvent_IdAndStatus(eventId, SeatStatus.AVAILABLE);
+    return seats;
   }
 }

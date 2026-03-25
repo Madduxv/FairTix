@@ -24,6 +24,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       FilterChain filterChain)
       throws ServletException, IOException {
 
+    String previousRequestId = MDC.get("requestId");
     String requestId = UUID.randomUUID().toString();
     MDC.put("requestId", requestId);
 
@@ -31,7 +32,7 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
     try {
 
-      log.info("[{}] <- {} {}", requestId,
+      log.info("<- {} {}",
               request.getMethod(),
               request.getRequestURI());
 
@@ -40,10 +41,14 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 
       long duration = System.currentTimeMillis() - start;
 
-      log.info("[{}] -> {} ({} ms)", requestId,
+      log.info("-> {} ({} ms)",
               response.getStatus(),
               duration);
-      MDC.clear();
+      if (previousRequestId == null) {
+        MDC.remove("requestId");
+      } else {
+        MDC.put("requestId", previousRequestId);
+      }
 
     }
   }
