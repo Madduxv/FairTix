@@ -1,17 +1,15 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import useDeviceSize from '../UseDeviceSize';
-import logo from '../logo.png';
+import Logo from '../components/Logo';
 
 function Home() {
-  const [width] = useDeviceSize();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
     <div>
       <div style={{ marginTop: '3em' }}>
-        <img width={width} src={logo} alt="FairTix logo" />
+        <Logo />
       </div>
       <div>
         {user ? (

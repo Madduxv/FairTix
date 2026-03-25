@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,19 +24,32 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
       FilterChain filterChain)
       throws ServletException, IOException {
 
+    String previousRequestId = MDC.get("requestId");
     String requestId = UUID.randomUUID().toString();
+    MDC.put("requestId", requestId);
+
     long start = System.currentTimeMillis();
 
-    log.info("[{}] <- {} {}", requestId,
-        request.getMethod(),
-        request.getRequestURI());
+    try {
 
-    filterChain.doFilter(request, response);
+      log.info("<- {} {}",
+              request.getMethod(),
+              request.getRequestURI());
 
-    long duration = System.currentTimeMillis() - start;
+      filterChain.doFilter(request, response);
+    } finally {
 
-    log.info("[{}] -> {} ({} ms)", requestId,
-        response.getStatus(),
-        duration);
+      long duration = System.currentTimeMillis() - start;
+
+      log.info("-> {} ({} ms)",
+              response.getStatus(),
+              duration);
+      if (previousRequestId == null) {
+        MDC.remove("requestId");
+      } else {
+        MDC.put("requestId", previousRequestId);
+      }
+
+    }
   }
 }
