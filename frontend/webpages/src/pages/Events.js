@@ -1,11 +1,11 @@
-import React from 'react';
-import Logo from '../components/Logo';
+import Layout from '../components/Layout';
 
 function Events() {
    return (
-      <><Logo />
-      <h1>LIST EVENTS HERE</h1></>
+      <Layout>
+         <h1>LIST EVENTS HERE</h1>
+      </Layout>
    )
 }
 
-export default Events
+export default Events;
