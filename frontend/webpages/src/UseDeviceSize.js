@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// this code isn't mine! it's from https://medium.com/@ismoil.793 -skylar
+// Hook that tracks the current window width and height.
 
 const useDeviceSize = () => {
    const [width, setWidth] = useState(0);
