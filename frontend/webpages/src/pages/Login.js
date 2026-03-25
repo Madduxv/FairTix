@@ -1,43 +1,72 @@
-import { useState } from 'react';
-import Layout from '../components/Layout';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth';
+import '../styles/Login.css';
 
 function Login() {
-   const [email, setEmail] = useState('');
-   const [password, setPassword] = useState('');
-   const [error, setError] = useState('');
-   let navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-   const handleSubmit = (e) => {
-      e.preventDefault();
-      setError('');
+  const from = location.state?.from?.pathname || '/dashboard';
 
-      if (!email || !password) {
-         setError('Please fill in all fields.');
-         return;
-      }
+  if (user) {
+    return <Navigate to={from} replace />;
+  }
 
-      // TODO: replace with actual API call
-      navigate("/events");
-   };
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-   return (
-      <Layout>
-         <h1>LOG IN</h1>
-         <form onSubmit={handleSubmit}>
-            <label>
-               email: <input name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </label>
-            <br />
-            <label>
-               password: <input name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </label>
-            <br /><br />
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <button type="submit">log in</button>
-         </form>
-      </Layout>
-   )
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="login-page">
+      <h2>Log In</h2>
+      <form onSubmit={handleSubmit} className="login-form">
+        {error && <div className="error-message">{error}</div>}
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Logging in...' : 'Log In'}
+        </button>
+      </form>
+      <p className="form-link">
+        Don't have an account? <Link to="/signup">Sign up</Link>
+      </p>
+    </div>
+  );
 }
 
 export default Login;

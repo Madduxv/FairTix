@@ -1,13 +1,20 @@
 package com.fairtix.events.application;
 
+import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.events.domain.Event;
+import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.infrastructure.EventRepository;
 
 import jakarta.transaction.Transactional;
+import jakarta.persistence.criteria.Predicate;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,19 +43,85 @@ public class EventService {
 
   /**
    * @param id the id of the event
-   * @throws IllegalArgumentException if the event is not found
+   * @throws ResourceNotFoundException if the event is not found
    * @return the requested {@link Event}
    */
   public Event getEvent(UUID id) {
     return repository.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("Event not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
   }
 
   /**
-   * @return a list containing all events
+   * Updates the title or start time of an event
+   *
+   * @param id      the id of the event
+   * @param request an {@link UpdateEventRequest} containing the title and start
+   *                time of the event
+   *
+   * @throws ResourceNotFoundException if the event is not found
+   * @return the newly updated event
    */
-  public List<Event> getAllEvents() {
-    return repository.findAll();
+  public Event update(UUID id, UpdateEventRequest request) {
+    Event event = repository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+    event.update(request.title(), request.startTime());
+    return event;
   }
 
+  /**
+   * Deletes the requested event
+   *
+   * @param id the id of the event
+   * @throws ResourceNotFoundException if an event with the requested id does not
+   *                                   exist
+   */
+  public void delete(UUID id) {
+    Event event = repository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+    repository.delete(event);
+  }
+
+  /**
+   * @param venue
+   * @param title
+   * @param upcoming
+   * @param pageable
+   * @return
+   */
+  public Page<Event> search(
+      String venue,
+      String title,
+      Boolean upcoming,
+      Pageable pageable) {
+
+    Specification<Event> spec = (root, query, cb) -> {
+
+      List<Predicate> predicates = new ArrayList<>();
+
+      if (venue != null && !venue.isBlank()) {
+        predicates.add(
+            cb.like(
+                cb.lower(root.get("venue")),
+                "%" + venue.toLowerCase() + "%"));
+      }
+
+      if (title != null && !title.isBlank()) {
+        predicates.add(
+            cb.like(
+                cb.lower(root.get("title")),
+                "%" + title.toLowerCase() + "%"));
+      }
+
+      if (upcoming == null || upcoming) {
+        predicates.add(
+            cb.greaterThan(
+                root.get("startTime"),
+                Instant.now()));
+      }
+
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
+
+    return repository.findAll(spec, pageable);
+  }
 }

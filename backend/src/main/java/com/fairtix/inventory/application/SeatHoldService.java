@@ -46,19 +46,21 @@ public class SeatHoldService {
   /**
    * Places a hold on one or more seats for an event.
    *
-   * <p>Guarantees:
+   * <p>
+   * Guarantees:
    * <ul>
-   *   <li>Atomic: if any seat is unavailable the whole operation rolls back.</li>
-   *   <li>Deadlock-safe: seats are locked in consistent UUID order via a single
-   *       batch {@code SELECT … FOR UPDATE ORDER BY id} query.</li>
-   *   <li>Duration is clamped to {@code holds.max-duration-minutes}.</li>
-   *   <li>Active-hold count for the holder is checked before locking.</li>
+   * <li>Atomic: if any seat is unavailable the whole operation rolls back.</li>
+   * <li>Deadlock-safe: seats are locked in consistent UUID order via a single
+   * batch {@code SELECT … FOR UPDATE ORDER BY id} query.</li>
+   * <li>Duration is clamped to {@code holds.max-duration-minutes}.</li>
+   * <li>Active-hold count for the holder is checked before locking.</li>
    * </ul>
    *
    * @param eventId         the target event
    * @param seatIds         the seats to hold (duplicates are de-duped)
    * @param holderId        opaque identifier for the holder
-   * @param durationMinutes requested hold length; clamped and defaulted server-side
+   * @param durationMinutes requested hold length; clamped and defaulted
+   *                        server-side
    * @return the created {@link SeatHold} records
    */
   @Transactional
@@ -87,10 +89,10 @@ public class SeatHoldService {
     List<UUID> sortedIds = seatIds.stream().distinct().sorted().toList();
 
     // Enforce configurable max seats per hold before acquiring any locks
-    if (sortedIds.size() > maxSeatsPerHold) {
+    if (sortedIds.size() > maxActivePerHolder) {
       throw new IllegalArgumentException(
           "Too many seats requested for a single hold: requested " + sortedIds.size()
-              + ", maximum is " + maxSeatsPerHold);
+              + ", maximum is " + maxActivePerHolder);
     }
     // Lock all seats in one batch query — ORDER BY s.id matches our sort above
     List<Seat> lockedSeats = seatRepository.findAndLockByIdIn(sortedIds);
@@ -136,7 +138,8 @@ public class SeatHoldService {
   /**
    * Releases an active hold, returning the seat to AVAILABLE.
    *
-   * <p>Idempotent: calling release on a hold that is already RELEASED returns
+   * <p>
+   * Idempotent: calling release on a hold that is already RELEASED returns
    * the hold unchanged (200 OK) instead of throwing.
    *
    * @param holdId   the hold to release
@@ -170,7 +173,8 @@ public class SeatHoldService {
   /**
    * Confirms an active hold, transitioning the seat to BOOKED.
    *
-   * <p>Idempotent: calling confirm on a hold that is already CONFIRMED returns
+   * <p>
+   * Idempotent: calling confirm on a hold that is already CONFIRMED returns
    * the hold unchanged (200 OK) instead of throwing.
    *
    * @param holdId   the hold to confirm
