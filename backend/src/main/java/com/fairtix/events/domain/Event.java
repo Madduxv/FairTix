@@ -18,7 +18,7 @@ public class Event {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 500)
   private String title;
 
   @Column(nullable = false)
@@ -34,6 +34,11 @@ public class Event {
   }
 
   protected Event() {
+  }
+
+  public void update(String title, Instant startTime) {
+    this.title = title;
+    this.startTime = startTime;
   }
 
   public UUID getId() {

@@ -2,6 +2,9 @@ package com.fairtix.events.dto;
 
 import java.time.Instant;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 /**
  * Requests / Creates payload for creating a new event
  * 
@@ -10,7 +13,7 @@ import java.time.Instant;
  * @param venue     the venue name
  */
 public record CreateEventRequest(
-    String title,
-    Instant startTime,
-    String venue) {
+                @NotBlank String title,
+                @NotNull Instant startTime,
+                @NotBlank String venue) {
 }
