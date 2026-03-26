@@ -108,7 +108,7 @@ Tokens are obtained from the Auth endpoints and expire after 15 minutes.
 |--------|------|------|-------------|
 | POST | `/api/events/{eventId}/holds` | Authenticated | Create a hold on 1-10 seats |
 | GET | `/api/holds` | Authenticated | List holds for a holder |
-| GET | `/api/holds/{holdId}` | Public | Get a single hold |
+| GET | `/api/holds/{holdId}` | Authenticated | Get a single hold |
 | POST | `/api/holds/{holdId}/release` | Authenticated | Release a hold (idempotent) |
 | POST | `/api/holds/{holdId}/confirm` | Authenticated | Confirm a hold (idempotent) |
 
@@ -121,17 +121,19 @@ Tokens are obtained from the Auth endpoints and expire after 15 minutes.
 }
 ```
 
-**Hold response:**
+**Hold response (array — one hold per seat):**
 ```json
-{
-  "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
-  "seatId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
-  "eventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "holderId": "user-session-abc123",
-  "expiresAt": "2026-07-15T19:10:00Z",
-  "createdAt": "2026-07-15T19:00:00Z",
-  "status": "ACTIVE"
-}
+[
+  {
+    "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+    "seatId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "eventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "holderId": "user-session-abc123",
+    "expiresAt": "2026-07-15T19:10:00Z",
+    "createdAt": "2026-07-15T19:00:00Z",
+    "status": "ACTIVE"
+  }
+]
 ```
 
 **Hold statuses:** `ACTIVE`, `CONFIRMED`, `EXPIRED`, `RELEASED`

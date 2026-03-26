@@ -13,7 +13,7 @@ public record AnalyticsResponse(
         Map<String, Long> seatsByStatus,
         List<EventInventory> topEventsByBookings,
         Map<String, Long> holdsByStatus,
-        @Schema(description = "Ratio of confirmed holds to total holds", example = "0.75")
+        @Schema(description = "Hold confirmation rate as a percentage (0-100)", example = "75.0")
         double holdConfirmationRate,
         List<DailyHoldCount> holdsPerDay,
         Map<String, Long> usersByRole) {
