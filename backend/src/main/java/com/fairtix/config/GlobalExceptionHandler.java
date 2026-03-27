@@ -3,7 +3,11 @@ package com.fairtix.config;
 import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
+import com.fairtix.orders.application.OrderNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -31,6 +35,8 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(SeatHoldNotFoundException.class)
   public ResponseEntity<Map<String, Object>> handleNotFound(
@@ -87,10 +93,32 @@ public class GlobalExceptionHandler {
     return error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Access denied", req);
   }
 
+  @ExceptionHandler(OrderNotFoundException.class)
+  public ResponseEntity<Map<String, Object>> handleOrderNotFound(
+      OrderNotFoundException ex, HttpServletRequest req) {
+    return error(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND", ex.getMessage(), req);
+  }
+
   @ExceptionHandler(ResourceNotFoundException.class)
   public ResponseEntity<Map<String, Object>> handleResourceNotFound(
       ResourceNotFoundException ex, HttpServletRequest req) {
     return error(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<Map<String, Object>> handleDataIntegrity(
+      DataIntegrityViolationException ex, HttpServletRequest req) {
+    log.error("Data integrity violation on {}: {}", req.getRequestURI(), ex.getMessage());
+    return error(HttpStatus.CONFLICT, "DATA_CONFLICT",
+        "The request conflicts with the current state of the data", req);
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, Object>> handleUnexpected(
+      Exception ex, HttpServletRequest req) {
+    log.error("Unhandled exception on {}", req.getRequestURI(), ex);
+    return error(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
+        "An unexpected error occurred", req);
   }
 
   // -------------------------------------------------------------------------
