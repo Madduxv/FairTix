@@ -1,6 +1,11 @@
 package com.fairtix.users.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Login credentials")
 public record LoginRequest(
-    String email,
-    String password) {
+        @Schema(description = "User email address", example = "user@example.com")
+        String email,
+        @Schema(description = "User password", example = "password123")
+        String password) {
 }
