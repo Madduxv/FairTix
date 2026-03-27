@@ -116,7 +116,7 @@ Tokens are obtained from the Auth endpoints and expire after 15 minutes.
 ```json
 {
   "seatIds": ["b2c3d4e5-f6a7-8901-bcde-f12345678901"],
-  "holderId": "user-session-abc123",
+  "holderId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
   "durationMinutes": 10
 }
 ```
@@ -128,7 +128,7 @@ Tokens are obtained from the Auth endpoints and expire after 15 minutes.
     "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
     "seatId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
     "eventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "holderId": "user-session-abc123",
+    "holderId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
     "expiresAt": "2026-07-15T19:10:00Z",
     "createdAt": "2026-07-15T19:00:00Z",
     "status": "ACTIVE"

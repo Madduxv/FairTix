@@ -1,6 +1,8 @@
 package com.fairtix.orders.application;
 
+import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.domain.HoldStatus;
+import com.fairtix.inventory.domain.Seat;
 import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
@@ -57,10 +59,19 @@ public class OrderService {
       }
     }
 
-    // Transition seats from BOOKED → SOLD
+    // Transition seats from BOOKED → SOLD (guard against double-issue)
     for (SeatHold hold : holds) {
-      hold.getSeat().setStatus(SeatStatus.SOLD);
-      seatRepository.save(hold.getSeat());
+      Seat seat = hold.getSeat();
+      if (seat.getStatus() == SeatStatus.SOLD) {
+        throw new SeatHoldConflictException(
+            "Seat " + seat.getId() + " has already been sold");
+      }
+      if (seat.getStatus() != SeatStatus.BOOKED) {
+        throw new SeatHoldConflictException(
+            "Seat " + seat.getId() + " is not in BOOKED state (status: " + seat.getStatus() + ")");
+      }
+      seat.setStatus(SeatStatus.SOLD);
+      seatRepository.save(seat);
     }
 
     // Create the order (MVP: totalAmount = 0, no payment integration)

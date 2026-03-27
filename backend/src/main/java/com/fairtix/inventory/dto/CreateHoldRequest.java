@@ -29,8 +29,8 @@ public record CreateHoldRequest(
         @Size(max = 10, message = "Cannot request more than 10 seats per hold")
         List<UUID> seatIds,
 
-        @Schema(description = "Opaque holder identifier (session or user ID)",
-                example = "user-session-abc123")
+        @Schema(description = "User ID of the holder (must match authenticated user for order creation)",
+                example = "d290f1ee-6c54-4b01-90e6-d701748f0851")
         @NotBlank(message = "holderId must not be blank")
         String holderId,
 

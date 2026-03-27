@@ -27,7 +27,7 @@ public record SeatHoldResponse(
         UUID seatId,
         @Schema(description = "Event ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
         UUID eventId,
-        @Schema(description = "Holder identifier", example = "user-session-abc123")
+        @Schema(description = "Holder identifier (user ID)", example = "d290f1ee-6c54-4b01-90e6-d701748f0851")
         String holderId,
         @Schema(description = "Hold expiry time in UTC", example = "2026-07-15T19:10:00Z")
         Instant expiresAt,
