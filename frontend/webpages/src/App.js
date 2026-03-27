@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Events from './pages/Events';
 import Dashboard from './pages/Dashboard';
+import MyTickets from './pages/MyTickets';
 import AdminLayout from './admin/AdminLayout';
 import AdminDashboard from './admin/pages/AdminDashboard';
 import AdminEventsPage from './admin/pages/AdminEventsPage';
@@ -31,6 +32,7 @@ function App() {
             {/* Authenticated routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/my-tickets" element={<MyTickets />} />
             </Route>
 
             {/* Admin routes */}

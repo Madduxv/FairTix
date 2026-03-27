@@ -1,0 +1,100 @@
+.my-tickets {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.my-tickets h2 {
+  margin-bottom: 1.5rem;
+}
+
+.tickets-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+.ticket-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.ticket-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.ticket-card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.ticket-status {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ticket-status.valid {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.ticket-status.used {
+  background: #e8e8e8;
+  color: #666;
+}
+
+.ticket-status.cancelled {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.ticket-status.transferred {
+  background: #e8f0fe;
+  color: #1a73e8;
+}
+
+.ticket-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.ticket-card-details .label {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.ticket-card-seat {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ticket-card-seat span {
+  display: flex;
+  flex-direction: column;
+}
