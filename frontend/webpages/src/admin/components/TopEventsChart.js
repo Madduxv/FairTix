@@ -10,6 +10,7 @@ function TopEventsChart({ data }) {
     Available: e.available,
     Held: e.held,
     Booked: e.booked,
+    Sold: e.sold,
   }));
 
   const barHeight = Math.max(380, chartData.length * 50 + 80);
@@ -27,6 +28,7 @@ function TopEventsChart({ data }) {
               <YAxis type="category" dataKey="name" width={130} stroke="#b0b0b0" tick={{ fontSize: 12 }} />
               <Tooltip contentStyle={{ backgroundColor: '#16213e', border: 'none', color: '#fff' }} />
               <Legend />
+              <Bar dataKey="Sold" fill="#2196f3" stackId="a" />
               <Bar dataKey="Booked" fill="#e94560" stackId="a" />
               <Bar dataKey="Held" fill="#ff9800" stackId="a" />
               <Bar dataKey="Available" fill="#4caf50" stackId="a" />

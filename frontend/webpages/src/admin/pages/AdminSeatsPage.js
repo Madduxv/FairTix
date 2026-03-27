@@ -23,6 +23,7 @@ const statusColors = {
   AVAILABLE: 'success',
   HELD: 'warning',
   BOOKED: 'error',
+  SOLD: 'primary',
 };
 
 function AdminSeatsPage() {

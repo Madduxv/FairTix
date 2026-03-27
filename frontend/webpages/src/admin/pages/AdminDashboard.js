@@ -10,6 +10,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import ChairIcon from '@mui/icons-material/Chair';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import PanToolIcon from '@mui/icons-material/PanTool';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import PercentIcon from '@mui/icons-material/Percent';
 import StatsCard from '../components/StatsCard';
 import SeatStatusChart from '../components/SeatStatusChart';
@@ -79,6 +80,9 @@ function AdminDashboard() {
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={4}>
           <StatsCard title="Active Holds" value={overview.activeHolds} icon={<PanToolIcon />} color="#ff9800" />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4} lg={4}>
+          <StatsCard title="Sold Seats" value={overview.soldSeats} icon={<ShoppingCartIcon />} color="#2196f3" />
         </Grid>
       </Grid>
 

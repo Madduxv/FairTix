@@ -25,7 +25,8 @@ public record AnalyticsResponse(
             @Schema(example = "350") long totalUsers,
             @Schema(example = "5000") long totalSeats,
             @Schema(example = "1200") long bookedSeats,
-            @Schema(example = "85") long activeHolds) {
+            @Schema(example = "85") long activeHolds,
+            @Schema(example = "300") long soldSeats) {
     }
 
     @Schema(description = "Event count grouped by venue")
@@ -40,7 +41,8 @@ public record AnalyticsResponse(
             @Schema(example = "Summer Music Festival") String eventTitle,
             @Schema(example = "200") long available,
             @Schema(example = "50") long held,
-            @Schema(example = "150") long booked) {
+            @Schema(example = "150") long booked,
+            @Schema(example = "100") long sold) {
     }
 
     @Schema(description = "Hold count for a single day")
