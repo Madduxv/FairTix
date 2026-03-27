@@ -45,7 +45,7 @@ function AdminEventsPage() {
     setLoading(true);
     setError('');
     try {
-      const params = new URLSearchParams({ page: page.toString(), size: rowsPerPage.toString() });
+      const params = new URLSearchParams({ page: page.toString(), size: rowsPerPage.toString(), upcoming: 'false' });
       if (search.trim()) params.set('title', search.trim());
       const data = await api.get(`/api/events?${params}`);
       setEvents(data.content || []);

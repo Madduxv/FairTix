@@ -61,6 +61,7 @@ class AnalyticsControllerTest {
         .andExpect(jsonPath("$.seatsByStatus").value(hasKey("AVAILABLE")))
         .andExpect(jsonPath("$.seatsByStatus").value(hasKey("HELD")))
         .andExpect(jsonPath("$.seatsByStatus").value(hasKey("BOOKED")))
+        .andExpect(jsonPath("$.seatsByStatus").value(hasKey("SOLD")))
         .andExpect(jsonPath("$.holdsByStatus").value(hasKey("ACTIVE")))
         .andExpect(jsonPath("$.holdConfirmationRate").value(0.0))
         .andExpect(jsonPath("$.holdsPerDay").isArray())
@@ -92,6 +93,7 @@ class AnalyticsControllerTest {
         .andExpect(jsonPath("$.overview.totalSeats").value(0))
         .andExpect(jsonPath("$.overview.bookedSeats").value(0))
         .andExpect(jsonPath("$.overview.activeHolds").value(0))
+        .andExpect(jsonPath("$.overview.soldSeats").value(0))
         .andExpect(jsonPath("$.holdConfirmationRate").value(0.0));
   }
 }

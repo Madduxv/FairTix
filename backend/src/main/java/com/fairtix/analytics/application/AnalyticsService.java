@@ -66,8 +66,9 @@ public class AnalyticsService {
 
     long bookedSeats = seatsByStatus.getOrDefault("BOOKED", 0L);
     long activeHolds = seatsByStatus.getOrDefault("HELD", 0L);
+    long soldSeats = seatsByStatus.getOrDefault("SOLD", 0L);
 
-    return new OverviewStats(totalEvents, upcomingEvents, totalUsers, totalSeats, bookedSeats, activeHolds);
+    return new OverviewStats(totalEvents, upcomingEvents, totalUsers, totalSeats, bookedSeats, activeHolds, soldSeats);
   }
 
   private List<VenueCount> buildEventsByVenue() {
@@ -112,7 +113,8 @@ public class AnalyticsService {
               titleById.get(id),
               counts.getOrDefault("AVAILABLE", 0L),
               counts.getOrDefault("HELD", 0L),
-              counts.getOrDefault("BOOKED", 0L)
+              counts.getOrDefault("BOOKED", 0L),
+              counts.getOrDefault("SOLD", 0L)
           );
         })
         .sorted(Comparator.comparingLong(EventInventory::booked).reversed())

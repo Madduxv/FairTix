@@ -116,7 +116,7 @@ Tokens are obtained from the Auth endpoints and expire after 15 minutes.
 ```json
 {
   "seatIds": ["b2c3d4e5-f6a7-8901-bcde-f12345678901"],
-  "holderId": "user-session-abc123",
+  "holderId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
   "durationMinutes": 10
 }
 ```
@@ -128,7 +128,7 @@ Tokens are obtained from the Auth endpoints and expire after 15 minutes.
     "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
     "seatId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
     "eventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "holderId": "user-session-abc123",
+    "holderId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
     "expiresAt": "2026-07-15T19:10:00Z",
     "createdAt": "2026-07-15T19:00:00Z",
     "status": "ACTIVE"
@@ -179,69 +179,78 @@ All errors follow a consistent shape:
 
 ---
 
-## Planned Endpoints (Not Yet Implemented)
+## Orders
 
-### Orders
-
-Future endpoints for completing a purchase after confirming a hold.
+Endpoints for completing a purchase after confirming a hold.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/api/orders` | Authenticated | Create an order from confirmed holds |
 | GET | `/api/orders` | Authenticated | List the current user's orders |
 | GET | `/api/orders/{orderId}` | Authenticated | Get order details |
-| POST | `/api/orders/{orderId}/cancel` | Authenticated | Cancel an order (if refundable) |
-| GET | `/api/admin/orders` | ADMIN | List all orders (admin) |
 
-**Planned create order request:**
+**Create order request:**
 ```json
 {
-  "holdIds": ["c3d4e5f6-a7b8-9012-cdef-123456789012"],
-  "paymentMethod": "CARD"
+  "holdIds": ["c3d4e5f6-a7b8-9012-cdef-123456789012"]
 }
 ```
 
-**Planned order response:**
+**Order response:**
 ```json
 {
   "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
   "userId": "d290f1ee-6c54-4b01-90e6-d701748f0851",
   "holdIds": ["c3d4e5f6-a7b8-9012-cdef-123456789012"],
   "status": "COMPLETED",
-  "totalAmount": 75.00,
+  "totalAmount": 0.00,
   "currency": "USD",
   "createdAt": "2026-07-15T19:05:00Z"
 }
 ```
 
-**Planned order statuses:** `PENDING`, `COMPLETED`, `CANCELLED`, `REFUNDED`
+**Order statuses:** `PENDING`, `COMPLETED`, `CANCELLED`, `REFUNDED`
 
 ### Tickets
 
-Future endpoints for accessing purchased tickets.
+Endpoints for accessing purchased tickets.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | GET | `/api/tickets` | Authenticated | List the current user's tickets |
-| GET | `/api/tickets/{ticketId}` | Authenticated | Get ticket details / QR data |
-| POST | `/api/tickets/{ticketId}/transfer` | Authenticated | Transfer a ticket to another user |
-| POST | `/api/admin/tickets/{ticketId}/validate` | ADMIN | Validate a ticket at the door |
+| GET | `/api/tickets/{ticketId}` | Authenticated | Get ticket details |
 
-**Planned ticket response:**
+**Ticket response:**
 ```json
 {
   "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
   "orderId": "d4e5f6a7-b8c9-0123-defa-234567890123",
   "eventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "eventTitle": "Summer Music Festival",
+  "eventVenue": "Madison Square Garden",
+  "eventStartTime": "2026-07-15T19:00:00Z",
   "seatId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "seatSection": "Floor",
+  "seatRow": "A",
+  "seatNumber": "101",
   "holderEmail": "user@example.com",
   "status": "VALID",
-  "qrCode": "base64-encoded-qr-data",
   "issuedAt": "2026-07-15T19:05:00Z"
 }
 ```
 
-**Planned ticket statuses:** `VALID`, `USED`, `TRANSFERRED`, `CANCELLED`
+**Ticket statuses:** `VALID`, `USED`, `TRANSFERRED`, `CANCELLED`
+
+---
+
+## Planned Endpoints (Not Yet Implemented)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/orders/{orderId}/cancel` | Authenticated | Cancel an order (if refundable) |
+| GET | `/api/admin/orders` | ADMIN | List all orders (admin) |
+| POST | `/api/tickets/{ticketId}/transfer` | Authenticated | Transfer a ticket to another user |
+| POST | `/api/admin/tickets/{ticketId}/validate` | ADMIN | Validate a ticket at the door |
 
 ---
 
@@ -252,5 +261,6 @@ The frontend currently integrates with:
 - Events listing (`GET /api/events`)
 - Analytics dashboard (`GET /api/analytics/dashboard`)
 - Admin user management (`GET /api/admin/users`, `PATCH .../promote`)
+- Tickets listing (`GET /api/tickets`) — My Tickets page
 
-**Not yet wired in the frontend:** Seats, holds, release, confirm. These are backend-ready and awaiting the seat selection / checkout UI.
+**Not yet wired in the frontend:** Seats, holds, release, confirm, order creation. These are backend-ready and awaiting the seat selection / checkout UI.

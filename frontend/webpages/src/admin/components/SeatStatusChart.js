@@ -4,7 +4,7 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const COLORS = { AVAILABLE: '#4caf50', HELD: '#ff9800', BOOKED: '#e94560' };
+const COLORS = { AVAILABLE: '#4caf50', HELD: '#ff9800', BOOKED: '#e94560', SOLD: '#2196f3' };
 
 function SeatStatusChart({ data }) {
   const chartData = Object.entries(data).map(([name, value]) => ({ name, value }));
