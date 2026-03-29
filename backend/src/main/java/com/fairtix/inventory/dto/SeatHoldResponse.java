@@ -14,7 +14,7 @@ import java.util.UUID;
  * @param id        the unique hold id
  * @param seatId    the held seat
  * @param eventId   the event the seat belongs to
- * @param holderId  the holder identifier
+ * @param ownerId   the owner's user ID
  * @param expiresAt when the hold expires (UTC)
  * @param createdAt when the hold was created (UTC)
  * @param status    the current hold status
@@ -27,8 +27,8 @@ public record SeatHoldResponse(
         UUID seatId,
         @Schema(description = "Event ID", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
         UUID eventId,
-        @Schema(description = "Holder identifier (user ID)", example = "d290f1ee-6c54-4b01-90e6-d701748f0851")
-        String holderId,
+        @Schema(description = "Owner user ID", example = "d290f1ee-6c54-4b01-90e6-d701748f0851")
+        UUID ownerId,
         @Schema(description = "Hold expiry time in UTC", example = "2026-07-15T19:10:00Z")
         Instant expiresAt,
         @Schema(description = "Hold creation time in UTC", example = "2026-07-15T19:00:00Z")
@@ -47,7 +47,7 @@ public record SeatHoldResponse(
                 hold.getId(),
                 hold.getSeat().getId(),
                 hold.getSeat().getEvent().getId(),
-                hold.getHolderId(),
+                hold.getOwnerId(),
                 hold.getExpiresAt(),
                 hold.getCreatedAt(),
                 hold.getStatus());

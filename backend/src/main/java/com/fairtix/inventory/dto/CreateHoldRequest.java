@@ -2,7 +2,6 @@ package com.fairtix.inventory.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
@@ -16,8 +15,10 @@ import java.util.UUID;
  * The service also enforces {@code holds.max-seats-per-hold} and
  * {@code holds.max-duration-minutes} so the limits hold even for direct calls.
  *
+ * <p>The hold owner is derived from the authenticated user's JWT — it is
+ * never accepted from the client.
+ *
  * @param seatIds         the seats to hold (1-10 items)
- * @param holderId        opaque identifier for the holder (session/user id)
  * @param durationMinutes how long the hold lasts; server default when null
  */
 @Schema(description = "Payload for creating a temporary seat hold")
@@ -28,11 +29,6 @@ public record CreateHoldRequest(
         @NotEmpty(message = "At least one seat is required")
         @Size(max = 10, message = "Cannot request more than 10 seats per hold")
         List<UUID> seatIds,
-
-        @Schema(description = "User ID of the holder (must match authenticated user for order creation)",
-                example = "d290f1ee-6c54-4b01-90e6-d701748f0851")
-        @NotBlank(message = "holderId must not be blank")
-        String holderId,
 
         @Schema(description = "Hold duration in minutes (server default if omitted, max 60)",
                 example = "10")

@@ -1,10 +1,9 @@
 package com.fairtix.orders.api;
 
+import com.fairtix.auth.domain.CustomUserPrincipal;
 import com.fairtix.orders.application.OrderService;
 import com.fairtix.orders.dto.CreateOrderRequest;
 import com.fairtix.orders.dto.OrderResponse;
-import com.fairtix.users.domain.User;
-import com.fairtix.users.infrastructure.UserRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,9 +12,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,11 +24,9 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
-    private final UserRepository userRepository;
 
-    public OrderController(OrderService orderService, UserRepository userRepository) {
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
-        this.userRepository = userRepository;
     }
 
     @Operation(summary = "Create an order from confirmed holds")
@@ -40,18 +35,16 @@ public class OrderController {
     @PostMapping("/api/orders")
     @ResponseStatus(HttpStatus.CREATED)
     public OrderResponse createOrder(
-            @AuthenticationPrincipal UserDetails principal,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @Valid @RequestBody CreateOrderRequest request) {
-        UUID userId = resolveUserId(principal);
-        return OrderResponse.from(orderService.createOrder(userId, request.holdIds()));
+        return OrderResponse.from(orderService.createOrder(principal.getUserId(), request.holdIds()));
     }
 
     @Operation(summary = "List the current user's orders")
     @ApiResponse(responseCode = "200", description = "List of orders")
     @GetMapping("/api/orders")
-    public List<OrderResponse> listOrders(@AuthenticationPrincipal UserDetails principal) {
-        UUID userId = resolveUserId(principal);
-        return orderService.listOrders(userId).stream()
+    public List<OrderResponse> listOrders(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        return orderService.listOrders(principal.getUserId()).stream()
                 .map(OrderResponse::from)
                 .toList();
     }
@@ -61,16 +54,8 @@ public class OrderController {
     @ApiResponse(responseCode = "404", description = "Order not found")
     @GetMapping("/api/orders/{orderId}")
     public OrderResponse getOrder(
-            @AuthenticationPrincipal UserDetails principal,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable UUID orderId) {
-        UUID userId = resolveUserId(principal);
-        return OrderResponse.from(orderService.getOrder(orderId, userId));
-    }
-
-    private UUID resolveUserId(UserDetails principal) {
-        User user = userRepository.findByEmail(principal.getUsername())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.UNAUTHORIZED, "Authenticated user not found"));
-        return user.getId();
+        return OrderResponse.from(orderService.getOrder(orderId, principal.getUserId()));
     }
 }
