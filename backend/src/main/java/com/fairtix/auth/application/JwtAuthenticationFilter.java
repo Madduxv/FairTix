@@ -41,18 +41,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (jwtService.isTokenValid(token)
         && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-      Claims claims = jwtService.extractAllClaims(token);
-      String email = claims.getSubject();
-      UUID userId = UUID.fromString(claims.get("userId", String.class));
-      String role = claims.get("role", String.class);
+      try {
+        Claims claims = jwtService.extractAllClaims(token);
+        String email = claims.getSubject();
+        UUID userId = UUID.fromString(claims.get("userId", String.class));
+        String role = claims.get("role", String.class);
 
-      CustomUserPrincipal principal = new CustomUserPrincipal(
-          userId, email, "", List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+        CustomUserPrincipal principal = new CustomUserPrincipal(
+            userId, email, "", List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
-      UsernamePasswordAuthenticationToken authToken =
-          new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+        UsernamePasswordAuthenticationToken authToken =
+            new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
-      SecurityContextHolder.getContext().setAuthentication(authToken);
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+      } catch (Exception e) {
+        // Malformed or missing claims — treat as unauthenticated
+      }
     }
 
     filterChain.doFilter(request, response);

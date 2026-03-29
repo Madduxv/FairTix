@@ -12,7 +12,7 @@ import java.util.UUID;
  * Request payload for creating a seat hold.
  *
  * <p>Bean-validation enforces a hard upper bound of 10 seats per request.
- * The service also enforces {@code holds.max-seats-per-hold} and
+ * The service also enforces {@code holds.max-active-per-holder} and
  * {@code holds.max-duration-minutes} so the limits hold even for direct calls.
  *
  * <p>The hold owner is derived from the authenticated user's JWT — it is
