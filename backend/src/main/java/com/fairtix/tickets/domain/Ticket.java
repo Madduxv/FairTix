@@ -6,6 +6,7 @@ import com.fairtix.orders.domain.Order;
 import com.fairtix.users.domain.User;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -37,6 +38,9 @@ public class Ticket {
   @JoinColumn(name = "event_id", nullable = false)
   private Event event;
 
+  @Column(nullable = false, precision = 10, scale = 2)
+  private BigDecimal price;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private TicketStatus status;
@@ -44,11 +48,12 @@ public class Ticket {
   @Column(name = "issued_at", nullable = false, updatable = false)
   private Instant issuedAt;
 
-  public Ticket(Order order, User user, Seat seat, Event event) {
+  public Ticket(Order order, User user, Seat seat, Event event, BigDecimal price) {
     this.order = order;
     this.user = user;
     this.seat = seat;
     this.event = event;
+    this.price = price;
     this.status = TicketStatus.VALID;
     this.issuedAt = Instant.now();
   }
@@ -74,6 +79,10 @@ public class Ticket {
 
   public Event getEvent() {
     return event;
+  }
+
+  public BigDecimal getPrice() {
+    return price;
   }
 
   public TicketStatus getStatus() {

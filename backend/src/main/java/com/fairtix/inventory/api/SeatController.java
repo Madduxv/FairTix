@@ -60,7 +60,7 @@ public class SeatController {
                 eventId, request.section(), request.rowLabel(), request.seatNumber());
 
         return SeatResponse.from(
-                seatService.createSeat(eventId, request.section(), request.rowLabel(), request.seatNumber()));
+                seatService.createSeat(eventId, request.section(), request.rowLabel(), request.seatNumber(), request.price()));
     }
 
     /**

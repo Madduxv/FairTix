@@ -25,7 +25,8 @@ public class TicketService {
             order,
             order.getUser(),
             hold.getSeat(),
-            hold.getSeat().getEvent()))
+            hold.getSeat().getEvent(),
+            hold.getSeat().getPrice()))
         .toList();
     ticketRepository.saveAll(tickets);
   }

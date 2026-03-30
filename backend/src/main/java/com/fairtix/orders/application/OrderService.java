@@ -74,8 +74,11 @@ public class OrderService {
       seatRepository.save(seat);
     }
 
-    // Create the order (MVP: totalAmount = 0, no payment integration)
-    Order order = new Order(user, holdIds, BigDecimal.ZERO, "USD");
+    BigDecimal totalAmount = holds.stream()
+        .map(hold -> hold.getSeat().getPrice())
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Order order = new Order(user, holdIds, totalAmount, "USD");
     order = orderRepository.save(order);
 
     // Issue tickets for each hold
