@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,7 +55,7 @@ public class SeatController {
     @ResponseStatus(HttpStatus.CREATED)
     public SeatResponse createSeat(
             @PathVariable UUID eventId,
-            @RequestBody CreateSeatRequest request) {
+            @Valid @RequestBody CreateSeatRequest request) {
 
         log.info("Request to create seat for event {} section={} row={} seat={}",
                 eventId, request.section(), request.rowLabel(), request.seatNumber());
