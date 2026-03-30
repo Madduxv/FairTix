@@ -103,12 +103,20 @@ function EventDetail() {
       ) : (
         Object.entries(sectionGroups).map(([section, sectionSeats]) => (
           <div key={section} className="seat-section-group">
-            <h3>{section}</h3>
+            <h3>{section}{(() => {
+              const prices = sectionSeats.map(s => s.price ?? 0);
+              const min = Math.min(...prices);
+              const max = Math.max(...prices);
+              return min === max
+                ? ` — $${min.toFixed(2)}`
+                : ` — from $${min.toFixed(2)} to $${max.toFixed(2)}`;
+            })()}</h3>
             <table className="seats-table">
               <thead>
                 <tr>
                   <th>Row</th>
                   <th>Seat</th>
+                  <th>Price</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -117,6 +125,7 @@ function EventDetail() {
                   <tr key={seat.id}>
                     <td>{seat.rowLabel}</td>
                     <td>{seat.seatNumber}</td>
+                    <td>${(seat.price ?? 0).toFixed(2)}</td>
                     <td>
                       <span className={`seat-status ${seat.status.toLowerCase()}`}>
                         {seat.status}
