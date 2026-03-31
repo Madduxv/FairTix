@@ -11,6 +11,8 @@ import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
 import Dashboard from './pages/Dashboard';
 import MyTickets from './pages/MyTickets';
+import MyHolds from './pages/MyHolds';
+import Checkout from './pages/Checkout';
 import AdminLayout from './admin/AdminLayout';
 import AdminDashboard from './admin/pages/AdminDashboard';
 import AdminEventsPage from './admin/pages/AdminEventsPage';
@@ -34,6 +36,8 @@ function App() {
             {/* Authenticated routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/my-holds" element={<MyHolds />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/my-tickets" element={<MyTickets />} />
             </Route>
 

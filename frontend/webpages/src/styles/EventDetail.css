@@ -175,3 +175,132 @@
   border-color: #999;
   color: #111;
 }
+
+/* Seat selection */
+.seat-row-selectable {
+  cursor: pointer;
+}
+
+.seat-row-selectable:hover td {
+  background: #e8f5e9 !important;
+}
+
+.seat-row-selected td {
+  background: #c8e6c9 !important;
+}
+
+.seat-row-selected .seat-status {
+  background: #1e7e34 !important;
+  color: #fff !important;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.login-prompt a {
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.login-prompt a:hover {
+  text-decoration: underline;
+}
+
+.hold-message {
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.hold-message.success {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.hold-message.error {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.hold-message-link {
+  margin-left: 0.5rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.hold-message.success .hold-message-link {
+  color: #1e7e34;
+}
+
+.selection-error {
+  background: #fce8e6;
+  color: #c5221f;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.selection-bar {
+  position: sticky;
+  bottom: 1rem;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 0.8rem 1.2rem;
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.selection-bar-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.selection-bar-clear {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.45rem 1rem;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.selection-bar-clear:hover {
+  border-color: #999;
+  color: #111;
+}
+
+.selection-bar-hold {
+  background: #1e7e34;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selection-bar-hold:hover:not(:disabled) {
+  background: #166b2b;
+}
+
+.selection-bar-hold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

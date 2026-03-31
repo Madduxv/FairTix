@@ -26,6 +26,7 @@ function Navbar() {
 
         {user && (
           <>
+            <NavLink to="/my-holds">My Holds</NavLink>
             <NavLink to="/my-tickets">My Tickets</NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
             {user.role === 'ADMIN' && (
