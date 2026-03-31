@@ -1,5 +1,6 @@
 package com.fairtix.tickets.api;
 
+import com.fairtix.auth.WithMockPrincipal;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.HoldStatus;
@@ -19,7 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.Instant;
 import java.util.List;
@@ -73,15 +73,14 @@ class TicketControllerTest {
   }
 
   @Test
-  @WithMockUser(username = "tickettest@example.com")
   void listTickets_returnsEmptyWhenNone() throws Exception {
-    mockMvc.perform(get("/api/tickets"))
+    mockMvc.perform(get("/api/tickets")
+            .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
   }
 
   @Test
-  @WithMockUser(username = "tickettest@example.com")
   void listTickets_returnsTicketsAfterOrder() throws Exception {
     // Set up: event → seat → confirmed hold → order → tickets
     Event event = eventRepository.save(new Event("Ticket Concert", "Ticket Venue", Instant.now().plusSeconds(86400)));
@@ -89,14 +88,15 @@ class TicketControllerTest {
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 
-    SeatHold hold = new SeatHold(seat, testUser.getId().toString(), Instant.now().plusSeconds(600));
+    SeatHold hold = new SeatHold(seat, testUser.getId(), Instant.now().plusSeconds(600));
     hold.setStatus(HoldStatus.CONFIRMED);
     hold = seatHoldRepository.save(hold);
 
     // Create the order (which issues tickets)
     orderService.createOrder(testUser.getId(), List.of(hold.getId()));
 
-    mockMvc.perform(get("/api/tickets"))
+    mockMvc.perform(get("/api/tickets")
+            .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(1))
         .andExpect(jsonPath("$[0].eventTitle").value("Ticket Concert"))
@@ -107,15 +107,14 @@ class TicketControllerTest {
   }
 
   @Test
-  @WithMockUser(username = "tickettest@example.com")
   void getTicket_notFound_returns404() throws Exception {
-    mockMvc.perform(get("/api/tickets/{ticketId}", UUID.randomUUID()))
+    mockMvc.perform(get("/api/tickets/{ticketId}", UUID.randomUUID())
+            .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail())))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"));
   }
 
   @Test
-  @WithMockUser(username = "other@example.com")
   void getTicket_belongingToOtherUser_returns404() throws Exception {
     // Create another user to test ownership isolation
     User otherUser = new User();
@@ -129,14 +128,15 @@ class TicketControllerTest {
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 
-    SeatHold hold = new SeatHold(seat, testUser.getId().toString(), Instant.now().plusSeconds(600));
+    SeatHold hold = new SeatHold(seat, testUser.getId(), Instant.now().plusSeconds(600));
     hold.setStatus(HoldStatus.CONFIRMED);
     hold = seatHoldRepository.save(hold);
 
     orderService.createOrder(testUser.getId(), List.of(hold.getId()));
 
     // otherUser should see empty tickets, not testUser's
-    mockMvc.perform(get("/api/tickets"))
+    mockMvc.perform(get("/api/tickets")
+            .with(WithMockPrincipal.user(otherUser.getId(), otherUser.getEmail())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
   }

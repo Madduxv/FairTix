@@ -8,7 +8,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "seat_holds", indexes = {
     @Index(name = "idx_hold_status_expires", columnList = "status, expires_at"),
-    @Index(name = "idx_hold_holder_id",      columnList = "holder_id")
+    @Index(name = "idx_hold_owner_id",       columnList = "owner_id")
 })
 public class SeatHold {
 
@@ -20,8 +20,8 @@ public class SeatHold {
   @JoinColumn(name = "seat_id", nullable = false)
   private Seat seat;
 
-  @Column(nullable = false, name = "holder_id")
-  private String holderId;
+  @Column(nullable = false, name = "owner_id")
+  private UUID ownerId;
 
   @Column(nullable = false, name = "expires_at")
   private Instant expiresAt;
@@ -33,9 +33,9 @@ public class SeatHold {
   @Column(nullable = false, name = "created_at", updatable = false)
   private Instant createdAt;
 
-  public SeatHold(Seat seat, String holderId, Instant expiresAt) {
+  public SeatHold(Seat seat, UUID ownerId, Instant expiresAt) {
     this.seat = seat;
-    this.holderId = holderId;
+    this.ownerId = ownerId;
     this.expiresAt = expiresAt;
     this.status = HoldStatus.ACTIVE;
     this.createdAt = Instant.now();
@@ -52,8 +52,8 @@ public class SeatHold {
     return seat;
   }
 
-  public String getHolderId() {
-    return holderId;
+  public UUID getOwnerId() {
+    return ownerId;
   }
 
   public Instant getExpiresAt() {
