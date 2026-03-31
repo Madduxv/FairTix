@@ -6,6 +6,7 @@ import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.infrastructure.EventRepository;
 
 import jakarta.persistence.criteria.Predicate;
+import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class EventService {
 
   private final EventRepository repository;
