@@ -26,7 +26,10 @@ function Navbar() {
 
         {user && (
           <>
+<<<<<<< HEAD
+=======
             <NavLink to="/my-holds">My Holds</NavLink>
+>>>>>>> main
             <NavLink to="/my-tickets">My Tickets</NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
             {user.role === 'ADMIN' && (

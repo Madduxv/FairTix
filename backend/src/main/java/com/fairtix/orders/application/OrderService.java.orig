@@ -47,7 +47,11 @@ public class OrderService {
 
     // Validate all holds exist, belong to this user, and are CONFIRMED
     List<SeatHold> holds = holdIds.stream()
+<<<<<<< HEAD
+        .map(holdId -> seatHoldRepository.findByIdAndHolderId(holdId, userId.toString())
+=======
         .map(holdId -> seatHoldRepository.findByIdAndOwnerId(holdId, userId)
+>>>>>>> main
             .orElseThrow(() -> new IllegalArgumentException(
                 "Hold not found or does not belong to you: " + holdId)))
         .toList();

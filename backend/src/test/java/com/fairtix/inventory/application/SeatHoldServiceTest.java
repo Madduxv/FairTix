@@ -35,6 +35,9 @@ class SeatHoldServiceTest {
   private Event testEvent;
   private Seat testSeat;
 
+  private static final UUID USER_1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
+  private static final UUID USER_2 = UUID.fromString("00000000-0000-0000-0000-000000000002");
+
   @BeforeEach
   void setUp() {
     testEvent = eventRepository.save(
@@ -43,18 +46,18 @@ class SeatHoldServiceTest {
   }
 
   // -------------------------------------------------------------------------
-  // Original tests (kept intact)
+  // Original tests (updated for UUID ownerId)
   // -------------------------------------------------------------------------
 
   @Test
   void holdingASeatSucceeds() {
     List<SeatHold> holds = seatHoldService.createHold(
-        testEvent.getId(), List.of(testSeat.getId()), "user-1", 10);
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
 
     assertThat(holds).hasSize(1);
     SeatHold hold = holds.get(0);
     assertThat(hold.getStatus()).isEqualTo(HoldStatus.ACTIVE);
-    assertThat(hold.getHolderId()).isEqualTo("user-1");
+    assertThat(hold.getOwnerId()).isEqualTo(USER_1);
     assertThat(hold.getExpiresAt()).isAfter(Instant.now());
 
     Seat updatedSeat = seatRepository.findById(testSeat.getId()).orElseThrow();
@@ -64,10 +67,10 @@ class SeatHoldServiceTest {
   @Test
   void holdingTheSameSeatTwiceReturnsConflict() {
     seatHoldService.createHold(
-        testEvent.getId(), List.of(testSeat.getId()), "user-1", 10);
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
 
     assertThatThrownBy(() -> seatHoldService.createHold(
-        testEvent.getId(), List.of(testSeat.getId()), "user-2", 10))
+        testEvent.getId(), List.of(testSeat.getId()), USER_2, 10))
         .isInstanceOf(SeatHoldConflictException.class)
         .hasMessageContaining("not available");
   }
@@ -77,7 +80,7 @@ class SeatHoldServiceTest {
     testSeat.setStatus(SeatStatus.HELD);
     seatRepository.save(testSeat);
 
-    SeatHold expiredHold = new SeatHold(testSeat, "user-1", Instant.now().minusSeconds(60));
+    SeatHold expiredHold = new SeatHold(testSeat, USER_1, Instant.now().minusSeconds(60));
     seatHoldRepository.save(expiredHold);
 
     scheduler.expireHolds();
@@ -96,10 +99,10 @@ class SeatHoldServiceTest {
   @Test
   void releasingAnAlreadyReleasedHoldIsIdempotent() {
     SeatHold hold = seatHoldService.createHold(
-        testEvent.getId(), List.of(testSeat.getId()), "user-1", 10).get(0);
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10).get(0);
 
-    SeatHold firstRelease  = seatHoldService.releaseHold(hold.getId(), "user-1");
-    SeatHold secondRelease = seatHoldService.releaseHold(hold.getId(), "user-1");
+    SeatHold firstRelease  = seatHoldService.releaseHold(hold.getId(), USER_1);
+    SeatHold secondRelease = seatHoldService.releaseHold(hold.getId(), USER_1);
 
     assertThat(firstRelease.getStatus()).isEqualTo(HoldStatus.RELEASED);
     assertThat(secondRelease.getStatus()).isEqualTo(HoldStatus.RELEASED);
@@ -111,10 +114,10 @@ class SeatHoldServiceTest {
   @Test
   void confirmingAnAlreadyConfirmedHoldIsIdempotent() {
     SeatHold hold = seatHoldService.createHold(
-        testEvent.getId(), List.of(testSeat.getId()), "user-1", 10).get(0);
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10).get(0);
 
-    SeatHold firstConfirm  = seatHoldService.confirmHold(hold.getId(), "user-1");
-    SeatHold secondConfirm = seatHoldService.confirmHold(hold.getId(), "user-1");
+    SeatHold firstConfirm  = seatHoldService.confirmHold(hold.getId(), USER_1);
+    SeatHold secondConfirm = seatHoldService.confirmHold(hold.getId(), USER_1);
 
     assertThat(firstConfirm.getStatus()).isEqualTo(HoldStatus.CONFIRMED);
     assertThat(secondConfirm.getStatus()).isEqualTo(HoldStatus.CONFIRMED);
@@ -130,7 +133,7 @@ class SeatHoldServiceTest {
   void durationIsClampedToMaxDurationMinutes() {
     // Request a hold 10× longer than the allowed maximum
     List<SeatHold> holds = seatHoldService.createHold(
-        testEvent.getId(), List.of(testSeat.getId()), "user-1", 600);
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 600);
 
     Instant hold60MinBound = Instant.now().plusSeconds(60 * 60L + 5); // 60 min + 5 s slack
     assertThat(holds.get(0).getExpiresAt()).isBefore(hold60MinBound);
@@ -142,16 +145,16 @@ class SeatHoldServiceTest {
 
   @Test
   void exceedingMaxActiveHoldsPerHolderThrowsConflict() {
-    // Create 2 seats so "user-1" can reach the limit
+    // Create 2 seats so USER_1 can reach the limit
     Seat extraSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
 
-    seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), "user-1", 10);
-    seatHoldService.createHold(testEvent.getId(), List.of(extraSeat.getId()), "user-1", 10);
+    seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
+    seatHoldService.createHold(testEvent.getId(), List.of(extraSeat.getId()), USER_1, 10);
 
     // Third seat — must be blocked by the active-hold limit
     Seat thirdSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "103"));
     assertThatThrownBy(() -> seatHoldService.createHold(
-        testEvent.getId(), List.of(thirdSeat.getId()), "user-1", 10))
+        testEvent.getId(), List.of(thirdSeat.getId()), USER_1, 10))
         .isInstanceOf(SeatHoldConflictException.class)
         .hasMessageContaining("Hold limit reached");
   }
@@ -160,13 +163,13 @@ class SeatHoldServiceTest {
   void holdLimitIsPerHolder_otherHolderCanStillHold() {
     Seat extraSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
 
-    seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), "user-1", 10);
-    seatHoldService.createHold(testEvent.getId(), List.of(extraSeat.getId()), "user-1", 10);
+    seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
+    seatHoldService.createHold(testEvent.getId(), List.of(extraSeat.getId()), USER_1, 10);
 
-    // user-2 is unaffected by user-1's limit
+    // USER_2 is unaffected by USER_1's limit
     Seat thirdSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "103"));
     List<SeatHold> holds = seatHoldService.createHold(
-        testEvent.getId(), List.of(thirdSeat.getId()), "user-2", 10);
+        testEvent.getId(), List.of(thirdSeat.getId()), USER_2, 10);
     assertThat(holds).hasSize(1);
     assertThat(holds.get(0).getStatus()).isEqualTo(HoldStatus.ACTIVE);
   }
@@ -189,7 +192,7 @@ class SeatHoldServiceTest {
         : List.of(id2, id1);
 
     List<SeatHold> holds = seatHoldService.createHold(
-        testEvent.getId(), reversed, "user-1", 10);
+        testEvent.getId(), reversed, USER_1, 10);
 
     assertThat(holds).hasSize(2);
     assertThat(seatRepository.findById(id1).orElseThrow().getStatus()).isEqualTo(SeatStatus.HELD);
@@ -202,7 +205,7 @@ class SeatHoldServiceTest {
     List<SeatHold> holds = seatHoldService.createHold(
         testEvent.getId(),
         List.of(testSeat.getId(), testSeat.getId()),
-        "user-1", 10);
+        USER_1, 10);
 
     assertThat(holds).hasSize(1);
   }
@@ -220,7 +223,7 @@ class SeatHoldServiceTest {
     for (Seat seat : List.of(testSeat, seat2, seat3)) {
       seat.setStatus(SeatStatus.HELD);
       seatRepository.save(seat);
-      seatHoldRepository.save(new SeatHold(seat, "user-1", Instant.now().minusSeconds(60)));
+      seatHoldRepository.save(new SeatHold(seat, USER_1, Instant.now().minusSeconds(60)));
     }
 
     scheduler.expireHolds();
@@ -244,13 +247,44 @@ class SeatHoldServiceTest {
   void listHoldsReturnsOnlyActiveHoldsForHolder() {
     Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
 
-    // Two holds for user-1 (hits the limit of 2 for test props)
-    seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), "user-1", 10);
-    seatHoldService.createHold(testEvent.getId(), List.of(seat2.getId()),    "user-1", 10);
+    // Two holds for USER_1 (hits the limit of 2 for test props)
+    seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
+    seatHoldService.createHold(testEvent.getId(), List.of(seat2.getId()),    USER_1, 10);
 
-    List<SeatHold> active = seatHoldService.listHolds("user-1", HoldStatus.ACTIVE);
+    List<SeatHold> active = seatHoldService.listHolds(USER_1, HoldStatus.ACTIVE);
     assertThat(active).hasSize(2);
     assertThat(active).allMatch(h -> h.getStatus() == HoldStatus.ACTIVE);
-    assertThat(active).allMatch(h -> h.getHolderId().equals("user-1"));
+    assertThat(active).allMatch(h -> h.getOwnerId().equals(USER_1));
+  }
+
+  // -------------------------------------------------------------------------
+  // Ownership isolation
+  // -------------------------------------------------------------------------
+
+  @Test
+  void cannotReleaseAnotherUsersHold() {
+    SeatHold hold = seatHoldService.createHold(
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10).get(0);
+
+    assertThatThrownBy(() -> seatHoldService.releaseHold(hold.getId(), USER_2))
+        .isInstanceOf(SeatHoldNotFoundException.class);
+  }
+
+  @Test
+  void cannotConfirmAnotherUsersHold() {
+    SeatHold hold = seatHoldService.createHold(
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10).get(0);
+
+    assertThatThrownBy(() -> seatHoldService.confirmHold(hold.getId(), USER_2))
+        .isInstanceOf(SeatHoldNotFoundException.class);
+  }
+
+  @Test
+  void cannotGetAnotherUsersHold() {
+    SeatHold hold = seatHoldService.createHold(
+        testEvent.getId(), List.of(testSeat.getId()), USER_1, 10).get(0);
+
+    assertThatThrownBy(() -> seatHoldService.getHold(hold.getId(), USER_2))
+        .isInstanceOf(SeatHoldNotFoundException.class);
   }
 }

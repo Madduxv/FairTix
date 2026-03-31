@@ -1,6 +1,9 @@
 package com.fairtix.orders.api;
 
+<<<<<<< HEAD
+=======
 import com.fairtix.auth.WithMockPrincipal;
+>>>>>>> main
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.HoldStatus;
@@ -16,6 +19,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+<<<<<<< HEAD
+import org.springframework.security.test.context.support.WithMockUser;
+=======
+>>>>>>> main
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,13 +82,20 @@ class OrderControllerTest {
   }
 
   @Test
+<<<<<<< HEAD
+  @WithMockUser(username = "ordertest@example.com")
+=======
+>>>>>>> main
   void createOrder_emptyHoldIds_returns400() throws Exception {
     String body = """
         { "holdIds": [] }
         """;
 
     mockMvc.perform(post("/api/orders")
+<<<<<<< HEAD
+=======
             .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail()))
+>>>>>>> main
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isBadRequest())
@@ -89,13 +103,20 @@ class OrderControllerTest {
   }
 
   @Test
+<<<<<<< HEAD
+  @WithMockUser(username = "ordertest@example.com")
+=======
+>>>>>>> main
   void createOrder_nonExistentHold_returns400() throws Exception {
     String body = """
         { "holdIds": ["00000000-0000-0000-0000-000000000001"] }
         """;
 
     mockMvc.perform(post("/api/orders")
+<<<<<<< HEAD
+=======
             .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail()))
+>>>>>>> main
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isBadRequest())
@@ -103,6 +124,10 @@ class OrderControllerTest {
   }
 
   @Test
+<<<<<<< HEAD
+  @WithMockUser(username = "ordertest@example.com")
+=======
+>>>>>>> main
   void createOrder_withConfirmedHold_returns201() throws Exception {
     // Set up: event → seat → confirmed hold
     Event event = eventRepository.save(new Event("Test Concert", "Test Venue", Instant.now().plusSeconds(86400)));
@@ -110,7 +135,11 @@ class OrderControllerTest {
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 
+<<<<<<< HEAD
+    SeatHold hold = new SeatHold(seat, testUser.getId().toString(), Instant.now().plusSeconds(600));
+=======
     SeatHold hold = new SeatHold(seat, testUser.getId(), Instant.now().plusSeconds(600));
+>>>>>>> main
     hold.setStatus(HoldStatus.CONFIRMED);
     hold = seatHoldRepository.save(hold);
 
@@ -119,7 +148,10 @@ class OrderControllerTest {
         """.formatted(hold.getId());
 
     mockMvc.perform(post("/api/orders")
+<<<<<<< HEAD
+=======
             .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail()))
+>>>>>>> main
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isCreated())
@@ -129,9 +161,15 @@ class OrderControllerTest {
   }
 
   @Test
+<<<<<<< HEAD
+  @WithMockUser(username = "ordertest@example.com")
+  void listOrders_returnsEmptyWhenNone() throws Exception {
+    mockMvc.perform(get("/api/orders"))
+=======
   void listOrders_returnsEmptyWhenNone() throws Exception {
     mockMvc.perform(get("/api/orders")
             .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail())))
+>>>>>>> main
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
   }

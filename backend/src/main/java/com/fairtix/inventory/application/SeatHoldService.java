@@ -35,6 +35,9 @@ public class SeatHoldService {
   @Value("${holds.max-active-per-holder:5}")
   private int maxActivePerHolder;
 
+  @Value("${holds.max-seats-per-hold:10}")
+  private int maxSeatsPerHold;
+
   public SeatHoldService(SeatRepository seatRepository,
       SeatHoldRepository seatHoldRepository,
       EventRepository eventRepository) {
@@ -58,25 +61,25 @@ public class SeatHoldService {
    *
    * @param eventId         the target event
    * @param seatIds         the seats to hold (duplicates are de-duped)
-   * @param holderId        opaque identifier for the holder
+   * @param ownerId         authenticated user's ID
    * @param durationMinutes requested hold length; clamped and defaulted
    *                        server-side
    * @return the created {@link SeatHold} records
    */
   @Transactional
   public List<SeatHold> createHold(UUID eventId, List<UUID> seatIds,
-      String holderId, Integer durationMinutes) {
+      UUID ownerId, Integer durationMinutes) {
 
     if (!eventRepository.existsById(eventId)) {
       throw new IllegalArgumentException("Event not found: " + eventId);
     }
 
     // Soft limit: reject before acquiring any locks
-    long activeCount = seatHoldRepository.countByHolderIdAndStatus(holderId, HoldStatus.ACTIVE);
+    long activeCount = seatHoldRepository.countByOwnerIdAndStatus(ownerId, HoldStatus.ACTIVE);
     long requestedDistinctSeats = seatIds.stream().distinct().count();
     if (activeCount + requestedDistinctSeats > maxActivePerHolder) {
       throw new SeatHoldConflictException(
-          "Hold limit reached: " + holderId + " already has " + activeCount + " active hold(s)");
+          "Hold limit reached: " + ownerId + " already has " + activeCount + " active hold(s)");
     }
 
     // Clamp duration: null → default, >max → max
@@ -89,10 +92,10 @@ public class SeatHoldService {
     List<UUID> sortedIds = seatIds.stream().distinct().sorted().toList();
 
     // Enforce configurable max seats per hold before acquiring any locks
-    if (sortedIds.size() > maxActivePerHolder) {
+    if (sortedIds.size() > maxSeatsPerHold) {
       throw new IllegalArgumentException(
           "Too many seats requested for a single hold: requested " + sortedIds.size()
-              + ", maximum is " + maxActivePerHolder);
+              + ", maximum is " + maxSeatsPerHold);
     }
     // Lock all seats in one batch query — ORDER BY s.id matches our sort above
     List<Seat> lockedSeats = seatRepository.findAndLockByIdIn(sortedIds);
@@ -130,7 +133,7 @@ public class SeatHoldService {
         .collect(Collectors.toMap(Seat::getId, Function.identity()));
     List<SeatHold> holds = seatIds.stream()
         .distinct()
-        .map(id -> new SeatHold(seatById.get(id), holderId, expiresAt))
+        .map(id -> new SeatHold(seatById.get(id), ownerId, expiresAt))
         .toList();
     return seatHoldRepository.saveAll(holds);
   }
@@ -142,13 +145,13 @@ public class SeatHoldService {
    * Idempotent: calling release on a hold that is already RELEASED returns
    * the hold unchanged (200 OK) instead of throwing.
    *
-   * @param holdId   the hold to release
-   * @param holderId must match the holder who created the hold
+   * @param holdId  the hold to release
+   * @param ownerId must match the authenticated user who created the hold
    * @return the (possibly unchanged) {@link SeatHold}
    */
   @Transactional
-  public SeatHold releaseHold(UUID holdId, String holderId) {
-    SeatHold hold = seatHoldRepository.findByIdAndHolderId(holdId, holderId)
+  public SeatHold releaseHold(UUID holdId, UUID ownerId) {
+    SeatHold hold = seatHoldRepository.findByIdAndOwnerId(holdId, ownerId)
         .orElseThrow(() -> new SeatHoldNotFoundException("Hold not found: " + holdId));
 
     // Idempotent: already released is a no-op
@@ -177,13 +180,13 @@ public class SeatHoldService {
    * Idempotent: calling confirm on a hold that is already CONFIRMED returns
    * the hold unchanged (200 OK) instead of throwing.
    *
-   * @param holdId   the hold to confirm
-   * @param holderId must match the holder who created the hold
+   * @param holdId  the hold to confirm
+   * @param ownerId must match the authenticated user who created the hold
    * @return the (possibly unchanged) {@link SeatHold}
    */
   @Transactional
-  public SeatHold confirmHold(UUID holdId, String holderId) {
-    SeatHold hold = seatHoldRepository.findByIdAndHolderId(holdId, holderId)
+  public SeatHold confirmHold(UUID holdId, UUID ownerId) {
+    SeatHold hold = seatHoldRepository.findByIdAndOwnerId(holdId, ownerId)
         .orElseThrow(() -> new SeatHoldNotFoundException("Hold not found: " + holdId));
 
     // Idempotent: already confirmed is a no-op
@@ -210,25 +213,25 @@ public class SeatHoldService {
   /**
    * Returns hold details for the given holder.
    *
-   * @param holdId   the hold id
-   * @param holderId must match the holder who created the hold
+   * @param holdId  the hold id
+   * @param ownerId must match the authenticated user who created the hold
    * @return the {@link SeatHold}
    */
   @Transactional
-  public SeatHold getHold(UUID holdId, String holderId) {
-    return seatHoldRepository.findByIdAndHolderId(holdId, holderId)
+  public SeatHold getHold(UUID holdId, UUID ownerId) {
+    return seatHoldRepository.findByIdAndOwnerId(holdId, ownerId)
         .orElseThrow(() -> new SeatHoldNotFoundException("Hold not found: " + holdId));
   }
 
   /**
    * Lists all holds for the given holder, filtered by status.
    *
-   * @param holderId the holder to query for
-   * @param status   the desired hold status (e.g. ACTIVE)
+   * @param ownerId the authenticated user's ID
+   * @param status  the desired hold status (e.g. ACTIVE)
    * @return matching holds, possibly empty
    */
   @Transactional
-  public List<SeatHold> listHolds(String holderId, HoldStatus status) {
-    return seatHoldRepository.findAllByHolderIdAndStatus(holderId, status);
+  public List<SeatHold> listHolds(UUID ownerId, HoldStatus status) {
+    return seatHoldRepository.findAllByOwnerIdAndStatus(ownerId, status);
   }
 }
