@@ -38,24 +38,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     String token = authHeader.substring(7);
 
-    if (jwtService.isTokenValid(token)
-        && SecurityContextHolder.getContext().getAuthentication() == null) {
-
+    if (SecurityContextHolder.getContext().getAuthentication() == null) {
       try {
         Claims claims = jwtService.extractAllClaims(token);
-        String email = claims.getSubject();
-        UUID userId = UUID.fromString(claims.get("userId", String.class));
-        String role = claims.get("role", String.class);
+        if (claims.getExpiration().after(new java.util.Date())) {
+          String email = claims.getSubject();
+          UUID userId = UUID.fromString(claims.get("userId", String.class));
+          String role = claims.get("role", String.class);
 
-        CustomUserPrincipal principal = new CustomUserPrincipal(
-            userId, email, "", List.of(new SimpleGrantedAuthority("ROLE_" + role)));
+          CustomUserPrincipal principal = new CustomUserPrincipal(
+              userId, email, "", List.of(new SimpleGrantedAuthority("ROLE_" + role)));
 
-        UsernamePasswordAuthenticationToken authToken =
-            new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+          UsernamePasswordAuthenticationToken authToken =
+              new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
 
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+          SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
       } catch (Exception e) {
-        // Malformed or missing claims — treat as unauthenticated
+        // Malformed, expired, or missing claims — treat as unauthenticated
       }
     }
 

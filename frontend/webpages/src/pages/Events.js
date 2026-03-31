@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
+import '../styles/Events.css';
 
 function Events() {
   const [events, setEvents] = useState([]);
@@ -23,19 +25,25 @@ function Events() {
   if (error) return <div className="error-message">{error}</div>;
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className="events-page">
       <h2>Events</h2>
       {events.length === 0 ? (
-        <p>No events available.</p>
+        <div className="events-empty">
+          <p>No events available.</p>
+        </div>
       ) : (
-        <ul style={{ listStyle: 'none', padding: 0 }}>
+        <div className="events-grid">
           {events.map((event) => (
-            <li key={event.id} style={{ padding: '1rem', borderBottom: '1px solid #eee' }}>
+            <Link key={event.id} to={`/events/${event.id}`} className="event-card">
               <h3>{event.title}</h3>
-              <p>{event.venue} — {new Date(event.startTime).toLocaleString()}</p>
-            </li>
+              <div className="event-card-meta">
+                <span>{event.venue}</span>
+                <span>{new Date(event.startTime).toLocaleString()}</span>
+              </div>
+              <div className="event-card-action">View details &rarr;</div>
+            </Link>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

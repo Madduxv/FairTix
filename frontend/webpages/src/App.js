@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Events from './pages/Events';
+import EventDetail from './pages/EventDetail';
 import Dashboard from './pages/Dashboard';
 import MyTickets from './pages/MyTickets';
 import AdminLayout from './admin/AdminLayout';
@@ -26,6 +27,7 @@ function App() {
             {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/events/:eventId" element={<EventDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 

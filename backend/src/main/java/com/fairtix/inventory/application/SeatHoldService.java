@@ -35,6 +35,9 @@ public class SeatHoldService {
   @Value("${holds.max-active-per-holder:5}")
   private int maxActivePerHolder;
 
+  @Value("${holds.max-seats-per-hold:10}")
+  private int maxSeatsPerHold;
+
   public SeatHoldService(SeatRepository seatRepository,
       SeatHoldRepository seatHoldRepository,
       EventRepository eventRepository) {
@@ -89,10 +92,10 @@ public class SeatHoldService {
     List<UUID> sortedIds = seatIds.stream().distinct().sorted().toList();
 
     // Enforce configurable max seats per hold before acquiring any locks
-    if (sortedIds.size() > maxActivePerHolder) {
+    if (sortedIds.size() > maxSeatsPerHold) {
       throw new IllegalArgumentException(
           "Too many seats requested for a single hold: requested " + sortedIds.size()
-              + ", maximum is " + maxActivePerHolder);
+              + ", maximum is " + maxSeatsPerHold);
     }
     // Lock all seats in one batch query — ORDER BY s.id matches our sort above
     List<Seat> lockedSeats = seatRepository.findAndLockByIdIn(sortedIds);
