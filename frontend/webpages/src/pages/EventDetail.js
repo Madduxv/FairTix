@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
 import '../styles/EventDetail.css';
+
+const MAX_SEATS_PER_HOLD = 10;
 
 function groupSeatsBySection(seats) {
   const groups = {};
@@ -28,10 +31,65 @@ function buildSummary(seats) {
 
 function EventDetail() {
   const { eventId } = useParams();
+  const { user } = useAuth();
   const [event, setEvent] = useState(null);
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedSeatIds, setSelectedSeatIds] = useState(new Set());
+  const [selectionError, setSelectionError] = useState('');
+
+  function toggleSeat(seatId) {
+    setSelectionError('');
+    setSelectedSeatIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(seatId)) {
+        next.delete(seatId);
+      } else {
+        if (next.size >= MAX_SEATS_PER_HOLD) {
+          setSelectionError(`You can select up to ${MAX_SEATS_PER_HOLD} seats per hold.`);
+          return prev;
+        }
+        next.add(seatId);
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedSeatIds(new Set());
+    setSelectionError('');
+  }
+
+  const [holdSubmitting, setHoldSubmitting] = useState(false);
+  const [holdMessage, setHoldMessage] = useState(null); // { type: 'success'|'error', text }
+
+  async function handleHoldSeats() {
+    if (selectedSeatIds.size === 0 || holdSubmitting) return;
+    setHoldSubmitting(true);
+    setHoldMessage(null);
+    setSelectionError('');
+    try {
+      await api.post(`/api/events/${eventId}/holds`, {
+        seatIds: [...selectedSeatIds],
+      });
+      setSelectedSeatIds(new Set());
+      setHoldMessage({ type: 'success', text: 'Hold created — expires in 10 minutes.' });
+      await fetchData();
+    } catch (err) {
+      if (err.status === 409) {
+        setHoldMessage({ type: 'error', text: 'Some seats are no longer available.' });
+      } else if (err.status === 401 || err.status === 403) {
+        setHoldMessage({ type: 'error', text: 'Session expired — please log in again.' });
+      } else {
+        setHoldMessage({ type: 'error', text: err.message || 'Failed to create hold.' });
+      }
+      setSelectedSeatIds(new Set());
+      await fetchData();
+    } finally {
+      setHoldSubmitting(false);
+    }
+  }
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -113,21 +171,76 @@ function EventDetail() {
                 </tr>
               </thead>
               <tbody>
-                {sectionSeats.map((seat) => (
-                  <tr key={seat.id}>
-                    <td>{seat.rowLabel}</td>
-                    <td>{seat.seatNumber}</td>
-                    <td>
-                      <span className={`seat-status ${seat.status.toLowerCase()}`}>
-                        {seat.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {sectionSeats.map((seat) => {
+                  const isAvailable = seat.status === 'AVAILABLE';
+                  const isSelected = selectedSeatIds.has(seat.id);
+                  const canSelect = user && isAvailable;
+                  return (
+                    <tr
+                      key={seat.id}
+                      className={[
+                        canSelect ? 'seat-row-selectable' : '',
+                        isSelected ? 'seat-row-selected' : '',
+                      ].join(' ')}
+                      onClick={canSelect ? () => toggleSeat(seat.id) : undefined}
+                      role={canSelect ? 'button' : undefined}
+                      tabIndex={canSelect ? 0 : -1}
+                      onKeyDown={
+                        canSelect
+                          ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleSeat(seat.id);
+                              }
+                            }
+                          : undefined
+                      }
+                    >
+                      <td>{seat.rowLabel}</td>
+                      <td>{seat.seatNumber}</td>
+                      <td>
+                        <span className={`seat-status ${seat.status.toLowerCase()}`}>
+                          {isSelected ? 'SELECTED' : seat.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         ))
+      )}
+
+      {!user && seats.length > 0 && (
+        <div className="login-prompt">
+          <Link to="/login">Log in</Link> to hold seats.
+        </div>
+      )}
+
+      {holdMessage && (
+        <div className={`hold-message ${holdMessage.type}`}>
+          {holdMessage.text}
+          {holdMessage.type === 'success' && (
+            <> <Link to="/my-holds" className="hold-message-link">View My Holds</Link></>
+          )}
+        </div>
+      )}
+
+      {selectionError && (
+        <div className="selection-error">{selectionError}</div>
+      )}
+
+      {selectedSeatIds.size > 0 && (
+        <div className="selection-bar">
+          <span>{selectedSeatIds.size} seat{selectedSeatIds.size > 1 ? 's' : ''} selected</span>
+          <div className="selection-bar-actions">
+            <button className="selection-bar-clear" onClick={clearSelection} disabled={holdSubmitting}>Clear</button>
+            <button className="selection-bar-hold" onClick={handleHoldSeats} disabled={holdSubmitting}>
+              {holdSubmitting ? 'Holding...' : 'Hold Seats'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,0 +1,197 @@
+.my-holds {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.my-holds-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.my-holds-header h2 {
+  margin: 0;
+}
+
+.my-holds-refresh {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.my-holds-refresh:hover {
+  border-color: #999;
+  color: #111;
+}
+
+.holds-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+.holds-empty a {
+  color: #1a73e8;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.holds-empty a:hover {
+  text-decoration: underline;
+}
+
+.holds-section-title {
+  font-size: 1.05rem;
+  margin: 1.5rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid #eee;
+}
+
+.holds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.hold-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+
+.hold-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.hold-card-expired {
+  opacity: 0.6;
+}
+
+.hold-card-confirmed {
+  border-color: #c8e6c9;
+  background: #f6fdf7;
+}
+
+.hold-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.hold-card-seat {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.hold-card-timer {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f9a825;
+  font-variant-numeric: tabular-nums;
+}
+
+.hold-card-timer.expired {
+  color: #c5221f;
+}
+
+.hold-card-status {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.hold-card-status.confirmed {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.hold-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hold-btn-confirm {
+  background: #1e7e34;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hold-btn-confirm:hover:not(:disabled) {
+  background: #166b2b;
+}
+
+.hold-btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hold-btn-release {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.hold-btn-release:hover:not(:disabled) {
+  border-color: #c5221f;
+  color: #c5221f;
+}
+
+.hold-btn-release:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hold-page-message {
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.hold-page-message.success {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.hold-page-message.error {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.checkout-link {
+  display: inline-block;
+  margin-top: 1rem;
+  background: #1a73e8;
+  color: #fff;
+  text-decoration: none;
+  padding: 0.55rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.checkout-link:hover {
+  background: #1565c0;
+}
