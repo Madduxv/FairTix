@@ -2,14 +2,13 @@ package com.fairtix.users.api;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
+import com.fairtix.auth.domain.CustomUserPrincipal;
+import com.fairtix.users.application.UserService;
 import com.fairtix.users.infrastructure.UserRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.domain.Role;
@@ -35,6 +34,7 @@ import java.util.UUID;
 public class AdminController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
 
     /**
      * Returns a paginated list of all users.
@@ -71,5 +71,20 @@ public class AdminController {
 
         user.setRole(Role.ADMIN);
         userRepository.save(user);
+    }
+
+    @Operation(summary = "Delete a user account",
+            description = "Admin-only. Soft-deletes the user, anonymizes PII, and releases all holds. "
+                    + "Admins cannot delete their own account via this endpoint.")
+    @ApiResponse(responseCode = "204", description = "User deleted")
+    @ApiResponse(responseCode = "400", description = "Cannot delete own account")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @DeleteMapping("/users/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        userService.adminDeleteAccount(principal.getUserId(), id);
     }
 }
