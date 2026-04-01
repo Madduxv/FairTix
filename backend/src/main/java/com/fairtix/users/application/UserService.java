@@ -80,13 +80,15 @@ public class UserService {
     }
     seatHoldRepository.saveAll(activeHolds);
 
-    // Release CONFIRMED holds (revert seats to AVAILABLE)
+    // Release CONFIRMED holds — only revert seats that aren't already SOLD
     List<SeatHold> confirmedHolds = seatHoldRepository.findAllByOwnerIdAndStatus(
         userId, HoldStatus.CONFIRMED);
     for (SeatHold hold : confirmedHolds) {
       hold.setStatus(HoldStatus.RELEASED);
-      hold.getSeat().setStatus(SeatStatus.AVAILABLE);
-      seatRepository.save(hold.getSeat());
+      if (hold.getSeat().getStatus() != SeatStatus.SOLD) {
+        hold.getSeat().setStatus(SeatStatus.AVAILABLE);
+        seatRepository.save(hold.getSeat());
+      }
     }
     seatHoldRepository.saveAll(confirmedHolds);
   }

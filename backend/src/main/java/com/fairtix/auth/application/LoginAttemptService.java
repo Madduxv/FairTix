@@ -32,7 +32,9 @@ public class LoginAttemptService {
   public void recordFailure(String email) {
     RAtomicLong counter = redissonClient.getAtomicLong(KEY_PREFIX + email.toLowerCase());
     long current = counter.incrementAndGet();
-    if (current == 1) {
+    if (current == 1 || current >= maxAttempts) {
+      // Set TTL on first failure; refresh it when lockout threshold is reached
+      // so the lockout duration is a full window from the moment of lockout
       counter.expire(lockoutDuration);
     }
   }

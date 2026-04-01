@@ -17,7 +17,7 @@ import com.fairtix.payments.domain.PaymentStatus;
 import com.fairtix.tickets.application.TicketService;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -52,11 +52,33 @@ public class OrderService {
   }
 
   /**
-   * Original order creation (MVP path, no payment). Kept for backwards compatibility.
+   * Original order creation (MVP path, no payment). Always succeeds with $0 total.
    */
   @Transactional
   public Order createOrder(UUID userId, List<UUID> holdIds) {
-    return createOrderWithPayment(userId, holdIds, null);
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+    List<SeatHold> holds = validateHolds(userId, holdIds);
+
+    for (SeatHold hold : holds) {
+      Seat seat = hold.getSeat();
+      if (seat.getStatus() == SeatStatus.SOLD) {
+        throw new SeatHoldConflictException(
+            "Seat " + seat.getId() + " has already been sold");
+      }
+      if (seat.getStatus() != SeatStatus.BOOKED) {
+        throw new SeatHoldConflictException(
+            "Seat " + seat.getId() + " is not in BOOKED state (status: " + seat.getStatus() + ")");
+      }
+      seat.setStatus(SeatStatus.SOLD);
+      seatRepository.save(seat);
+    }
+
+    Order order = new Order(user, holdIds, BigDecimal.ZERO, "USD");
+    order = orderRepository.save(order);
+    ticketService.issueTickets(order, holds);
+    return order;
   }
 
   /**
@@ -70,7 +92,7 @@ public class OrderService {
    * 5. On success: mark order COMPLETED, issue tickets
    * 6. On failure/cancel: mark order CANCELLED, rollback seats to BOOKED
    */
-  @Transactional
+  @Transactional(noRollbackFor = PaymentFailedException.class)
   public Order createOrderWithPayment(UUID userId, List<UUID> holdIds,
       PaymentStatus simulatedOutcome) {
 

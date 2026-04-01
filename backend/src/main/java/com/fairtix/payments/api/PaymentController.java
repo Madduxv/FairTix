@@ -4,7 +4,6 @@ import com.fairtix.auth.domain.CustomUserPrincipal;
 import com.fairtix.orders.application.OrderService;
 import com.fairtix.orders.domain.Order;
 import com.fairtix.payments.application.PaymentFailedException;
-import com.fairtix.payments.domain.PaymentStatus;
 import com.fairtix.payments.dto.PaymentRequest;
 import com.fairtix.payments.dto.PaymentResponse;
 import com.fairtix.payments.infrastructure.PaymentRecordRepository;
@@ -60,9 +59,7 @@ public class PaymentController {
           .orElseThrow();
 
       throw new PaymentProcessingException(PaymentResponse.from(record,
-          ex.getStatus() == PaymentStatus.CANCELLED
-              ? com.fairtix.orders.domain.OrderStatus.CANCELLED
-              : com.fairtix.orders.domain.OrderStatus.CANCELLED));
+          com.fairtix.orders.domain.OrderStatus.CANCELLED));
     }
   }
 }

@@ -69,11 +69,11 @@ function Checkout() {
     fetchConfirmedHolds();
   }, [fetchConfirmedHolds]);
 
+  // Simulated price per seat — matches backend SIMULATED_SEAT_PRICE
+  const SIMULATED_SEAT_PRICE = 25.00;
+
   function calculateTotal() {
-    return holds.reduce((sum, hold) => {
-      const seat = seatMap[hold.seatId];
-      return sum + (seat?.price ?? 0);
-    }, 0);
+    return holds.length * SIMULATED_SEAT_PRICE;
   }
 
   function formatCard(value) {
@@ -183,7 +183,7 @@ function Checkout() {
                   <td>{seat ? seat.section : '—'}</td>
                   <td>{seat ? seat.rowLabel : '—'}</td>
                   <td>{seat ? seat.seatNumber : hold.seatId.slice(0, 8) + '...'}</td>
-                  <td>{seat?.price != null ? `$${seat.price.toFixed(2)}` : '—'}</td>
+                  <td>${SIMULATED_SEAT_PRICE.toFixed(2)}</td>
                 </tr>
               );
             })}

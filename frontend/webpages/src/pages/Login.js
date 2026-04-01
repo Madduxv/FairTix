@@ -57,8 +57,8 @@ function Login() {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err) {
-      if (err.status === 429 || err.status === 403) {
-        const retryAfter = err.retryAfter || 60;
+      if (err.status === 429) {
+        const retryAfter = err.body?.remainingSeconds || 60;
         startLockoutTimer(retryAfter);
         setError('Account temporarily locked due to too many failed attempts.');
       } else {
