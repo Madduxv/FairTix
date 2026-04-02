@@ -7,7 +7,8 @@ import jakarta.validation.constraints.NotBlank;
  * @param name the name of the venue.
  * @param address the address of the venue.
  */
-@NotBlank
-public record CreateVenueRequest(String name, String address) {
+public record CreateVenueRequest(
+        @NotBlank String name,
+        @NotBlank String address) {
 
 }
