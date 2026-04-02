@@ -13,6 +13,7 @@ function SeatFormDialog({ open, onClose, onSaved, eventId }) {
   const [section, setSection] = useState('');
   const [rowLabel, setRowLabel] = useState('');
   const [seatNumber, setSeatNumber] = useState('');
+  const [price, setPrice] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -21,14 +22,19 @@ function SeatFormDialog({ open, onClose, onSaved, eventId }) {
       setSection('');
       setRowLabel('');
       setSeatNumber('');
+      setPrice('');
       setError('');
     }
   }, [open]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!section.trim() || !rowLabel.trim() || !seatNumber.trim()) {
+    if (!section.trim() || !rowLabel.trim() || !seatNumber.trim() || price === '') {
       setError('All fields are required.');
+      return;
+    }
+    if (isNaN(parseFloat(price)) || parseFloat(price) < 0) {
+      setError('Price must be a non-negative number.');
       return;
     }
 
@@ -39,6 +45,7 @@ function SeatFormDialog({ open, onClose, onSaved, eventId }) {
         section: section.trim(),
         rowLabel: rowLabel.trim(),
         seatNumber: seatNumber.trim(),
+        price: parseFloat(price),
       });
       onSaved();
       onClose();
@@ -79,6 +86,16 @@ function SeatFormDialog({ open, onClose, onSaved, eventId }) {
               required
               fullWidth
               placeholder="e.g. 101, 102"
+            />
+            <TextField
+              label="Price"
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+              fullWidth
+              placeholder="e.g. 49.99"
+              inputProps={{ min: 0, step: '0.01' }}
             />
           </Box>
         </DialogContent>

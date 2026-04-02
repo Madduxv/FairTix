@@ -5,6 +5,7 @@ import com.fairtix.inventory.domain.SeatStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -15,6 +16,7 @@ import java.util.UUID;
  * @param section    the seating section
  * @param rowLabel   the row within the section
  * @param seatNumber the individual seat number
+ * @param price      the ticket price for this seat
  * @param status     the current availability status
  */
 @Schema(description = "Seat details")
@@ -29,6 +31,8 @@ public record SeatResponse(
         String rowLabel,
         @Schema(description = "Seat number", example = "101")
         String seatNumber,
+        @Schema(description = "Ticket price", example = "49.99")
+        BigDecimal price,
         @Schema(description = "Availability status", example = "AVAILABLE")
         SeatStatus status) {
 
@@ -45,6 +49,7 @@ public record SeatResponse(
                 seat.getSection(),
                 seat.getRowLabel(),
                 seat.getSeatNumber(),
+                seat.getPrice(),
                 seat.getStatus());
     }
 }
