@@ -38,15 +38,15 @@ public class Ticket {
   @JoinColumn(name = "event_id", nullable = false)
   private Event event;
 
+  @Column(nullable = false, precision = 10, scale = 2)
+  private BigDecimal price;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private TicketStatus status;
 
   @Column(name = "issued_at", nullable = false, updatable = false)
   private Instant issuedAt;
-
-  @Column(nullable = false, precision = 10, scale = 2)
-  private BigDecimal price;
 
   public Ticket(Order order, User user, Seat seat, Event event, BigDecimal price) {
     this.order = order;
@@ -81,16 +81,16 @@ public class Ticket {
     return event;
   }
 
+  public BigDecimal getPrice() {
+    return price;
+  }
+
   public TicketStatus getStatus() {
     return status;
   }
 
   public Instant getIssuedAt() {
     return issuedAt;
-  }
-
-  public BigDecimal getPrice() {
-    return price;
   }
 
   public void setStatus(TicketStatus status) {

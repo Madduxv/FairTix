@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -42,7 +43,7 @@ class SeatHoldServiceTest {
   void setUp() {
     testEvent = eventRepository.save(
         new Event("Test Event", "Test Venue", Instant.now().plusSeconds(3600)));
-    testSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "101"));
+    testSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "101", new BigDecimal("25.00")));
   }
 
   // -------------------------------------------------------------------------
@@ -146,13 +147,13 @@ class SeatHoldServiceTest {
   @Test
   void exceedingMaxActiveHoldsPerHolderThrowsConflict() {
     // Create 2 seats so USER_1 can reach the limit
-    Seat extraSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
+    Seat extraSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "102", new BigDecimal("25.00")));
 
     seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
     seatHoldService.createHold(testEvent.getId(), List.of(extraSeat.getId()), USER_1, 10);
 
     // Third seat — must be blocked by the active-hold limit
-    Seat thirdSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "103"));
+    Seat thirdSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "103", new BigDecimal("25.00")));
     assertThatThrownBy(() -> seatHoldService.createHold(
         testEvent.getId(), List.of(thirdSeat.getId()), USER_1, 10))
         .isInstanceOf(SeatHoldConflictException.class)
@@ -161,13 +162,13 @@ class SeatHoldServiceTest {
 
   @Test
   void holdLimitIsPerHolder_otherHolderCanStillHold() {
-    Seat extraSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
+    Seat extraSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "102", new BigDecimal("25.00")));
 
     seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);
     seatHoldService.createHold(testEvent.getId(), List.of(extraSeat.getId()), USER_1, 10);
 
     // USER_2 is unaffected by USER_1's limit
-    Seat thirdSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "103"));
+    Seat thirdSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "103", new BigDecimal("25.00")));
     List<SeatHold> holds = seatHoldService.createHold(
         testEvent.getId(), List.of(thirdSeat.getId()), USER_2, 10);
     assertThat(holds).hasSize(1);
@@ -182,7 +183,7 @@ class SeatHoldServiceTest {
   void batchHoldLocksSeatsInAnyInputOrder() {
     // Create two seats and request them in reverse UUID order.
     // The service must sort them internally; both must end up HELD.
-    Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
+    Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102", new BigDecimal("25.00")));
 
     // Provide seatIds in descending order (likely reversed from UUID sort)
     UUID id1 = testSeat.getId();
@@ -217,8 +218,8 @@ class SeatHoldServiceTest {
   @Test
   void schedulerExpiresMultipleHoldsInOneBatch() {
     // Create 3 expired holds manually (scheduler page size is 500, so all fit)
-    Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
-    Seat seat3 = seatRepository.save(new Seat(testEvent, "Floor", "A", "103"));
+    Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102", new BigDecimal("25.00")));
+    Seat seat3 = seatRepository.save(new Seat(testEvent, "Floor", "A", "103", new BigDecimal("25.00")));
 
     for (Seat seat : List.of(testSeat, seat2, seat3)) {
       seat.setStatus(SeatStatus.HELD);
@@ -245,7 +246,7 @@ class SeatHoldServiceTest {
 
   @Test
   void listHoldsReturnsOnlyActiveHoldsForHolder() {
-    Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102"));
+    Seat seat2 = seatRepository.save(new Seat(testEvent, "Floor", "A", "102", new BigDecimal("25.00")));
 
     // Two holds for USER_1 (hits the limit of 2 for test props)
     seatHoldService.createHold(testEvent.getId(), List.of(testSeat.getId()), USER_1, 10);

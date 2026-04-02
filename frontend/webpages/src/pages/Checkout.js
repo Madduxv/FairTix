@@ -69,11 +69,13 @@ function Checkout() {
     fetchConfirmedHolds();
   }, [fetchConfirmedHolds]);
 
-  // Simulated price per seat — matches backend SIMULATED_SEAT_PRICE
-  const SIMULATED_SEAT_PRICE = 25.00;
+  function getSeatPrice(hold) {
+    const seat = seatMap[hold.seatId];
+    return seat?.price ?? 0;
+  }
 
   function calculateTotal() {
-    return holds.length * SIMULATED_SEAT_PRICE;
+    return holds.reduce((sum, hold) => sum + getSeatPrice(hold), 0);
   }
 
   function formatCard(value) {
@@ -94,7 +96,9 @@ function Checkout() {
     setSubmitting(true);
 
     // Determine simulated outcome based on card number
-    const simulatedOutcome = digits.startsWith('4000') ? 'FAILURE' : 'SUCCESS';
+    let simulatedOutcome = 'SUCCESS';
+    if (digits.startsWith('4000')) simulatedOutcome = 'FAILURE';
+    else if (digits.startsWith('4111')) simulatedOutcome = 'CANCELLED';
 
     try {
       const result = await api.post('/api/payments/checkout', {
@@ -115,7 +119,21 @@ function Checkout() {
     }
   }
 
-  function handleCancel() {
+  async function handleCancel() {
+    // Record cancellation via the payment API before navigating away
+    if (holds.length > 0 && paymentState !== 'failed') {
+      try {
+        setSubmitting(true);
+        await api.post('/api/payments/checkout', {
+          holdIds: holds.map((h) => h.id),
+          simulatedOutcome: 'CANCELLED',
+        });
+      } catch {
+        // Expected 402 — cancellation is recorded server-side regardless
+      } finally {
+        setSubmitting(false);
+      }
+    }
     navigate('/my-holds');
   }
 
@@ -183,7 +201,7 @@ function Checkout() {
                   <td>{seat ? seat.section : '—'}</td>
                   <td>{seat ? seat.rowLabel : '—'}</td>
                   <td>{seat ? seat.seatNumber : hold.seatId.slice(0, 8) + '...'}</td>
-                  <td>${SIMULATED_SEAT_PRICE.toFixed(2)}</td>
+                  <td>${getSeatPrice(hold).toFixed(2)}</td>
                 </tr>
               );
             })}
@@ -232,7 +250,7 @@ function Checkout() {
               required
               autoComplete="off"
             />
-            <span className="checkout-field-hint">Use 4242... for success, 4000... for decline</span>
+            <span className="checkout-field-hint">Use 4242... for success, 4000... for decline, 4111... for cancel</span>
           </div>
           <div className="checkout-actions">
             <button type="button" className="checkout-btn-secondary" onClick={handleCancel} disabled={submitting}>

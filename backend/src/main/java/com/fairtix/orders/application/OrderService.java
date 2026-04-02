@@ -34,9 +34,6 @@ public class OrderService {
   private final TicketService ticketService;
   private final PaymentSimulationService paymentSimulationService;
 
-  /** Simulated price per seat until a real pricing model is added. */
-  private static final BigDecimal SIMULATED_SEAT_PRICE = new BigDecimal("25.00");
-
   public OrderService(OrderRepository orderRepository,
       SeatHoldRepository seatHoldRepository,
       SeatRepository seatRepository,
@@ -75,7 +72,11 @@ public class OrderService {
       seatRepository.save(seat);
     }
 
-    Order order = new Order(user, holdIds, BigDecimal.ZERO, "USD");
+    BigDecimal totalAmount = holds.stream()
+        .map(hold -> hold.getSeat().getPrice())
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Order order = new Order(user, holdIds, totalAmount, "USD");
     order = orderRepository.save(order);
     ticketService.issueTickets(order, holds);
     return order;
@@ -116,8 +117,9 @@ public class OrderService {
       seatRepository.save(seat);
     }
 
-    // Calculate total (simulated flat price per seat)
-    BigDecimal totalAmount = SIMULATED_SEAT_PRICE.multiply(BigDecimal.valueOf(holds.size()));
+    BigDecimal totalAmount = holds.stream()
+        .map(hold -> hold.getSeat().getPrice())
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
     // Create order as PENDING
     Order order = new Order(user, holdIds, totalAmount, "USD", OrderStatus.PENDING);

@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -84,7 +85,7 @@ class TicketControllerTest {
   void listTickets_returnsTicketsAfterOrder() throws Exception {
     // Set up: event → seat → confirmed hold → order → tickets
     Event event = eventRepository.save(new Event("Ticket Concert", "Ticket Venue", Instant.now().plusSeconds(86400)));
-    Seat seat = seatRepository.save(new Seat(event, "B", "2", "205"));
+    Seat seat = seatRepository.save(new Seat(event, "B", "2", "205", new BigDecimal("35.00")));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 
@@ -103,6 +104,7 @@ class TicketControllerTest {
         .andExpect(jsonPath("$[0].seatSection").value("B"))
         .andExpect(jsonPath("$[0].seatRow").value("2"))
         .andExpect(jsonPath("$[0].seatNumber").value("205"))
+        .andExpect(jsonPath("$[0].price").value(35.00))
         .andExpect(jsonPath("$[0].status").value("VALID"));
   }
 
@@ -124,7 +126,7 @@ class TicketControllerTest {
 
     // Create order/ticket for testUser
     Event event = eventRepository.save(new Event("Private Show", "Venue", Instant.now().plusSeconds(86400)));
-    Seat seat = seatRepository.save(new Seat(event, "C", "1", "1"));
+    Seat seat = seatRepository.save(new Seat(event, "C", "1", "1", new BigDecimal("35.00")));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 

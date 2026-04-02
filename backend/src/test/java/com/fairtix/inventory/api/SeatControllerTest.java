@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -64,7 +65,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -78,6 +80,7 @@ class SeatControllerTest {
         .andExpect(jsonPath("$.section").value("Floor"))
         .andExpect(jsonPath("$.rowLabel").value("A"))
         .andExpect(jsonPath("$.seatNumber").value("101"))
+        .andExpect(jsonPath("$.price").value(49.99))
         .andExpect(jsonPath("$.status").value("AVAILABLE"));
   }
 
@@ -87,7 +90,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -104,7 +108,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -120,7 +125,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -139,9 +145,9 @@ class SeatControllerTest {
 
   @Test
   void getSeats_returnsAllSeats() throws Exception {
-    seatService.createSeat(testEvent.getId(), "Floor", "A", "1");
-    seatService.createSeat(testEvent.getId(), "Floor", "A", "2");
-    seatService.createSeat(testEvent.getId(), "Balcony", "B", "1");
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "1", new BigDecimal("25.00"));
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "2", new BigDecimal("25.00"));
+    seatService.createSeat(testEvent.getId(), "Balcony", "B", "1", new BigDecimal("15.00"));
 
     mockMvc.perform(get("/api/events/{eventId}/seats", testEvent.getId()))
         .andExpect(status().isOk())
@@ -159,8 +165,8 @@ class SeatControllerTest {
 
   @Test
   void getSeats_availableOnly_filtersCorrectly() throws Exception {
-    Seat seat1 = seatService.createSeat(testEvent.getId(), "Floor", "A", "1");
-    seatService.createSeat(testEvent.getId(), "Floor", "A", "2");
+    Seat seat1 = seatService.createSeat(testEvent.getId(), "Floor", "A", "1", new BigDecimal("25.00"));
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "2", new BigDecimal("25.00"));
 
     // Mark seat1 as held to make it unavailable
     // Entity is managed within @Transactional so the change is auto-flushed

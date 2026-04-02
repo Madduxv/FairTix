@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -106,7 +107,7 @@ class OrderControllerTest {
   void createOrder_withConfirmedHold_returns201() throws Exception {
     // Set up: event → seat → confirmed hold
     Event event = eventRepository.save(new Event("Test Concert", "Test Venue", Instant.now().plusSeconds(86400)));
-    Seat seat = seatRepository.save(new Seat(event, "A", "1", "101"));
+    Seat seat = seatRepository.save(new Seat(event, "A", "1", "101", new BigDecimal("50.00")));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 
@@ -125,7 +126,8 @@ class OrderControllerTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.userId").value(testUser.getId().toString()))
-        .andExpect(jsonPath("$.status").value("COMPLETED"));
+        .andExpect(jsonPath("$.status").value("COMPLETED"))
+        .andExpect(jsonPath("$.totalAmount").value(50.00));
   }
 
   @Test
