@@ -53,7 +53,7 @@ class AuthControllerTest {
     String body = """
         {
           "email":    "newuser@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
 
@@ -69,7 +69,7 @@ class AuthControllerTest {
     String body = """
         {
           "email":    "duplicate@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
 
@@ -91,7 +91,7 @@ class AuthControllerTest {
     String body = """
         {
           "email":    "jwtcheck@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
 
@@ -120,7 +120,7 @@ class AuthControllerTest {
     String registerBody = """
         {
           "email":    "loginuser@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
     mockMvc.perform(post("/auth/register")
@@ -132,7 +132,7 @@ class AuthControllerTest {
     String loginBody = """
         {
           "email":    "loginuser@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
     mockMvc.perform(post("/auth/login")
@@ -148,7 +148,7 @@ class AuthControllerTest {
     String registerBody = """
         {
           "email":    "badpw@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
     mockMvc.perform(post("/auth/register")
@@ -174,7 +174,7 @@ class AuthControllerTest {
     String body = """
         {
           "email":    "nobody@test.com",
-          "password": "password123"
+          "password": "Password123!"
         }
         """;
 

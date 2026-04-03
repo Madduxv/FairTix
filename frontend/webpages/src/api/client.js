@@ -26,9 +26,10 @@ async function apiRequest(path, options = {}) {
     let error;
     try {
       const body = await response.json();
-      error = new Error(body.message || 'Request failed');
+      error = new Error(body.message || body.failureReason || 'Request failed');
       error.status = response.status;
       error.code = body.code;
+      error.body = body;
     } catch {
       error = new Error('Request failed');
       error.status = response.status;

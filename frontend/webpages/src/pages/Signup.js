@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import '../styles/Login.css';
+
+const PASSWORD_RULES = [
+  { key: 'length', label: 'At least 8 characters', test: (p) => p.length >= 8 },
+  { key: 'upper', label: 'Uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { key: 'lower', label: 'Lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { key: 'digit', label: 'A digit', test: (p) => /\d/.test(p) },
+  { key: 'special', label: 'Special character', test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
 
 function Signup() {
   const [email, setEmail] = useState('');
@@ -14,6 +22,12 @@ function Signup() {
   const { signup, user } = useAuth();
   const navigate = useNavigate();
 
+  const passwordChecks = useMemo(
+    () => PASSWORD_RULES.map((rule) => ({ ...rule, passed: rule.test(password) })),
+    [password]
+  );
+  const allPasswordRequirementsMet = passwordChecks.every((c) => c.passed);
+
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -21,6 +35,11 @@ function Signup() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    if (!allPasswordRequirementsMet) {
+      setError('Password does not meet all requirements.');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -94,8 +113,17 @@ function Signup() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
           />
+          {password.length > 0 && (
+            <ul className="password-strength">
+              {passwordChecks.map((check) => (
+                <li key={check.key} className={check.passed ? 'met' : 'unmet'}>
+                  {check.passed ? '\u2713' : '\u2717'} {check.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="form-group">
           <label htmlFor="confirmPassword">Confirm password</label>
@@ -107,7 +135,7 @@ function Signup() {
             required
           />
         </div>
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || !allPasswordRequirementsMet}>
           {loading ? 'Signing up...' : 'Sign Up'}
         </button>
       </form>

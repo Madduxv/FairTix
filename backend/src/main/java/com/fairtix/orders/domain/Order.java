@@ -46,11 +46,16 @@ public class Order {
   private Instant updatedAt;
 
   public Order(User user, List<UUID> holdIds, BigDecimal totalAmount, String currency) {
+    this(user, holdIds, totalAmount, currency, OrderStatus.COMPLETED);
+  }
+
+  public Order(User user, List<UUID> holdIds, BigDecimal totalAmount, String currency,
+      OrderStatus status) {
     this.user = user;
     this.holdIds = new ArrayList<>(holdIds);
     this.totalAmount = totalAmount;
     this.currency = currency;
-    this.status = OrderStatus.COMPLETED;
+    this.status = status;
     this.createdAt = Instant.now();
     this.updatedAt = this.createdAt;
   }
