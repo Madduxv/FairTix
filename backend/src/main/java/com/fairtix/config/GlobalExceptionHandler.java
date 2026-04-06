@@ -1,6 +1,7 @@
 package com.fairtix.config;
 
 import com.fairtix.common.ResourceNotFoundException;
+import com.fairtix.inventory.application.DuplicateSeatException;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import com.fairtix.orders.application.OrderNotFoundException;
@@ -52,6 +53,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleConflict(
       SeatHoldConflictException ex, HttpServletRequest req) {
     return error(HttpStatus.CONFLICT, "HOLD_CONFLICT", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(DuplicateSeatException.class)
+  public ResponseEntity<Map<String, Object>> handleDuplicateSeat(
+      DuplicateSeatException ex, HttpServletRequest req) {
+    return error(HttpStatus.CONFLICT, "DUPLICATE_SEAT", ex.getMessage(), req);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)

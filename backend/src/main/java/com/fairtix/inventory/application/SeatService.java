@@ -45,6 +45,14 @@ public class SeatService {
 
     var event = eventRepository.findById(eventId)
         .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+
+    if (seatRepository.existsByEvent_IdAndSectionAndRowLabelAndSeatNumber(
+            eventId, section, rowLabel, seatNumber)) {
+      throw new DuplicateSeatException(
+          "Seat already exists: section=%s row=%s seat=%s for event %s"
+              .formatted(section, rowLabel, seatNumber, eventId));
+    }
+
     return seatRepository.save(new Seat(event, section, rowLabel, seatNumber, price));
   }
 
