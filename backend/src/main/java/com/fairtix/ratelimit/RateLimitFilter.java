@@ -12,8 +12,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import io.jsonwebtoken.Claims;
 import com.fairtix.auth.application.JwtService;
 
@@ -63,20 +61,16 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveKey(HttpServletRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof org.springframework.security.core.userdetails.User) {
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                try {
-                    Claims claims = jwtService.extractAllClaims(authHeader.substring(7));
-                    String userId = claims.get("userId", String.class);
-                    if (userId != null) {
-                        return "user:" + userId;
-                    }
-                } catch (Exception e) {
-                    // fall through to IP
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                Claims claims = jwtService.extractAllClaims(authHeader.substring(7));
+                String userId = claims.get("userId", String.class);
+                if (userId != null) {
+                    return "user:" + userId;
                 }
+            } catch (Exception e) {
+                // Invalid/expired token — fall through to IP-based limiting
             }
         }
         return "ip:" + resolveIp(request);

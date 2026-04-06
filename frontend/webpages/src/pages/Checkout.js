@@ -199,9 +199,6 @@ function Checkout() {
     return new Date(h.expiresAt).getTime() <= now;
   });
 
-  // Force tick to be "used" for countdown reactivity
-  void tick;
-
   return (
     <div className="checkout">
       <h2>Checkout</h2>

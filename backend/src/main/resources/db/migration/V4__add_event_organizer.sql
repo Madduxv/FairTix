@@ -1,5 +1,5 @@
 -- Add organizer ownership to events.
--- Nullable initially to allow backfill; then made NOT NULL.
+-- Nullable initially to allow backfill; remains nullable in this migration.
 ALTER TABLE events ADD COLUMN organizer_id UUID REFERENCES users(id);
 
 -- Backfill: assign existing events to the first admin, or first user if no admin exists.

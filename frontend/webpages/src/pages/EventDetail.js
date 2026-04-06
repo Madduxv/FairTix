@@ -110,11 +110,6 @@ function EventDetail() {
       setEvent(eventData);
       const newSeats = seatsData || [];
 
-      // Detect seats that changed status since last fetch
-      const prevMap = {};
-      for (const s of prevSeatsRef.current) {
-        prevMap[s.id] = s.status;
-      }
       if (prevSeatsRef.current.length > 0) {
         // Deselect seats that are no longer available
         setSelectedSeatIds((prev) => {

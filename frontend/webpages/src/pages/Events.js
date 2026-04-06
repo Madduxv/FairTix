@@ -68,7 +68,7 @@ function Events() {
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleString(undefined, {
       weekday: 'short',
       year: 'numeric',
       month: 'short',

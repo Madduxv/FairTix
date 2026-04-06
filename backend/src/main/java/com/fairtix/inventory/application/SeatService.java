@@ -5,6 +5,7 @@ import com.fairtix.inventory.domain.Seat;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -53,7 +54,13 @@ public class SeatService {
               .formatted(section, rowLabel, seatNumber, eventId));
     }
 
-    return seatRepository.save(new Seat(event, section, rowLabel, seatNumber, price));
+    try {
+      return seatRepository.save(new Seat(event, section, rowLabel, seatNumber, price));
+    } catch (DataIntegrityViolationException e) {
+      throw new DuplicateSeatException(
+          "Seat already exists: section=%s row=%s seat=%s for event %s"
+              .formatted(section, rowLabel, seatNumber, eventId));
+    }
   }
 
   /**

@@ -1,4 +1,4 @@
--- Remove any accidental duplicate seats (keeps the earliest-inserted row by UUID).
+-- Remove any accidental duplicate seats (keeps the row with the lower UUID value).
 DELETE FROM seats a USING seats b
 WHERE a.id > b.id
   AND a.event_id = b.event_id
