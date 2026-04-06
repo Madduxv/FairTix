@@ -26,7 +26,9 @@ public record EventResponse(
         @Schema(description = "Start time in UTC", example = "2026-07-15T19:00:00Z")
         Instant startTime,
         @Schema(description = "Venue name", example = "Madison Square Garden")
-        String venue) {
+        String venue,
+        @Schema(description = "Organizer user ID")
+        UUID organizerId) {
 
     /**
      * Maps an {@link Event} object to an API response.
@@ -39,6 +41,7 @@ public record EventResponse(
                 event.getId(),
                 event.getTitle(),
                 event.getStartTime(),
-                event.getVenue());
+                event.getVenue(),
+                event.getOrganizerId());
     }
 }

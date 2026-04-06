@@ -27,10 +27,14 @@ public class Event {
   @Column(nullable = false)
   private Instant startTime;
 
-  public Event(String title, String venue, Instant startTime) {
+  @Column(name = "organizer_id")
+  private UUID organizerId;
+
+  public Event(String title, String venue, Instant startTime, UUID organizerId) {
     this.title = title;
     this.venue = venue;
     this.startTime = startTime;
+    this.organizerId = organizerId;
   }
 
   protected Event() {
@@ -57,4 +61,7 @@ public class Event {
     return startTime;
   }
 
+  public UUID getOrganizerId() {
+    return organizerId;
+  }
 }

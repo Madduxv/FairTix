@@ -106,7 +106,7 @@ class OrderControllerTest {
   @Test
   void createOrder_withConfirmedHold_returns201() throws Exception {
     // Set up: event → seat → confirmed hold
-    Event event = eventRepository.save(new Event("Test Concert", "Test Venue", Instant.now().plusSeconds(86400)));
+    Event event = eventRepository.save(new Event("Test Concert", "Test Venue", Instant.now().plusSeconds(86400), null));
     Seat seat = seatRepository.save(new Seat(event, "A", "1", "101", new BigDecimal("50.00")));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
