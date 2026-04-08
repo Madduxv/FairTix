@@ -1,7 +1,7 @@
 -- Payment records table (matches PaymentRecord.java entity)
 CREATE TABLE payment_records (
     id              UUID PRIMARY KEY,
-    order_id        UUID        NOT NULL,
+    order_id        UUID        NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
     user_id         UUID        NOT NULL REFERENCES users(id),
     amount          NUMERIC(10, 2) NOT NULL,
     currency        VARCHAR(3)  NOT NULL,

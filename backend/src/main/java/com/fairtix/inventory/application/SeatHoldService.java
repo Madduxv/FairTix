@@ -140,11 +140,17 @@ public class SeatHoldService {
         .map(id -> new SeatHold(seatById.get(id), ownerId, expiresAt))
         .toList();
     List<SeatHold> saved = seatHoldRepository.saveAll(holds);
-    for (SeatHold hold : saved) {
-      auditService.log(ownerId, "CREATE", "HOLD", hold.getId(),
-          "Hold created on seat " + hold.getSeat().getId() + " for event " + eventId
-              + ", expires in " + duration + " min");
-    }
+    String holdIdsSummary = saved.stream()
+        .map(SeatHold::getId).map(UUID::toString)
+        .collect(Collectors.joining(", "));
+    String seatIdsSummary = saved.stream()
+        .map(h -> h.getSeat().getId()).map(UUID::toString)
+        .collect(Collectors.joining(", "));
+    auditService.log(ownerId, "CREATE", "HOLD", saved.get(0).getId(),
+        "Created " + saved.size() + " hold(s) for event " + eventId
+            + "; seatIds=[" + seatIdsSummary + "]"
+            + "; holdIds=[" + holdIdsSummary + "]"
+            + "; expires in " + duration + " min");
     return saved;
   }
 

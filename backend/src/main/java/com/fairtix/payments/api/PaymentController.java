@@ -49,6 +49,11 @@ public class PaymentController {
       @AuthenticationPrincipal CustomUserPrincipal principal,
       @Valid @RequestBody PaymentRequest request) {
 
+    if (!allowSimulatedOutcome && request.simulatedOutcome() != null) {
+      throw new IllegalArgumentException(
+          "simulatedOutcome is not allowed in this environment");
+    }
+
     try {
       var outcome = allowSimulatedOutcome ? request.simulatedOutcome() : null;
       Order order = orderService.createOrderWithPayment(

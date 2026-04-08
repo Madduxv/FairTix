@@ -63,6 +63,7 @@ export function AuthProvider({ children }) {
     if (!decoded || !decoded.sub || !decoded.userId || !decoded.role) {
       throw new Error('Authentication failed: invalid token received from server.');
     }
+    setSessionExpired(false);
     saveToken(data.token);
     setToken(data.token);
     const userInfo = {
@@ -80,6 +81,7 @@ export function AuthProvider({ children }) {
     if (!decoded || !decoded.sub || !decoded.userId || !decoded.role) {
       throw new Error('Registration failed: invalid token received from server.');
     }
+    setSessionExpired(false);
     saveToken(data.token);
     setToken(data.token);
     const userInfo = {
