@@ -59,7 +59,7 @@ class PurchaseFlowIntegrationTest {
     testUser = userRepository.save(testUser);
 
     testEvent = eventRepository.save(
-        new Event("Purchase Flow Concert", "Main Arena", Instant.now().plusSeconds(86400), null));
+        new Event("Purchase Flow Concert", "Main Arena", Instant.now().plusSeconds(86400)));
 
     seatA = seatRepository.save(new Seat(testEvent, "VIP", "1", "1", new BigDecimal("75.00")));
     seatB = seatRepository.save(new Seat(testEvent, "VIP", "1", "2", new BigDecimal("75.00")));
