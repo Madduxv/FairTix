@@ -1,4 +1,4 @@
-CREATE TABLE notification_preferences (
+CREATE TABLE IF NOT EXISTS notification_preferences (
     user_id         UUID PRIMARY KEY REFERENCES users(id),
     email_order     BOOLEAN NOT NULL DEFAULT TRUE,
     email_ticket    BOOLEAN NOT NULL DEFAULT TRUE,
@@ -10,4 +10,5 @@ CREATE TABLE notification_preferences (
 
 -- Create default preferences for all existing users
 INSERT INTO notification_preferences (user_id)
-SELECT id FROM users WHERE deleted_at IS NULL;
+SELECT id FROM users WHERE deleted_at IS NULL
+ON CONFLICT (user_id) DO NOTHING;

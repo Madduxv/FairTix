@@ -15,6 +15,7 @@ function Dashboard() {
   const [prefsLoading, setPrefsLoading] = useState(true);
   const [prefsSaving, setPrefsSaving] = useState(false);
   const [prefsMessage, setPrefsMessage] = useState('');
+  const [prefsError, setPrefsError] = useState(false);
 
   // Data export
   const [exporting, setExporting] = useState(false);
@@ -32,8 +33,10 @@ function Dashboard() {
     try {
       const updated = await api.put('/api/users/me/notifications', prefs);
       setPrefs(updated);
+      setPrefsError(false);
       setPrefsMessage('Preferences saved.');
     } catch (err) {
+      setPrefsError(true);
       setPrefsMessage(err.message || 'Failed to save preferences.');
     } finally {
       setPrefsSaving(false);
@@ -43,6 +46,7 @@ function Dashboard() {
   function togglePref(key) {
     setPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
     setPrefsMessage('');
+    setPrefsError(false);
   }
 
   async function handleExportData() {
@@ -115,7 +119,11 @@ function Dashboard() {
             <button className="dashboard-save-btn" onClick={handleSavePrefs} disabled={prefsSaving}>
               {prefsSaving ? 'Saving...' : 'Save Preferences'}
             </button>
-            {prefsMessage && <p className="prefs-message">{prefsMessage}</p>}
+            {prefsMessage && (
+              <p className={`prefs-message ${prefsError ? 'prefs-message--error' : 'prefs-message--success'}`}>
+                {prefsMessage}
+              </p>
+            )}
           </>
         )}
       </div>

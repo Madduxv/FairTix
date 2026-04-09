@@ -58,7 +58,7 @@ function PrivacyPolicy() {
         <p>
           FairTix uses a single HTTP-only authentication cookie to maintain your
           session. This cookie cannot be read by JavaScript and is automatically
-          cleared when you log out or after 15 minutes of inactivity.
+          cleared when you log out or 15 minutes after login.
         </p>
       </section>
 

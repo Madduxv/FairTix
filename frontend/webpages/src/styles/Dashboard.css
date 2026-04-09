@@ -80,8 +80,15 @@
 
 .prefs-message {
   font-size: 0.85rem;
-  color: #1e7e34;
   margin-top: 0.5rem;
+}
+
+.prefs-message--success {
+  color: #1e7e34;
+}
+
+.prefs-message--error {
+  color: #c5221f;
 }
 
 /* Data export */

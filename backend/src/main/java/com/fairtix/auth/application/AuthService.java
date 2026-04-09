@@ -3,6 +3,7 @@ package com.fairtix.auth.application;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fairtix.notifications.application.NotificationPreferenceService;
@@ -40,6 +41,7 @@ public class AuthService {
     this.notificationPreferenceService = notificationPreferenceService;
   }
 
+  @Transactional
   public String register(RegisterRequest request) {
     validatePasswordStrength(request.password());
 
