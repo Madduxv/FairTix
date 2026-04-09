@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fairtix.notifications.application.NotificationPreferenceService;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.dto.LoginRequest;
 import com.fairtix.users.dto.RegisterRequest;
@@ -19,6 +20,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final LoginAttemptService loginAttemptService;
+  private final NotificationPreferenceService notificationPreferenceService;
 
   private static final Pattern UPPERCASE = Pattern.compile("[A-Z]");
   private static final Pattern LOWERCASE = Pattern.compile("[a-z]");
@@ -29,11 +31,13 @@ public class AuthService {
   public AuthService(UserRepository userRepository,
       PasswordEncoder passwordEncoder,
       JwtService jwtService,
-      LoginAttemptService loginAttemptService) {
+      LoginAttemptService loginAttemptService,
+      NotificationPreferenceService notificationPreferenceService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;
     this.loginAttemptService = loginAttemptService;
+    this.notificationPreferenceService = notificationPreferenceService;
   }
 
   public String register(RegisterRequest request) {
@@ -48,6 +52,7 @@ public class AuthService {
     user.setPassword(passwordEncoder.encode(request.password()));
 
     userRepository.save(user);
+    notificationPreferenceService.createDefault(user.getId());
 
     return jwtService.generateToken(
         user.getId(),
