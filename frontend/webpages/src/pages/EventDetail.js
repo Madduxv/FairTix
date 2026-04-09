@@ -243,6 +243,7 @@ function EventDetail() {
                     >
                       <td>{seat.rowLabel}</td>
                       <td>{seat.seatNumber}</td>
+                      <td>${seat.price != null ? Number(seat.price).toFixed(2) : '—'}</td>
                       <td>
                         <span className={`seat-status ${seat.status.toLowerCase()}`}>
                           {isSelected ? 'SELECTED' : seat.status}
