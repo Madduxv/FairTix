@@ -12,6 +12,7 @@ import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.users.domain.Role;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -67,7 +68,7 @@ class SecurityAcceptanceTest {
     adminUser = userRepository.save(adminUser);
 
     testEvent = eventRepository.save(
-        new Event("Security Test Event", "Test Venue", Instant.now().plusSeconds(86400)));
+        new Event("Security Test Event", "Test Venue", Instant.now().plusSeconds(86400), (UUID) null));
   }
 
   @Nested

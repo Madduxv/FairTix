@@ -8,6 +8,7 @@ import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +60,7 @@ class PurchaseFlowIntegrationTest {
     testUser = userRepository.save(testUser);
 
     testEvent = eventRepository.save(
-        new Event("Purchase Flow Concert", "Main Arena", Instant.now().plusSeconds(86400)));
+        new Event("Purchase Flow Concert", "Main Arena", Instant.now().plusSeconds(86400), (UUID) null));
 
     seatA = seatRepository.save(new Seat(testEvent, "VIP", "1", "1", new BigDecimal("75.00")));
     seatB = seatRepository.save(new Seat(testEvent, "VIP", "1", "2", new BigDecimal("75.00")));
