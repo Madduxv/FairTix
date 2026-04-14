@@ -57,7 +57,8 @@ public class EventController {
         Event event = service.createEvent(
                 request.title(),
                 request.startTime(),
-                request.venue());
+                request.venue(),
+                request.thumbnail());
         return EventResponse.from(event);
     }
 

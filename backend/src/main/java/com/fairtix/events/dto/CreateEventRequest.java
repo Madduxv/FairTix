@@ -5,6 +5,7 @@ import java.time.Instant;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.URL;
 
 /**
  * Requests / Creates payload for creating a new event
@@ -12,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
  * @param title     the event title
  * @param startTime the event start time in UTC (ISO-8601)
  * @param venue     the venue name
+ * @param thumbnail optional thumbnail URL
  */
 @Schema(description = "Payload for creating a new event")
 public record CreateEventRequest(
@@ -20,5 +22,7 @@ public record CreateEventRequest(
         @Schema(description = "Event start time in UTC (ISO-8601)", example = "2026-07-15T19:00:00Z")
         @NotNull Instant startTime,
         @Schema(description = "Venue name", example = "Madison Square Garden")
-        @NotBlank String venue) {
+        @NotBlank String venue,
+        @Schema(description = "Thumbnail URL", example = "https://example.com/event-thumbnail.jpg")
+        @URL String thumbnail) {
 }

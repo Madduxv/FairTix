@@ -34,6 +34,9 @@ function AdminEventsPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [seedMessage, setSeedMessage] = useState('');
+  const [seedError, setSeedError] = useState('');
+  const [seeding, setSeeding] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
@@ -64,6 +67,21 @@ function AdminEventsPage() {
   const handleCreate = () => {
     setEditingEvent(null);
     setFormOpen(true);
+  };
+
+  const handleSeedDatabase = async () => {
+    setSeeding(true);
+    setSeedMessage('');
+    setSeedError('');
+    try {
+      const response = await api.post('/api/admin/seed-events', {});
+      setSeedMessage(response?.message || 'Seeding started.');
+      fetchEvents();
+    } catch (err) {
+      setSeedError(err.message || 'Failed to seed database.');
+    } finally {
+      setSeeding(false);
+    }
   };
 
   const handleEdit = (event) => {
@@ -104,12 +122,23 @@ function AdminEventsPage() {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Events
         </Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
-          Create Event
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={handleSeedDatabase}
+            disabled={seeding}
+          >
+            {seeding ? 'Seeding...' : 'Seed Database'}
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreate}>
+            Create Event
+          </Button>
+        </Box>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {seedError && <Alert severity="error" sx={{ mb: 2 }}>{seedError}</Alert>}
+      {seedMessage && <Alert severity="success" sx={{ mb: 2 }}>{seedMessage}</Alert>}
 
       <TextField
         placeholder="Search by title..."
@@ -133,17 +162,18 @@ function AdminEventsPage() {
               <TableCell>Title</TableCell>
               <TableCell>Venue</TableCell>
               <TableCell>Start Time</TableCell>
+              <TableCell>Thumbnail</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">Loading...</TableCell>
+                <TableCell colSpan={5} align="center">Loading...</TableCell>
               </TableRow>
             ) : events.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">No events found.</TableCell>
+                <TableCell colSpan={5} align="center">No events found.</TableCell>
               </TableRow>
             ) : (
               events.map((event) => (
@@ -151,6 +181,13 @@ function AdminEventsPage() {
                   <TableCell>{event.title}</TableCell>
                   <TableCell>{event.venue}</TableCell>
                   <TableCell>{formatDate(event.startTime)}</TableCell>
+                  <TableCell>
+                    {event.thumbnail ? (
+                      <a href={event.thumbnail} target="_blank" rel="noreferrer">{event.thumbnail}</a>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">
                       <IconButton size="small" onClick={() => handleEdit(event)}>

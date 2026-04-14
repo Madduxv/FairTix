@@ -128,10 +128,22 @@ function EventDetail() {
       <Link to="/events" className="event-detail-back">&larr; Back to Events</Link>
 
       <div className="event-detail-header">
+        {event.thumbnail && (
+          <img
+            src={event.thumbnail}
+            alt={`${event.title} thumbnail`}
+            className="event-detail-thumbnail"
+          />
+        )}
         <h2>{event.title}</h2>
         <div className="event-detail-meta">
           <span>{event.venue}</span>
           <span>{new Date(event.startTime).toLocaleString()}</span>
+          {event.thumbnail && (
+            <a href={event.thumbnail} target="_blank" rel="noreferrer" className="event-detail-thumbnail-link">
+              {event.thumbnail}
+            </a>
+          )}
         </div>
       </div>
 

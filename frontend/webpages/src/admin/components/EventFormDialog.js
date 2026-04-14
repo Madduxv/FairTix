@@ -14,6 +14,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
   const [title, setTitle] = useState('');
   const [venue, setVenue] = useState('');
   const [startTime, setStartTime] = useState('');
+  const [thumbnail, setThumbnail] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -21,6 +22,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
     if (event) {
       setTitle(event.title || '');
       setVenue(event.venue || '');
+      setThumbnail(event.thumbnail || '');
       const dt = event.startTime ? new Date(event.startTime) : null;
       if (dt) {
         const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
@@ -32,6 +34,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
       setTitle('');
       setVenue('');
       setStartTime('');
+      setThumbnail('');
     }
     setError('');
   }, [event, open]);
@@ -52,9 +55,18 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
     try {
       const isoTime = new Date(startTime).toISOString();
       if (isEdit) {
-        await api.put(`/api/events/${event.id}`, { title: title.trim(), startTime: isoTime });
+        await api.put(`/api/events/${event.id}`, {
+          title: title.trim(),
+          startTime: isoTime,
+          thumbnail: thumbnail.trim() || null,
+        });
       } else {
-        await api.post('/api/events', { title: title.trim(), venue: venue.trim(), startTime: isoTime });
+        await api.post('/api/events', {
+          title: title.trim(),
+          venue: venue.trim(),
+          startTime: isoTime,
+          thumbnail: thumbnail.trim() || null,
+        });
       }
       onSaved();
       onClose();
@@ -96,6 +108,13 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
               required
               fullWidth
               InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Thumbnail URL"
+              value={thumbnail}
+              onChange={(e) => setThumbnail(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              fullWidth
             />
           </Box>
         </DialogContent>

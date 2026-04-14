@@ -28,10 +28,22 @@ public class Event {
   @Column(nullable = false)
   private Instant startTime;
 
+  @org.hibernate.validator.constraints.URL
+  @Column(length = 500)
+  private String thumbnail;
+
   public Event(String title, String venue, Instant startTime) {
     this.title = title;
     this.venue = venue;
     this.startTime = startTime;
+    this.thumbnail = null;
+  }
+
+  public Event(String title, String venue, Instant startTime, String thumbnail) {
+    this.title = title;
+    this.venue = venue;
+    this.startTime = startTime;
+    this.thumbnail = thumbnail;
   }
 
   protected Event() {
@@ -40,6 +52,12 @@ public class Event {
   public void update(String title, Instant startTime) {
     this.title = title;
     this.startTime = startTime;
+  }
+
+  public void update(String title, Instant startTime, String thumbnail) {
+    this.title = title;
+    this.startTime = startTime;
+    this.thumbnail = thumbnail;
   }
 
   public UUID getId() {
@@ -56,6 +74,10 @@ public class Event {
 
   public Instant getStartTime() {
     return startTime;
+  }
+
+  public String getThumbnail() {
+    return thumbnail;
   }
 
 }

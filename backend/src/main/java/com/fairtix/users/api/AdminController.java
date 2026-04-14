@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -88,8 +89,8 @@ public class AdminController {
      */
     @PostMapping("/seed-events")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> seedEvents() {
+    public ResponseEntity<Map<String, String>> seedEvents() {
         eventSeeder.run();
-        return ResponseEntity.ok("Seeding started");
+        return ResponseEntity.ok(Map.of("message", "Seeding started"));
     }
 }

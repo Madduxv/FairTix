@@ -59,6 +59,7 @@ public class EventSeeder {
           String venue = extractVenue(e);
           String date = (String) e.get("date");
           String time = (String) e.get("time");
+          String thumbnail = extractThumbnail(e);
 
           String uniqueKey = title + "|" + date + "|" + time + "|" + venue;
           if (seen.contains(uniqueKey))
@@ -70,7 +71,7 @@ public class EventSeeder {
           if (startTime == null)
             continue;
 
-          eventService.createEvent(title, startTime, venue);
+          eventService.createEvent(title, startTime, venue, thumbnail);
         }
       }
     }
@@ -84,6 +85,34 @@ public class EventSeeder {
       return address.get(0);
     }
     return "Unknown Venue";
+  }
+
+  private String extractThumbnail(Map<String, Object> e) {
+    Object directThumbnail = e.get("thumbnail");
+    if (directThumbnail instanceof String thumbnailUrl && !thumbnailUrl.isBlank()) {
+      return thumbnailUrl;
+    }
+
+    Object image = e.get("image");
+    if (image instanceof String imageUrl && !imageUrl.isBlank()) {
+      return imageUrl;
+    }
+
+    Object imageList = e.get("images");
+    if (imageList instanceof List<?> list && !list.isEmpty()) {
+      Object first = list.get(0);
+      if (first instanceof String imageUrl && !imageUrl.isBlank()) {
+        return imageUrl;
+      }
+      if (first instanceof Map<?, ?> imageMap) {
+        Object original = imageMap.get("original");
+        if (original instanceof String imageUrl && !imageUrl.isBlank()) {
+          return imageUrl;
+        }
+      }
+    }
+
+    return null;
   }
 
   /**

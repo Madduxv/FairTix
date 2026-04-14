@@ -44,6 +44,24 @@ public class EventService {
   }
 
   /**
+   * Creates and persists a new {@link Event}
+   *
+   * @param title     the title or name of the event
+   * @param startTime the {@link Instant} start time of the event in UTC
+   * @param venue     the name of the venue for the event
+   * @param thumbnail the url for the thumbnail
+   * @return a newly created event
+   */
+  public Event createEvent(String title, Instant startTime, String venue, String thumbnail) {
+    return repository
+        .findByTitleAndStartTimeAndVenue(title, startTime, venue)
+        .orElseGet(() -> {
+          Event event = new Event(title, venue, startTime, thumbnail);
+          return repository.save(event);
+        });
+  }
+
+  /**
    * @param id the id of the event
    * @throws ResourceNotFoundException if the event is not found
    * @return the requested {@link Event}
@@ -66,7 +84,7 @@ public class EventService {
   public Event update(UUID id, UpdateEventRequest request) {
     Event event = repository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
-    event.update(request.title(), request.startTime());
+    event.update(request.title(), request.startTime(), request.thumbnail());
     return event;
   }
 

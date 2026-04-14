@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param title     the event title
  * @param startTime the event start time in UTC (ISO-8601)
  * @param venue     the name of the venue
+ * @param thumbnail the thumbnail URL for the event
  */
 @Schema(description = "Event details")
 public record EventResponse(
@@ -26,7 +27,9 @@ public record EventResponse(
         @Schema(description = "Start time in UTC", example = "2026-07-15T19:00:00Z")
         Instant startTime,
         @Schema(description = "Venue name", example = "Madison Square Garden")
-        String venue) {
+        String venue,
+        @Schema(description = "Thumbnail URL", example = "https://example.com/event-thumbnail.jpg")
+        String thumbnail) {
 
     /**
      * Maps an {@link Event} object to an API response.
@@ -39,6 +42,7 @@ public record EventResponse(
                 event.getId(),
                 event.getTitle(),
                 event.getStartTime(),
-                event.getVenue());
+                event.getVenue(),
+                event.getThumbnail());
     }
 }
