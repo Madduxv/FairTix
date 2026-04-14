@@ -39,7 +39,8 @@ class EventServiceTest {
         new Event(
             "Test Event",
             "Test Venue",
-            Instant.now().plusSeconds(3600)));
+            Instant.now().plusSeconds(3600),
+            null));
   }
 
   // -------------------------------------------------------------------------
@@ -52,7 +53,8 @@ class EventServiceTest {
     Event event = eventService.createEvent(
         "New Event",
         Instant.now().plusSeconds(7200),
-        "New Venue");
+        "New Venue",
+        null);
 
     assertThat(event.getId()).isNotNull();
     assertThat(event.getTitle()).isEqualTo("New Event");
@@ -93,7 +95,7 @@ class EventServiceTest {
 
     UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart);
 
-    Event updated = eventService.update(testEvent.getId(), request);
+    Event updated = eventService.update(testEvent.getId(), request, null);
 
     assertThat(updated.getTitle()).isEqualTo("Updated Event");
     assertThat(updated.getStartTime()).isEqualTo(newStart);
@@ -104,7 +106,7 @@ class EventServiceTest {
 
     UpdateEventRequest request = new UpdateEventRequest("Updated", Instant.now());
 
-    assertThatThrownBy(() -> eventService.update(UUID.randomUUID(), request))
+    assertThatThrownBy(() -> eventService.update(UUID.randomUUID(), request, null))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessageContaining("Event not found");
   }
@@ -118,7 +120,7 @@ class EventServiceTest {
 
     UUID id = testEvent.getId();
 
-    eventService.delete(id);
+    eventService.delete(id, null);
 
     assertThat(eventRepository.findById(id)).isEmpty();
   }
@@ -128,7 +130,7 @@ class EventServiceTest {
 
     UUID id = UUID.randomUUID();
 
-    assertThatThrownBy(() -> eventService.delete(id))
+    assertThatThrownBy(() -> eventService.delete(id, null))
         .isInstanceOf(ResourceNotFoundException.class)
         .hasMessageContaining("Event not found");
   }
@@ -142,7 +144,7 @@ class EventServiceTest {
 
     eventRepository.save(
         new Event("Another Event", "Another Venue",
-            Instant.now().plusSeconds(3600)));
+            Instant.now().plusSeconds(3600), null));
 
     Page<Event> results = eventService.search(
         "Test Venue",
@@ -174,7 +176,7 @@ class EventServiceTest {
 
     eventRepository.save(
         new Event("Past Event", "Test Venue",
-            Instant.now().minusSeconds(3600)));
+            Instant.now().minusSeconds(3600), null));
 
     Page<Event> results = eventService.search(
         null,
@@ -191,7 +193,7 @@ class EventServiceTest {
 
     eventRepository.save(
         new Event("Past Event", "Test Venue",
-            Instant.now().minusSeconds(3600)));
+            Instant.now().minusSeconds(3600), null));
 
     Page<Event> results = eventService.search(
         null,

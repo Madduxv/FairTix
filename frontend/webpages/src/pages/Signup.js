@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import '../styles/Login.css';
 
+const PASSWORD_RULES = [
+  { key: 'length', label: 'At least 8 characters', test: (p) => p.length >= 8 },
+  { key: 'upper', label: 'Uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { key: 'lower', label: 'Lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { key: 'digit', label: 'A digit', test: (p) => /\d/.test(p) },
+  { key: 'special', label: 'Special character', test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
+
 function Signup() {
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [birthday, setBirthday] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signup, user } = useAuth();
   const navigate = useNavigate();
+
+  const passwordChecks = useMemo(
+    () => PASSWORD_RULES.map((rule) => ({ ...rule, passed: rule.test(password) })),
+    [password]
+  );
+  const allPasswordRequirementsMet = passwordChecks.every((c) => c.passed);
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -22,24 +34,14 @@ function Signup() {
     e.preventDefault();
     setError('');
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+    if (!allPasswordRequirementsMet) {
+      setError('Password does not meet all requirements.');
       return;
     }
 
-    if (birthday) {
-      const [y, m, d] = birthday.split('-').map(Number);
-      const birthDate = new Date(y, m - 1, d);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        setError('You must be at least 18 years old to sign up.');
-        return;
-      }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
     }
 
     setLoading(true);
@@ -69,24 +71,6 @@ function Signup() {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="phone">Phone number</label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="birthday">Birthday</label>
-          <input
-            id="birthday"
-            type="date"
-            value={birthday}
-            onChange={(e) => setBirthday(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
             id="password"
@@ -94,8 +78,17 @@ function Signup() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
           />
+          {password.length > 0 && (
+            <ul className="password-strength">
+              {passwordChecks.map((check) => (
+                <li key={check.key} className={check.passed ? 'met' : 'unmet'}>
+                  {check.passed ? '\u2713' : '\u2717'} {check.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="form-group">
           <label htmlFor="confirmPassword">Confirm password</label>
@@ -107,7 +100,7 @@ function Signup() {
             required
           />
         </div>
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || !allPasswordRequirementsMet}>
           {loading ? 'Signing up...' : 'Sign Up'}
         </button>
       </form>

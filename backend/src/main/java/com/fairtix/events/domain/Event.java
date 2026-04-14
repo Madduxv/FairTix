@@ -32,11 +32,15 @@ public class Event {
   @Column(length = 500)
   private String thumbnail;
 
+  @Column(name = "organizer_id")
+  private UUID organizerId;
+
   public Event(String title, String venue, Instant startTime) {
     this.title = title;
     this.venue = venue;
     this.startTime = startTime;
     this.thumbnail = null;
+    this.organizerId = null;
   }
 
   public Event(String title, String venue, Instant startTime, String thumbnail) {
@@ -44,6 +48,15 @@ public class Event {
     this.venue = venue;
     this.startTime = startTime;
     this.thumbnail = thumbnail;
+    this.organizerId = null;
+  }
+
+  public Event(String title, String venue, Instant startTime, String thumbnail, UUID organizerId) {
+    this.title = title;
+    this.venue = venue;
+    this.startTime = startTime;
+    this.thumbnail = thumbnail;
+    this.organizerId = organizerId;
   }
 
   protected Event() {
@@ -80,4 +93,7 @@ public class Event {
     return thumbnail;
   }
 
+  public UUID getOrganizerId() {
+    return organizerId;
+  }
 }

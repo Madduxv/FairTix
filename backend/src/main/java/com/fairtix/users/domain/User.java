@@ -13,6 +13,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "users")
 public class User {
@@ -29,6 +31,9 @@ public class User {
 
   @Enumerated(EnumType.STRING)
   private Role role = Role.USER;
+
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
 
   public UUID getId() {
     return id;
@@ -60,5 +65,17 @@ public class User {
 
   public void setRole(Role role) {
     this.role = role;
+  }
+
+  public Instant getDeletedAt() {
+    return deletedAt;
+  }
+
+  public void setDeletedAt(Instant deletedAt) {
+    this.deletedAt = deletedAt;
+  }
+
+  public boolean isDeleted() {
+    return deletedAt != null;
   }
 }

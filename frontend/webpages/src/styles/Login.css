@@ -61,3 +61,33 @@
   color: #1a1a2e;
   font-weight: bold;
 }
+
+/* Lockout styles */
+.lockout-message {
+  border-left: 3px solid #d32f2f;
+}
+
+.lockout-timer {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Password strength indicator */
+.password-strength {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.password-strength .met {
+  color: #2e7d32;
+}
+
+.password-strength .unmet {
+  color: #999;
+}

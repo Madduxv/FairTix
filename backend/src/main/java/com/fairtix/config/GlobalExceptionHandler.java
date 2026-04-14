@@ -1,9 +1,14 @@
 package com.fairtix.config;
 
 import com.fairtix.common.ResourceNotFoundException;
+import com.fairtix.inventory.application.DuplicateSeatException;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import com.fairtix.orders.application.OrderNotFoundException;
+import com.fairtix.auth.application.AccountLockedException;
+import com.fairtix.auth.application.WeakPasswordException;
+import com.fairtix.payments.api.PaymentProcessingException;
+import com.fairtix.payments.application.PaymentFailedException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +53,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleConflict(
       SeatHoldConflictException ex, HttpServletRequest req) {
     return error(HttpStatus.CONFLICT, "HOLD_CONFLICT", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(DuplicateSeatException.class)
+  public ResponseEntity<Map<String, Object>> handleDuplicateSeat(
+      DuplicateSeatException ex, HttpServletRequest req) {
+    return error(HttpStatus.CONFLICT, "DUPLICATE_SEAT", ex.getMessage(), req);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
@@ -103,6 +114,37 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleResourceNotFound(
       ResourceNotFoundException ex, HttpServletRequest req) {
     return error(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(AccountLockedException.class)
+  public ResponseEntity<Map<String, Object>> handleAccountLocked(
+      AccountLockedException ex, HttpServletRequest req) {
+    Map<String, Object> body = Map.of(
+        "status", HttpStatus.TOO_MANY_REQUESTS.value(),
+        "code", "ACCOUNT_LOCKED",
+        "message", ex.getMessage(),
+        "remainingSeconds", ex.getRemainingSeconds(),
+        "path", req.getRequestURI(),
+        "timestamp", Instant.now().toString());
+    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(body);
+  }
+
+  @ExceptionHandler(WeakPasswordException.class)
+  public ResponseEntity<Map<String, Object>> handleWeakPassword(
+      WeakPasswordException ex, HttpServletRequest req) {
+    return error(HttpStatus.BAD_REQUEST, "WEAK_PASSWORD", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(PaymentProcessingException.class)
+  public ResponseEntity<Object> handlePaymentProcessing(
+      PaymentProcessingException ex, HttpServletRequest req) {
+    return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(ex.getPaymentResponse());
+  }
+
+  @ExceptionHandler(PaymentFailedException.class)
+  public ResponseEntity<Map<String, Object>> handlePaymentFailed(
+      PaymentFailedException ex, HttpServletRequest req) {
+    return error(HttpStatus.PAYMENT_REQUIRED, "PAYMENT_FAILED", ex.getMessage(), req);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)

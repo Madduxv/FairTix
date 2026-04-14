@@ -4,6 +4,25 @@
   margin: 0 auto;
 }
 
+@keyframes skeleton-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
+
+.event-detail-skeleton .skeleton-line {
+  background: #e0e0e0;
+  border-radius: 4px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.seats-all-taken {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #888;
+  font-size: 0.95rem;
+}
+
 .event-detail-back {
   display: inline-flex;
   align-items: center;
@@ -254,6 +273,34 @@
   text-decoration: underline;
 }
 
+.hold-message-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.hold-message-checkout {
+  background: #1e7e34;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hold-message-checkout:hover {
+  background: #166b2b;
+}
+
+.hold-message-checkout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .hold-message.success .hold-message-link {
   color: #1e7e34;
 }
@@ -322,4 +369,20 @@
 .selection-bar-hold:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.hold-duration-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.hold-duration-select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #fff;
 }

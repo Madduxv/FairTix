@@ -29,7 +29,9 @@ public record EventResponse(
         @Schema(description = "Venue name", example = "Madison Square Garden")
         String venue,
         @Schema(description = "Thumbnail URL", example = "https://example.com/event-thumbnail.jpg")
-        String thumbnail) {
+        String thumbnail,
+        @Schema(description = "Organizer user ID")
+        UUID organizerId) {
 
     /**
      * Maps an {@link Event} object to an API response.
@@ -43,6 +45,7 @@ public record EventResponse(
                 event.getTitle(),
                 event.getStartTime(),
                 event.getVenue(),
-                event.getThumbnail());
+                event.getThumbnail(),
+                event.getOrganizerId());
     }
 }

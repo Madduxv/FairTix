@@ -4,8 +4,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import com.fairtix.audit.application.AuditService;
+import com.fairtix.auth.domain.CustomUserPrincipal;
 import com.fairtix.events.application.EventService;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.dto.CreateEventRequest;
@@ -26,6 +29,7 @@ import java.util.UUID;
  * CRUD operations for events.
  *
  * <p>Read endpoints are public; create, update, and delete require the ADMIN role.
+ * Update and delete also enforce organizer ownership.
  */
 @Tag(name = "Events", description = "Event management")
 @RestController
@@ -33,47 +37,34 @@ import java.util.UUID;
 public class EventController {
 
     private final EventService service;
+    private final AuditService auditService;
 
-    public EventController(EventService service) {
+    public EventController(EventService service, AuditService auditService) {
         this.service = service;
+        this.auditService = auditService;
     }
 
-    /**
-     * Creates a new event.
-     *
-     * Accepts a JSON request body containing event details
-     *
-     * @param request the requested event as a json payload
-     * @return the newly created event
-     */
-    @Operation(summary = "Create an event", description = "Admin-only. Creates a new event.")
+    @Operation(summary = "Create an event", description = "Admin-only. Creates a new event owned by the caller.")
     @ApiResponse(responseCode = "201", description = "Event created")
     @ApiResponse(responseCode = "400", description = "Validation error")
     @ApiResponse(responseCode = "403", description = "Not an admin")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EventResponse createEvent(@Valid @RequestBody CreateEventRequest request) {
+    public EventResponse createEvent(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @Valid @RequestBody CreateEventRequest request) {
         Event event = service.createEvent(
                 request.title(),
                 request.startTime(),
                 request.venue(),
-                request.thumbnail());
+                request.thumbnail(),
+                principal.getUserId());
+        auditService.log(principal.getUserId(), "CREATE", "EVENT", event.getId(),
+                "Created event: " + event.getTitle());
         return EventResponse.from(event);
     }
 
-    /**
-     * Takes details about the types of events requested and returns a page of that
-     * type of event
-     *
-     * @param venueName the name of the venue
-     * @param title     the title of the event
-     * @param upcoming  whether or not to only display upcoming events
-     *                  (true by default)
-     * @param page      the page number
-     * @param size      the number of items per page
-     * @return the requested page
-     */
     @Operation(summary = "Search events",
             description = "Public. Returns a paginated list of events, optionally filtered.")
     @ApiResponse(responseCode = "200", description = "Page of matching events")
@@ -91,12 +82,6 @@ public class EventController {
         return events.map(EventResponse::from);
     }
 
-    /**
-     * Gets a specific event based on its id
-     *
-     * @param id the id of the event
-     * @return the requested event
-     */
     @Operation(summary = "Get event by ID", description = "Public. Returns a single event.")
     @ApiResponse(responseCode = "200", description = "Event found")
     @ApiResponse(responseCode = "404", description = "Event not found")
@@ -107,39 +92,34 @@ public class EventController {
         return EventResponse.from(service.getEvent(id));
     }
 
-    /**
-     * Updates the title or start time of an event
-     *
-     * @param id      the id of the event
-     * @param request an {@link UpdateEventRequest} containing the updated details
-     *                of the event
-     * @return an {@link EventResponse} containing the newly updated event
-     */
-    @Operation(summary = "Update an event", description = "Admin-only. Updates title and/or start time.")
+    @Operation(summary = "Update an event", description = "Admin-only. Only the organizer can update.")
     @ApiResponse(responseCode = "200", description = "Event updated")
     @ApiResponse(responseCode = "400", description = "Validation error")
+    @ApiResponse(responseCode = "403", description = "Not the organizer")
     @ApiResponse(responseCode = "404", description = "Event not found")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public EventResponse update(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable UUID id,
             @Valid @RequestBody UpdateEventRequest request) {
-        Event updated = service.update(id, request);
+        Event updated = service.update(id, request, principal.getUserId());
+        auditService.log(principal.getUserId(), "UPDATE", "EVENT", id,
+                "Updated event: " + updated.getTitle());
         return EventResponse.from(updated);
     }
 
-    /**
-     * Deletes the requested event
-     *
-     * @param id the UUID id of the event
-     */
-    @Operation(summary = "Delete an event", description = "Admin-only. Permanently deletes an event.")
+    @Operation(summary = "Delete an event", description = "Admin-only. Only the organizer can delete.")
     @ApiResponse(responseCode = "204", description = "Event deleted")
+    @ApiResponse(responseCode = "403", description = "Not the organizer")
     @ApiResponse(responseCode = "404", description = "Event not found")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID id) {
-        service.delete(id);
+    public void delete(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        service.delete(id, principal.getUserId());
+        auditService.log(principal.getUserId(), "DELETE", "EVENT", id, "Deleted event");
     }
 }

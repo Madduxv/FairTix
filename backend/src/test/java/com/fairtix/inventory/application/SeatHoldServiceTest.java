@@ -42,7 +42,7 @@ class SeatHoldServiceTest {
   @BeforeEach
   void setUp() {
     testEvent = eventRepository.save(
-        new Event("Test Event", "Test Venue", Instant.now().plusSeconds(3600)));
+        new Event("Test Event", "Test Venue", Instant.now().plusSeconds(3600), null));
     testSeat = seatRepository.save(new Seat(testEvent, "Floor", "A", "101", new BigDecimal("25.00")));
   }
 

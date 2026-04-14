@@ -1,5 +1,6 @@
 package com.fairtix.events.api;
 
+import com.fairtix.auth.WithMockPrincipal;
 import com.fairtix.events.application.EventService;
 import com.fairtix.events.domain.Event;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,8 @@ class EventControllerTest {
 
   private MockMvc mockMvc;
 
+  private static final UUID ADMIN_ID = UUID.randomUUID();
+
   @BeforeEach
   void setUp() {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
@@ -61,14 +64,15 @@ class EventControllerTest {
         """;
 
     mockMvc.perform(post("/api/events")
-            .with(user("admin@test.com").roles("ADMIN"))
+            .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(notNullValue()))
         .andExpect(jsonPath("$.title").value("Test Concert"))
         .andExpect(jsonPath("$.venue").value("Main Arena"))
-        .andExpect(jsonPath("$.startTime").value("2026-06-15T19:00:00Z"));
+        .andExpect(jsonPath("$.startTime").value("2026-06-15T19:00:00Z"))
+        .andExpect(jsonPath("$.organizerId").value(ADMIN_ID.toString()));
   }
 
   @Test
@@ -110,7 +114,7 @@ class EventControllerTest {
 
   @Test
   void listEvents_unauthenticated_returns200() throws Exception {
-    eventService.createEvent("Event 1", Instant.parse("2026-06-01T18:00:00Z"), "Venue A");
+    eventService.createEvent("Event 1", Instant.parse("2026-06-01T18:00:00Z"), "Venue A", null);
 
     mockMvc.perform(get("/api/events"))
         .andExpect(status().isOk())
@@ -121,9 +125,9 @@ class EventControllerTest {
 
   @Test
   void listEvents_pagination_works() throws Exception {
-    eventService.createEvent("Event A", Instant.parse("2026-06-01T18:00:00Z"), "Venue A");
-    eventService.createEvent("Event B", Instant.parse("2026-06-02T18:00:00Z"), "Venue B");
-    eventService.createEvent("Event C", Instant.parse("2026-06-03T18:00:00Z"), "Venue C");
+    eventService.createEvent("Event A", Instant.parse("2026-06-01T18:00:00Z"), "Venue A", null);
+    eventService.createEvent("Event B", Instant.parse("2026-06-02T18:00:00Z"), "Venue B", null);
+    eventService.createEvent("Event C", Instant.parse("2026-06-03T18:00:00Z"), "Venue C", null);
 
     mockMvc.perform(get("/api/events")
             .param("page", "0")
@@ -141,7 +145,7 @@ class EventControllerTest {
 
   @Test
   void getEvent_existingId_returns200() throws Exception {
-    Event event = eventService.createEvent("My Event", Instant.parse("2026-07-01T20:00:00Z"), "Stadium");
+    Event event = eventService.createEvent("My Event", Instant.parse("2026-07-01T20:00:00Z"), "Stadium", null);
 
     mockMvc.perform(get("/api/events/{id}", event.getId()))
         .andExpect(status().isOk())
