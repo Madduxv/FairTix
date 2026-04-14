@@ -1,5 +1,6 @@
 package com.fairtix.venues.api;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,9 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import com.fairtix.venues.application.VenueService;
 import com.fairtix.venues.domain.Venue;
 import com.fairtix.venues.dto.CreateVenueRequest;
+import com.fairtix.venues.dto.UpdateVenueRequest;
 import com.fairtix.venues.dto.VenueResponse;
 
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 
 import java.util.UUID;
 
@@ -20,6 +23,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/venues")
 public class VenueController {
+
     private final VenueService service;
     public VenueController(VenueService service){
         this.service = service;
@@ -34,8 +38,12 @@ public class VenueController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public VenueResponse createVenue(@Valid @RequestBody CreateVenueRequest request){
-        Venue venue = service.createVenue(request.name(), request.address());
+        Venue venue = service.createVenue(
+                request.name(),
+                request.address()
+        );
         return VenueResponse.from(venue);
     }
 
@@ -50,15 +58,20 @@ public class VenueController {
 
     @PermitAll
     @GetMapping
-    public Page<VenueResponse> list(
-            @RequestParam(required = false) String VenueName,
-            @RequestParam(required = false) String Address,
+    public Page<VenueResponse> search(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String address,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<Venue> venues = service.search(VenueName, Address, PageRequest.of(page, Math.min(size, 100)));
-        return (Page<VenueResponse>) venues.map(VenueResponse::from);
+        Page<Venue> venues = service.search(name, address, PageRequest.of(page, Math.min(size, 100)));
+        return venues.map(VenueResponse::from);
     }
 
+    @PermitAll
+    @GetMapping
+    public VenueResponse getVenue(@PathVariable UUID id){
+        return VenueResponse.from(service.getEvent(id));
+    }
 
     /**
      * Gets an individual venue based on its id
