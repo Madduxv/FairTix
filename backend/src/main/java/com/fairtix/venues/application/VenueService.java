@@ -70,14 +70,14 @@ public class VenueService {
                         cb.like(
                                 cb.lower(root.get("Venue Name")), "%" + VenueName.toLowerCase() + "%")
                         )
-                )
+                );
             }
             if (Address != null && !VenueName.isBlank()){
                 predicates.add(
                         cb.like(
                                 cb.lower(root.get("Venue Name")), "%" + VenueName.toLowerCase() + "%")
                         )
-                )
+                );
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
