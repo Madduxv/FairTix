@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import TicketCard from '../components/TicketCard';
 import '../styles/MyTickets.css';
@@ -8,7 +8,9 @@ function MyTickets() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  const fetchTickets = useCallback(() => {
+    setLoading(true);
+    setError('');
     api.get('/api/tickets')
       .then((data) => {
         setTickets(data || []);
@@ -21,18 +23,41 @@ function MyTickets() {
       });
   }, []);
 
-  if (loading) return <div className="loading">Loading tickets...</div>;
-  if (error) return <div className="error-message">{error}</div>;
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
 
   return (
     <div className="my-tickets">
       <h2>My Tickets</h2>
-      {tickets.length === 0 ? (
+
+      {loading && (
+        <div className="tickets-grid">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="ticket-card ticket-card-skeleton">
+              <div className="skeleton-line skeleton-ticket-title" />
+              <div className="skeleton-line skeleton-ticket-meta" />
+              <div className="skeleton-line skeleton-ticket-seat" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="tickets-error">
+          <p className="error-message">{error}</p>
+          <button className="tickets-retry" onClick={fetchTickets}>Retry</button>
+        </div>
+      )}
+
+      {!loading && !error && tickets.length === 0 && (
         <div className="tickets-empty">
           <p>You don't have any tickets yet.</p>
           <p>Browse events and purchase tickets to see them here.</p>
         </div>
-      ) : (
+      )}
+
+      {!loading && !error && tickets.length > 0 && (
         <div className="tickets-grid">
           {tickets.map((ticket) => (
             <TicketCard key={ticket.id} ticket={ticket} />

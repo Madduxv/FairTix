@@ -174,14 +174,30 @@ function Checkout() {
 
   if (error && holds.length === 0) {
     return (
-      <div className="checkout">
-        <div className="checkout-error-page">
-          <p>{error}</p>
-          <button onClick={() => navigate('/my-holds')} className="checkout-btn-secondary">
+    <div className="checkout">
+      <div className="checkout-error-page">
+        <p>{error}</p>
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchConfirmedHolds();
+            }}
+            className="checkout-btn-primary"
+          >
+            Retry
+          </button>
+
+          <button
+            onClick={() => navigate('/my-holds')}
+            className="checkout-btn-secondary"
+          >
             Back to My Holds
           </button>
         </div>
       </div>
+    </div>
     );
   }
 
