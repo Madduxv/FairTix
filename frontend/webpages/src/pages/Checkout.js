@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/Checkout.css';
@@ -16,6 +16,17 @@ function Checkout() {
   const [cardNumber, setCardNumber] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [paymentState, setPaymentState] = useState('form'); // form | processing | success | failed
+  const [tick, setTick] = useState(0);
+  const tickRef = useRef(null);
+
+  // Countdown timer for hold expiration
+  useEffect(() => {
+    if (holds.length > 0 && paymentState === 'form') {
+      tickRef.current = setInterval(() => setTick((t) => t + 1), 1000);
+      return () => clearInterval(tickRef.current);
+    }
+    return () => {};
+  }, [holds.length, paymentState]);
 
   const fetchConfirmedHolds = useCallback(async () => {
     const passedHoldIds = location.state?.holdIds || [];
@@ -163,24 +174,68 @@ function Checkout() {
 
   if (error && holds.length === 0) {
     return (
-      <div className="checkout">
-        <div className="checkout-error-page">
-          <p>{error}</p>
-          <button onClick={() => navigate('/my-holds')} className="checkout-btn-secondary">
+    <div className="checkout">
+      <div className="checkout-error-page">
+        <p>{error}</p>
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchConfirmedHolds();
+            }}
+            className="checkout-btn-primary"
+          >
+            Retry
+          </button>
+
+          <button
+            onClick={() => navigate('/my-holds')}
+            className="checkout-btn-secondary"
+          >
             Back to My Holds
           </button>
         </div>
       </div>
+    </div>
     );
   }
 
   const total = calculateTotal();
+
+  // Check hold expiration
+  const now = Date.now();
+  const expiringHolds = holds.filter((h) => {
+    if (!h.expiresAt) return false;
+    const remaining = new Date(h.expiresAt).getTime() - now;
+    return remaining > 0 && remaining < 120000; // < 2 minutes
+  });
+  const expiredHolds = holds.filter((h) => {
+    if (!h.expiresAt) return false;
+    return new Date(h.expiresAt).getTime() <= now;
+  });
 
   return (
     <div className="checkout">
       <h2>Checkout</h2>
 
       {error && <div className="checkout-error">{error}</div>}
+
+      {expiredHolds.length > 0 && (
+        <div className="checkout-error">
+          {expiredHolds.length} hold{expiredHolds.length > 1 ? 's have' : ' has'} expired.
+          Please go back and create new holds.
+          <button onClick={() => navigate('/my-holds')} className="checkout-btn-secondary" style={{ marginLeft: '0.5rem' }}>
+            Back to My Holds
+          </button>
+        </div>
+      )}
+
+      {expiringHolds.length > 0 && expiredHolds.length === 0 && (
+        <div className="checkout-warning">
+          {expiringHolds.length} hold{expiringHolds.length > 1 ? 's are' : ' is'} expiring soon. Complete payment quickly.
+        </div>
+      )}
 
       <div className="checkout-summary">
         <h3>Order Summary</h3>

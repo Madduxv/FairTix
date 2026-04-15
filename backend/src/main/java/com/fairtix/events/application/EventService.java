@@ -36,8 +36,8 @@ public class EventService {
    * @param venue     the name of the venue for the event
    * @return a newly created event
    */
-  public Event createEvent(String title, Instant startTime, String venue) {
-    Event event = new Event(title, venue, startTime);
+  public Event createEvent(String title, Instant startTime, String venue, UUID organizerId) {
+    Event event = new Event(title, venue, startTime, organizerId);
     return repository.save(event);
   }
 
@@ -61,9 +61,10 @@ public class EventService {
    * @throws ResourceNotFoundException if the event is not found
    * @return the newly updated event
    */
-  public Event update(UUID id, UpdateEventRequest request) {
+  public Event update(UUID id, UpdateEventRequest request, UUID callerId) {
     Event event = repository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+    verifyOwnership(event, callerId);
     event.update(request.title(), request.startTime());
     return event;
   }
@@ -75,10 +76,18 @@ public class EventService {
    * @throws ResourceNotFoundException if an event with the requested id does not
    *                                   exist
    */
-  public void delete(UUID id) {
+  public void delete(UUID id, UUID callerId) {
     Event event = repository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
+    verifyOwnership(event, callerId);
     repository.delete(event);
+  }
+
+  private void verifyOwnership(Event event, UUID callerId) {
+    if (event.getOrganizerId() != null && !event.getOrganizerId().equals(callerId)) {
+      throw new org.springframework.security.access.AccessDeniedException(
+          "You do not own this event");
+    }
   }
 
   /**

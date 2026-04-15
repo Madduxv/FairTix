@@ -52,7 +52,7 @@ class SeatControllerTest {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
-    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), "Arena");
+    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), "Arena", null);
   }
 
   // -------------------------------------------------------------------------
@@ -117,6 +117,28 @@ class SeatControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isForbidden());
+  }
+
+  @Test
+  void createSeat_duplicate_returns409() throws Exception {
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "101", new BigDecimal("49.99"));
+
+    String body = """
+        {
+          "section":    "Floor",
+          "rowLabel":   "A",
+          "seatNumber": "101",
+          "price":      49.99
+        }
+        """;
+
+    mockMvc.perform(post("/api/events/{eventId}/seats", testEvent.getId())
+            .with(user("admin@test.com").roles("ADMIN"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("DUPLICATE_SEAT"))
+        .andExpect(jsonPath("$.message").value(containsString("Seat already exists")));
   }
 
   @Test

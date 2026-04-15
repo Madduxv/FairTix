@@ -125,21 +125,62 @@
 }
 
 /* Skeleton loading */
-.ticket-card-skeleton {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1.25rem;
-  background: #fff;
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
 .skeleton-line {
-  background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s infinite;
   border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s infinite;
 }
 
-@keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+.ticket-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: none;
+}
+
+.skeleton-ticket-title {
+  height: 1.1rem;
+  width: 60%;
+}
+
+.skeleton-ticket-meta {
+  height: 0.85rem;
+  width: 40%;
+}
+
+.skeleton-ticket-seat {
+  height: 0.85rem;
+  width: 50%;
+  margin-top: 0.25rem;
+}
+
+/* Error state */
+.tickets-error {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.tickets-error .error-message {
+  margin-bottom: 1rem;
+}
+
+.tickets-retry {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+}
+
+.tickets-retry:hover {
+  border-color: #999;
+  color: #111;
 }

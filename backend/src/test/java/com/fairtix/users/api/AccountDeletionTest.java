@@ -65,7 +65,7 @@ class AccountDeletionTest {
     adminUser.setRole(Role.ADMIN);
     adminUser = userRepository.save(adminUser);
 
-    event = new Event("Test Event", "Test Venue", Instant.now().plusSeconds(86400 * 30));
+    event = new Event("Test Event", "Test Venue", Instant.now().plusSeconds(86400 * 30), null);
     event = eventRepository.save(event);
   }
 

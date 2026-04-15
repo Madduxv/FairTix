@@ -61,8 +61,14 @@ function Login() {
         const retryAfter = err.body?.remainingSeconds || 60;
         startLockoutTimer(retryAfter);
         setError('Account temporarily locked due to too many failed attempts.');
+      } else if (err.status === 401 || err.status === 400) {
+        setError('Invalid email or password.');
+      } else if (err.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.status) {
+        setError('Login failed. Please try again.');
       } else {
-        setError(err.message || 'Login failed');
+        setError('Network error. Please check your connection.');
       }
     } finally {
       setLoading(false);

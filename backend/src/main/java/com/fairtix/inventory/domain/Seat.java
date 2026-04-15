@@ -7,10 +7,14 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "seats", indexes = {
-    @Index(name = "idx_seat_event_id", columnList = "event_id"),
-    @Index(name = "idx_seat_status", columnList = "status")
-})
+@Table(name = "seats",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_seat_event_section_row_number",
+        columnNames = {"event_id", "section", "row_label", "seat_number"}),
+    indexes = {
+        @Index(name = "idx_seat_event_id", columnList = "event_id"),
+        @Index(name = "idx_seat_status", columnList = "status")
+    })
 public class Seat {
 
   @Id

@@ -24,6 +24,9 @@ public interface SeatRepository extends JpaRepository<Seat, UUID> {
 
   List<Seat> findByEvent_IdAndStatus(UUID eventId, SeatStatus status);
 
+  boolean existsByEvent_IdAndSectionAndRowLabelAndSeatNumber(
+      UUID eventId, String section, String rowLabel, String seatNumber);
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("SELECT s FROM Seat s WHERE s.id = ?1")
   Optional<Seat> findAndLockById(UUID id);

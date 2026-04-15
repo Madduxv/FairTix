@@ -116,6 +116,17 @@
   text-align: center;
 }
 
+.checkout-warning {
+  background: #fef7e0;
+  color: #b45309;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+
 .checkout-error-page {
   text-align: center;
   padding: 3rem 1rem;
