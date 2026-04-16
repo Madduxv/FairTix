@@ -46,8 +46,8 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth:session-expired', handler);
   }, [logout]);
 
-  async function login(email, password) {
-    const data = await api.post('/auth/login', { email, password });
+  async function login(email, password, recaptchaToken = '') {
+    const data = await api.post('/auth/login', { email, password, recaptchaToken });
     if (!data || !data.userId || !data.email || !data.role) {
       throw new Error('Authentication failed: invalid response from server.');
     }

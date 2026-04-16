@@ -29,6 +29,11 @@ public class LoginAttemptService {
     return counter.get() >= maxAttempts;
   }
 
+  public long getAttemptCount(String email) {
+    RAtomicLong counter = redissonClient.getAtomicLong(KEY_PREFIX + email.toLowerCase());
+    return counter.get();
+  }
+
   public void recordFailure(String email) {
     RAtomicLong counter = redissonClient.getAtomicLong(KEY_PREFIX + email.toLowerCase());
     long current = counter.incrementAndGet();

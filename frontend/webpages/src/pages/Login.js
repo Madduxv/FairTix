@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+import Recaptcha from '../components/Recaptcha';
 import '../styles/Login.css';
 
 function Login() {
@@ -8,8 +9,11 @@ function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [captchaToken, setCaptchaToken] = useState('');
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const lockoutTimer = useRef(null);
+  const recaptchaRef = useRef(null);
   const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,17 +55,37 @@ function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (lockoutSeconds > 0) return;
+
+    const shouldShowCaptcha = loginAttempts >= 3;
+    if (shouldShowCaptcha && !captchaToken) {
+      setError('Please complete the reCAPTCHA checkbox before logging in.');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(email, password, captchaToken);
       navigate(from, { replace: true });
     } catch (err) {
+      setLoginAttempts((prev) => prev + 1);
+      setCaptchaToken('');
+      if (recaptchaRef.current && typeof recaptchaRef.current.reset === 'function') {
+        recaptchaRef.current.reset();
+      }
+
       if (err.status === 429) {
         const retryAfter = err.body?.remainingSeconds || 60;
         startLockoutTimer(retryAfter);
         setError('Account temporarily locked due to too many failed attempts.');
+      } else if (err.code === 'CAPTCHA_REQUIRED') {
+        setLoginAttempts((prev) => (prev < 3 ? 3 : prev));
+        setError('Please complete the reCAPTCHA checkbox before logging in.');
+      } else if (err.code === 'INVALID_CAPTCHA') {
+        setError('reCAPTCHA verification failed. Please try again.');
+      } else if (err.code === 'CAPTCHA_UNAVAILABLE') {
+        setError('reCAPTCHA service is temporarily unavailable. Please try again later.');
       } else if (err.status === 401 || err.status === 400) {
         setError('Invalid email or password.');
       } else if (err.status >= 500) {
@@ -77,6 +101,7 @@ function Login() {
   }
 
   const isLocked = lockoutSeconds > 0;
+  const shouldShowCaptcha = !isLocked && loginAttempts >= 3;
 
   return (
     <div className="login-page">
@@ -120,6 +145,9 @@ function Login() {
             <Link to="/forgot-password">Forgot password?</Link>
           </div>
         </div>
+        {shouldShowCaptcha && (
+          <Recaptcha onChange={setCaptchaToken} ref={recaptchaRef} />
+        )}
         <button type="submit" disabled={loading || isLocked}>
           {loading ? 'Logging in...' : isLocked ? 'Account Locked' : 'Log In'}
         </button>
