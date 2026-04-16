@@ -12,6 +12,7 @@ import Events from './pages/Events';
 import EventDetail from './pages/EventDetail';
 import Dashboard from './pages/Dashboard';
 import MyTickets from './pages/MyTickets';
+import TransferRequests from './pages/TransferRequests';
 import MyHolds from './pages/MyHolds';
 import Checkout from './pages/Checkout';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -23,6 +24,7 @@ import AdminDashboard from './admin/pages/AdminDashboard';
 import AdminEventsPage from './admin/pages/AdminEventsPage';
 import AdminSeatsPage from './admin/pages/AdminSeatsPage';
 import AdminUsersPage from './admin/pages/AdminUsersPage';
+import AdminVenuesPage from './admin/pages/AdminVenuesPage';
 
 function SessionExpiredBanner() {
   const { sessionExpired, clearSessionExpired } = useAuth();
@@ -60,6 +62,7 @@ function App() {
                 <Route path="/my-holds" element={<MyHolds />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/my-tickets" element={<MyTickets />} />
+                <Route path="/transfers" element={<TransferRequests />} />
               </Route>
             </Route>
 
@@ -69,6 +72,7 @@ function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="events" element={<AdminEventsPage />} />
                 <Route path="events/:eventId/seats" element={<AdminSeatsPage />} />
+                <Route path="venues" element={<AdminVenuesPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
               </Route>
             </Route>

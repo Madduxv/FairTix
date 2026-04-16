@@ -84,7 +84,7 @@ class TicketControllerTest {
   @Test
   void listTickets_returnsTicketsAfterOrder() throws Exception {
     // Set up: event → seat → confirmed hold → order → tickets
-    Event event = eventRepository.save(new Event("Ticket Concert", "Ticket Venue", Instant.now().plusSeconds(86400), null));
+    Event event = eventRepository.save(new Event("Ticket Concert", null, Instant.now().plusSeconds(86400), null));
     Seat seat = seatRepository.save(new Seat(event, "B", "2", "205", new BigDecimal("35.00")));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
@@ -125,7 +125,7 @@ class TicketControllerTest {
     otherUser = userRepository.save(otherUser);
 
     // Create order/ticket for testUser
-    Event event = eventRepository.save(new Event("Private Show", "Venue", Instant.now().plusSeconds(86400), null));
+    Event event = eventRepository.save(new Event("Private Show", null, Instant.now().plusSeconds(86400), null));
     Seat seat = seatRepository.save(new Seat(event, "C", "1", "1", new BigDecimal("35.00")));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
