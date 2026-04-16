@@ -8,6 +8,7 @@ import com.fairtix.orders.application.OrderNotFoundException;
 import com.fairtix.auth.application.AccountLockedException;
 import com.fairtix.auth.application.CaptchaRequiredException;
 import com.fairtix.auth.application.InvalidCaptchaException;
+import com.fairtix.auth.application.RecaptchaUnavailableException;
 import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
 import com.fairtix.payments.application.PaymentFailedException;
@@ -141,6 +142,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleInvalidCaptcha(
       InvalidCaptchaException ex, HttpServletRequest req) {
     return error(HttpStatus.UNPROCESSABLE_ENTITY, "INVALID_CAPTCHA", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(RecaptchaUnavailableException.class)
+  public ResponseEntity<Map<String, Object>> handleRecaptchaUnavailable(
+      RecaptchaUnavailableException ex, HttpServletRequest req) {
+    return error(HttpStatus.SERVICE_UNAVAILABLE, "CAPTCHA_UNAVAILABLE", ex.getMessage(), req);
   }
 
   @ExceptionHandler(WeakPasswordException.class)

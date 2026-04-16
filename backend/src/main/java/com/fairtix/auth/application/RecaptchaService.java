@@ -2,6 +2,8 @@ package com.fairtix.auth.application;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -11,11 +13,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
 public class RecaptchaService {
 
+  private static final Logger log = LoggerFactory.getLogger(RecaptchaService.class);
   private static final String VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
   private final RestTemplate restTemplate;
@@ -90,7 +94,11 @@ public class RecaptchaService {
       }
 
       return Boolean.TRUE.equals(response.getBody().get("success"));
+    } catch (ResourceAccessException ex) {
+      log.warn("reCAPTCHA API unreachable: {}", ex.getMessage());
+      throw new RecaptchaUnavailableException(ex);
     } catch (Exception ex) {
+      log.warn("reCAPTCHA verification error: {}", ex.getMessage());
       return false;
     }
   }
