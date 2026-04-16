@@ -3,6 +3,7 @@ package com.fairtix.config;
 import org.mockito.Mockito;
 import org.redisson.api.RAtomicLong;
 import org.redisson.api.RRateLimiter;
+import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,6 +55,17 @@ public class TestRedisConfig {
       when(atomicMock.remainTimeToLive()).thenReturn(900_000L); // 15 min in ms
       when(atomicMock.expire(Mockito.any(java.time.Duration.class))).thenReturn(true);
       return atomicMock;
+    });
+
+    // RSet mock for QueueService (admitted set per event)
+    when(mock.getSet(anyString())).thenAnswer(invocation -> {
+      @SuppressWarnings("unchecked")
+      RSet<String> setMock = Mockito.mock(RSet.class);
+      when(setMock.contains(Mockito.any())).thenReturn(false);
+      when(setMock.add(Mockito.any())).thenReturn(true);
+      when(setMock.remove(Mockito.any())).thenReturn(true);
+      when(setMock.expire(Mockito.any(java.time.Duration.class))).thenReturn(true);
+      return setMock;
     });
 
     return mock;
