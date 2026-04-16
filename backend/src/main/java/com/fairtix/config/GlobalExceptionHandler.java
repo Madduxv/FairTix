@@ -6,6 +6,8 @@ import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import com.fairtix.orders.application.OrderNotFoundException;
 import com.fairtix.auth.application.AccountLockedException;
+import com.fairtix.auth.application.CaptchaRequiredException;
+import com.fairtix.auth.application.InvalidCaptchaException;
 import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
 import com.fairtix.payments.application.PaymentFailedException;
@@ -127,6 +129,18 @@ public class GlobalExceptionHandler {
         "path", req.getRequestURI(),
         "timestamp", Instant.now().toString());
     return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(body);
+  }
+
+  @ExceptionHandler(CaptchaRequiredException.class)
+  public ResponseEntity<Map<String, Object>> handleCaptchaRequired(
+      CaptchaRequiredException ex, HttpServletRequest req) {
+    return error(HttpStatus.UNPROCESSABLE_ENTITY, "CAPTCHA_REQUIRED", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(InvalidCaptchaException.class)
+  public ResponseEntity<Map<String, Object>> handleInvalidCaptcha(
+      InvalidCaptchaException ex, HttpServletRequest req) {
+    return error(HttpStatus.UNPROCESSABLE_ENTITY, "INVALID_CAPTCHA", ex.getMessage(), req);
   }
 
   @ExceptionHandler(WeakPasswordException.class)
