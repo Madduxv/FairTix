@@ -1,6 +1,7 @@
 package com.fairtix.orders.application;
 
 import com.fairtix.audit.application.AuditService;
+import com.fairtix.events.domain.Event;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.domain.HoldStatus;
 import com.fairtix.inventory.domain.Seat;
@@ -15,7 +16,10 @@ import com.fairtix.payments.application.PaymentFailedException;
 import com.fairtix.payments.application.PaymentSimulationService;
 import com.fairtix.payments.domain.PaymentRecord;
 import com.fairtix.payments.domain.PaymentStatus;
+import com.fairtix.queue.application.QueueService;
 import com.fairtix.tickets.application.TicketService;
+import com.fairtix.tickets.domain.TicketStatus;
+import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +27,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -33,7 +39,9 @@ public class OrderService {
   private final SeatRepository seatRepository;
   private final UserRepository userRepository;
   private final TicketService ticketService;
+  private final TicketRepository ticketRepository;
   private final PaymentSimulationService paymentSimulationService;
+  private final QueueService queueService;
   private final AuditService auditService;
 
   public OrderService(OrderRepository orderRepository,
@@ -41,14 +49,18 @@ public class OrderService {
       SeatRepository seatRepository,
       UserRepository userRepository,
       TicketService ticketService,
+      TicketRepository ticketRepository,
       PaymentSimulationService paymentSimulationService,
+      QueueService queueService,
       AuditService auditService) {
     this.orderRepository = orderRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.seatRepository = seatRepository;
     this.userRepository = userRepository;
     this.ticketService = ticketService;
+    this.ticketRepository = ticketRepository;
     this.paymentSimulationService = paymentSimulationService;
+    this.queueService = queueService;
     this.auditService = auditService;
   }
 
@@ -61,6 +73,7 @@ public class OrderService {
         .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
     List<SeatHold> holds = validateHolds(userId, holdIds);
+    validatePurchaseCaps(userId, holds);
 
     for (SeatHold hold : holds) {
       Seat seat = hold.getSeat();
@@ -107,6 +120,7 @@ public class OrderService {
         .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
 
     List<SeatHold> holds = validateHolds(userId, holdIds);
+    validatePurchaseCaps(userId, holds);
 
     // Transition seats from BOOKED → SOLD
     for (SeatHold hold : holds) {
@@ -139,6 +153,13 @@ public class OrderService {
       order.setStatus(OrderStatus.COMPLETED);
       orderRepository.save(order);
       ticketService.issueTickets(order, holds);
+      for (SeatHold hold : holds) {
+        hold.setStatus(HoldStatus.RELEASED);
+        seatHoldRepository.save(hold);
+        if (hold.getSeat().getEvent().isQueueRequired()) {
+          queueService.completeQueueEntry(hold.getSeat().getEvent().getId(), userId);
+        }
+      }
       auditService.log(userId, "CREATE", "ORDER", order.getId(),
           "Order completed via payment: " + holdIds.size() + " hold(s), total=" + totalAmount
               + " USD, txn=" + payment.getTransactionId());
@@ -175,6 +196,29 @@ public class OrderService {
       }
     }
     return holds;
+  }
+
+  private void validatePurchaseCaps(UUID userId, List<SeatHold> holds) {
+    // Group holds by event, then check cap per event
+    Map<Event, Long> newTicketsByEvent = holds.stream()
+        .collect(Collectors.groupingBy(
+            hold -> hold.getSeat().getEvent(),
+            Collectors.counting()));
+
+    for (Map.Entry<Event, Long> entry : newTicketsByEvent.entrySet()) {
+      Event event = entry.getKey();
+      Integer cap = event.getMaxTicketsPerUser();
+      if (cap == null) continue;
+
+      long existing = ticketRepository.countByUser_IdAndEvent_IdAndStatusNot(
+          userId, event.getId(), TicketStatus.CANCELLED);
+      long newCount = entry.getValue();
+      if (existing + newCount > cap) {
+        throw new PurchaseCapExceededException(
+            "Purchase cap of " + cap + " ticket(s) per user exceeded for event: " + event.getTitle()
+                + " (already purchased: " + existing + ", requested: " + newCount + ")");
+      }
+    }
   }
 
   public Order getOrder(UUID orderId, UUID userId) {

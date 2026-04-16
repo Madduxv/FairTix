@@ -6,7 +6,6 @@ import WaitingRoom from '../components/WaitingRoom';
 import '../styles/EventDetail.css';
 
 const MAX_SEATS_PER_HOLD = 10;
-const POLL_INTERVAL_MS = 10000;
 
 function groupSeatsBySection(seats) {
   const groups = {};
@@ -41,6 +40,7 @@ function EventDetail() {
   const [selectedSeatIds, setSelectedSeatIds] = useState(new Set());
   const [selectionError, setSelectionError] = useState('');
   const [holdDuration, setHoldDuration] = useState(10);
+  const [ownedTicketCount, setOwnedTicketCount] = useState(0);
 
   const prevSeatsRef = useRef([]);
 
@@ -60,6 +60,11 @@ function EventDetail() {
       } else {
         if (next.size >= MAX_SEATS_PER_HOLD) {
           setSelectionError(`You can select up to ${MAX_SEATS_PER_HOLD} seats per hold.`);
+          return prev;
+        }
+        const cap = event && event.maxTicketsPerUser;
+        if (cap != null && ownedTicketCount + next.size + 1 > cap) {
+          setSelectionError(`You have reached the purchase limit of ${cap} ticket(s) for this event.`);
           return prev;
         }
         next.add(seatId);
@@ -141,6 +146,17 @@ function EventDetail() {
         api.get(`/api/events/${eventId}/seats`),
       ]);
       setEvent(eventData);
+      if (user && eventData.maxTicketsPerUser != null) {
+        try {
+          const myTickets = await api.get('/api/tickets');
+          const count = (myTickets || []).filter(
+            (t) => String(t.eventId).toLowerCase() === String(eventId).toLowerCase() && t.status !== 'CANCELLED'
+          ).length;
+          setOwnedTicketCount(count);
+        } catch (_) {
+          // non-critical
+        }
+      }
       // Fetch queue status if event requires queue and user is logged in
       if (eventData.queueRequired && user) {
         try {
@@ -182,7 +198,7 @@ function EventDetail() {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, user]);
 
   useEffect(() => {
     setLoading(true);
@@ -248,7 +264,7 @@ function EventDetail() {
       <div className="event-detail-header">
         <h2>{event.title}</h2>
         <div className="event-detail-meta">
-          <span>{event.venue}</span>
+          <span>{event.venue?.name ?? ''}</span>
           <span>{new Date(event.startTime).toLocaleString()}</span>
         </div>
       </div>
@@ -256,11 +272,17 @@ function EventDetail() {
       {/* Queue section for queue-required events */}
       {event.queueRequired && user && queueStatus === null && (
         <div className="queue-join-section">
-          <p className="queue-join-message">This event requires queue admission before you can hold seats.</p>
-          {queueError && <div className="queue-error">{queueError}</div>}
-          <button className="queue-join-btn" onClick={handleJoinQueue} disabled={joiningQueue}>
-            {joiningQueue ? 'Joining...' : 'Join Queue'}
-          </button>
+          {event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser ? (
+            <p className="queue-join-message">You have reached the purchase limit for this event and cannot rejoin the queue.</p>
+          ) : (
+            <>
+              <p className="queue-join-message">This event requires queue admission before you can hold seats.</p>
+              {queueError && <div className="queue-error">{queueError}</div>}
+              <button className="queue-join-btn" onClick={handleJoinQueue} disabled={joiningQueue}>
+                {joiningQueue ? 'Joining...' : 'Join Queue'}
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -274,14 +296,67 @@ function EventDetail() {
 
       {event.queueRequired && user && queueStatus === 'ADMITTED' && (
         <div className="queue-admitted-banner">
-          You're admitted! Select your seats before your window closes.
-          {admissionCountdown && <span className="queue-countdown"> Time remaining: {admissionCountdown}</span>}
+          {event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser ? (
+            'You have already purchased the maximum number of tickets for this event.'
+          ) : summary.AVAILABLE > 0 ? (
+            <>
+              You're admitted! Select your seats before your window closes.
+              {admissionCountdown && <span className="queue-countdown"> Time remaining: {admissionCountdown}</span>}
+            </>
+          ) : (
+            'All seats are sold out. No seats are available to select during your admission window.'
+          )}
+        </div>
+      )}
+
+      {event.queueRequired && user && queueStatus === 'EXPIRED' && (
+        <div className="queue-join-section">
+          {event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser ? (
+            <p className="queue-join-message">You have reached the purchase limit for this event and cannot rejoin the queue.</p>
+          ) : (
+            <>
+              <p className="queue-join-message">Your admission window expired. You can rejoin the queue.</p>
+              {queueError && <div className="queue-error">{queueError}</div>}
+              <button className="queue-join-btn" onClick={handleJoinQueue} disabled={joiningQueue}>
+                {joiningQueue ? 'Rejoining...' : 'Rejoin Queue'}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {event.queueRequired && user && queueStatus === 'COMPLETED' && (
+        <div className="queue-admitted-banner">
+          You've already reserved a seat for this event.{' '}
+          <Link to="/my-holds">Complete your purchase in My Holds.</Link>
+          {(event.maxTicketsPerUser == null || ownedTicketCount < event.maxTicketsPerUser) && (
+            <span style={{ marginLeft: '1rem', fontSize: '0.85em' }}>
+              Released your hold?{' '}
+              <button
+                className="queue-join-btn"
+                style={{ display: 'inline', padding: '0.2rem 0.6rem', fontSize: '0.85em' }}
+                onClick={async () => {
+                  setQueueStatus(null);
+                  await handleJoinQueue();
+                }}
+                disabled={joiningQueue}
+              >
+                {joiningQueue ? 'Rejoining...' : 'Rejoin Queue'}
+              </button>
+            </span>
+          )}
         </div>
       )}
 
       {event.queueRequired && !user && (
         <div className="login-prompt">
           <Link to="/login">Log in</Link> to join the queue for this event.
+        </div>
+      )}
+
+      {user && event.maxTicketsPerUser != null && (
+        <div className="purchase-cap-notice">
+          Purchase limit: {ownedTicketCount} / {event.maxTicketsPerUser} ticket(s) used for this event.
         </div>
       )}
 
@@ -333,7 +408,8 @@ function EventDetail() {
                   const isAvailable = seat.status === 'AVAILABLE';
                   const isSelected = selectedSeatIds.has(seat.id);
                   const queueGated = event.queueRequired && queueStatus !== 'ADMITTED';
-                  const canSelect = user && isAvailable && !queueGated;
+                  const atCap = event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser;
+                  const canSelect = user && isAvailable && !queueGated && !atCap;
                   return (
                     <tr
                       key={seat.id}

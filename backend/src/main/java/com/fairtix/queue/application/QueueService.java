@@ -1,5 +1,6 @@
 package com.fairtix.queue.application;
 
+import com.fairtix.audit.application.AuditService;
 import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.infrastructure.EventRepository;
@@ -8,6 +9,8 @@ import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.queue.domain.QueueEntry;
 import com.fairtix.queue.domain.QueueStatus;
 import com.fairtix.queue.infrastructure.QueueRepository;
+import com.fairtix.tickets.domain.TicketStatus;
+import com.fairtix.tickets.infrastructure.TicketRepository;
 import jakarta.transaction.Transactional;
 import org.redisson.api.RAtomicLong;
 import org.redisson.api.RSet;
@@ -27,11 +30,14 @@ public class QueueService {
 
     private static final String POSITION_KEY = "queue:position:";
     private static final String ADMITTED_KEY = "queue:admitted:";
+    private static final UUID SYSTEM = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     private final QueueRepository queueRepository;
     private final EventRepository eventRepository;
     private final SeatRepository seatRepository;
+    private final TicketRepository ticketRepository;
     private final RedissonClient redissonClient;
+    private final AuditService auditService;
 
     @Value("${queue.admission-window-minutes:15}")
     private int admissionWindowMinutes;
@@ -42,11 +48,15 @@ public class QueueService {
     public QueueService(QueueRepository queueRepository,
                         EventRepository eventRepository,
                         SeatRepository seatRepository,
-                        RedissonClient redissonClient) {
+                        TicketRepository ticketRepository,
+                        RedissonClient redissonClient,
+                        AuditService auditService) {
         this.queueRepository = queueRepository;
         this.eventRepository = eventRepository;
         this.seatRepository = seatRepository;
+        this.ticketRepository = ticketRepository;
         this.redissonClient = redissonClient;
+        this.auditService = auditService;
     }
 
     @Transactional
@@ -58,8 +68,23 @@ public class QueueService {
             throw new IllegalArgumentException("This event does not require a queue");
         }
 
-        if (queueRepository.findByEventIdAndUserId(eventId, userId).isPresent()) {
-            throw new QueueConflictException("You are already in the queue for this event");
+        if (event.getMaxTicketsPerUser() != null) {
+            long owned = ticketRepository.countByUser_IdAndEvent_IdAndStatusNot(
+                    userId, eventId, TicketStatus.CANCELLED);
+            if (owned >= event.getMaxTicketsPerUser()) {
+                throw new QueueConflictException(
+                        "You have already purchased the maximum number of tickets for this event");
+            }
+        }
+
+        Optional<QueueEntry> existing = queueRepository.findByEventIdAndUserId(eventId, userId);
+        if (existing.isPresent()) {
+            QueueStatus existingStatus = existing.get().getStatus();
+            if (existingStatus == QueueStatus.WAITING || existingStatus == QueueStatus.ADMITTED) {
+                throw new QueueConflictException("You are already in the queue for this event");
+            }
+            // EXPIRED or COMPLETED (hold was released) — delete old entry so the user can rejoin
+            queueRepository.delete(existing.get());
         }
 
         if (event.getQueueCapacity() != null) {
@@ -74,7 +99,9 @@ public class QueueService {
         long position = counter.incrementAndGet();
 
         QueueEntry entry = new QueueEntry(eventId, userId, UUID.randomUUID().toString(), (int) position);
-        return queueRepository.save(entry);
+        QueueEntry saved = queueRepository.save(entry);
+        auditService.log(userId, "QUEUE_JOINED", "QUEUE", eventId, null);
+        return saved;
     }
 
     @Transactional
@@ -94,6 +121,7 @@ public class QueueService {
             }
             entry.expire();
             queueRepository.save(entry);
+            auditService.log(userId, "QUEUE_LEFT", "QUEUE", eventId, null);
         }
     }
 
@@ -108,6 +136,43 @@ public class QueueService {
                 && entry.get().getStatus() == QueueStatus.ADMITTED
                 && entry.get().getExpiresAt() != null
                 && entry.get().getExpiresAt().isAfter(Instant.now());
+    }
+
+    /**
+     * Called when a user releases a hold on a queue-required event.
+     * If the queue entry is COMPLETED, reinstates it:
+     *   - back to ADMITTED (+ Redis set) if the admission window is still open
+     *   - to EXPIRED otherwise, so the user can rejoin the queue
+     */
+    @Transactional
+    public void reinstateAfterHoldRelease(UUID eventId, UUID userId) {
+        queueRepository.findByEventIdAndUserId(eventId, userId).ifPresent(entry -> {
+            if (entry.getStatus() != QueueStatus.COMPLETED) {
+                return;
+            }
+            if (entry.getExpiresAt() != null && entry.getExpiresAt().isAfter(Instant.now())) {
+                entry.admit(entry.getExpiresAt()); // restore ADMITTED, keep original window
+                RSet<String> admittedSet = redissonClient.getSet(ADMITTED_KEY + eventId);
+                admittedSet.add(userId.toString());
+            } else {
+                entry.expire(); // window gone — user must rejoin
+            }
+            queueRepository.save(entry);
+        });
+    }
+
+    /**
+     * Returns true if the user has queue clearance to proceed to checkout.
+     * Accepts both ADMITTED (active admission window) and COMPLETED (hold already
+     * created from this admission slot) — both states represent a user who has
+     * legitimately passed through the queue.
+     */
+    public boolean hasCheckoutClearance(UUID eventId, UUID userId) {
+        if (isAdmitted(eventId, userId)) {
+            return true;
+        }
+        Optional<QueueEntry> entry = queueRepository.findByEventIdAndUserId(eventId, userId);
+        return entry.isPresent() && entry.get().getStatus() == QueueStatus.COMPLETED;
     }
 
     @Transactional
@@ -145,6 +210,9 @@ public class QueueService {
         admittedSet.expire(admissionWindowMinutes + 1, TimeUnit.MINUTES);
 
         queueRepository.saveAll(waiting);
+        if (!waiting.isEmpty()) {
+            auditService.log(SYSTEM, "QUEUE_ADMITTED", "QUEUE", eventId, "count=" + waiting.size());
+        }
     }
 
     @Transactional
@@ -160,6 +228,10 @@ public class QueueService {
             removeFromAdmittedSet(eventId, entry.getUserId());
         }
         queueRepository.saveAll(expiredForEvent);
+        if (!expiredForEvent.isEmpty()) {
+            auditService.log(SYSTEM, "QUEUE_ADMISSION_EXPIRED", "QUEUE", eventId,
+                "count=" + expiredForEvent.size());
+        }
     }
 
     public long countWaiting(UUID eventId) {

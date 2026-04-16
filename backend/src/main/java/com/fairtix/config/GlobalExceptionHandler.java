@@ -5,6 +5,7 @@ import com.fairtix.inventory.application.DuplicateSeatException;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.application.SeatHoldNotFoundException;
 import com.fairtix.orders.application.OrderNotFoundException;
+import com.fairtix.orders.application.PurchaseCapExceededException;
 import com.fairtix.auth.application.AccountLockedException;
 import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
@@ -109,6 +110,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleAccessDenied(
       AccessDeniedException ex, HttpServletRequest req) {
     return error(HttpStatus.FORBIDDEN, "FORBIDDEN", "Access denied", req);
+  }
+
+  @ExceptionHandler(PurchaseCapExceededException.class)
+  public ResponseEntity<Map<String, Object>> handlePurchaseCap(
+      PurchaseCapExceededException ex, HttpServletRequest req) {
+    return error(HttpStatus.CONFLICT, "PURCHASE_CAP_EXCEEDED", ex.getMessage(), req);
   }
 
   @ExceptionHandler(OrderNotFoundException.class)

@@ -52,7 +52,7 @@ class SeatControllerTest {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
-    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), "Arena", null, false, null);
+    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), null, null, false, null, null);
   }
 
   // -------------------------------------------------------------------------

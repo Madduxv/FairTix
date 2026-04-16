@@ -190,20 +190,27 @@ public class SeatHoldService {
       return hold;
     }
 
-    if (hold.getStatus() != HoldStatus.ACTIVE) {
+    if (hold.getStatus() != HoldStatus.ACTIVE && hold.getStatus() != HoldStatus.CONFIRMED) {
       throw new SeatHoldConflictException(
           "Cannot release hold with status: " + hold.getStatus());
     }
 
     hold.setStatus(HoldStatus.RELEASED);
     Seat seat = hold.getSeat();
-    if (seat.getStatus() == SeatStatus.HELD) {
+    if (seat.getStatus() == SeatStatus.HELD || seat.getStatus() == SeatStatus.BOOKED) {
       seat.setStatus(SeatStatus.AVAILABLE);
       seatRepository.save(seat);
     }
     SeatHold saved = seatHoldRepository.save(hold);
     auditService.log(ownerId, "RELEASE", "HOLD", holdId,
         "Hold released, seat " + seat.getId() + " returned to AVAILABLE");
+
+    // If the event uses a queue, reinstate the user's queue entry so they can re-select
+    UUID eventId = seat.getEvent().getId();
+    if (seat.getEvent().isQueueRequired()) {
+      queueService.reinstateAfterHoldRelease(eventId, ownerId);
+    }
+
     return saved;
   }
 
