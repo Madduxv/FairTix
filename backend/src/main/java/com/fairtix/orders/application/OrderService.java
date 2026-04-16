@@ -1,5 +1,6 @@
 package com.fairtix.orders.application;
 
+import com.fairtix.audit.application.AuditService;
 import com.fairtix.inventory.application.SeatHoldConflictException;
 import com.fairtix.inventory.domain.HoldStatus;
 import com.fairtix.inventory.domain.Seat;
@@ -33,19 +34,22 @@ public class OrderService {
   private final UserRepository userRepository;
   private final TicketService ticketService;
   private final PaymentSimulationService paymentSimulationService;
+  private final AuditService auditService;
 
   public OrderService(OrderRepository orderRepository,
       SeatHoldRepository seatHoldRepository,
       SeatRepository seatRepository,
       UserRepository userRepository,
       TicketService ticketService,
-      PaymentSimulationService paymentSimulationService) {
+      PaymentSimulationService paymentSimulationService,
+      AuditService auditService) {
     this.orderRepository = orderRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.seatRepository = seatRepository;
     this.userRepository = userRepository;
     this.ticketService = ticketService;
     this.paymentSimulationService = paymentSimulationService;
+    this.auditService = auditService;
   }
 
   /**
@@ -79,6 +83,8 @@ public class OrderService {
     Order order = new Order(user, holdIds, totalAmount, "USD");
     order = orderRepository.save(order);
     ticketService.issueTickets(order, holds);
+    auditService.log(userId, "CREATE", "ORDER", order.getId(),
+        "Order completed: " + holdIds.size() + " hold(s), total=" + totalAmount + " USD");
     return order;
   }
 
@@ -133,6 +139,9 @@ public class OrderService {
       order.setStatus(OrderStatus.COMPLETED);
       orderRepository.save(order);
       ticketService.issueTickets(order, holds);
+      auditService.log(userId, "CREATE", "ORDER", order.getId(),
+          "Order completed via payment: " + holdIds.size() + " hold(s), total=" + totalAmount
+              + " USD, txn=" + payment.getTransactionId());
     } else {
       // Rollback: mark order cancelled and revert seats to BOOKED
       order.setStatus(OrderStatus.CANCELLED);
@@ -142,6 +151,9 @@ public class OrderService {
         seat.setStatus(SeatStatus.BOOKED);
         seatRepository.save(seat);
       }
+      auditService.log(userId, "CANCEL", "ORDER", order.getId(),
+          "Payment " + payment.getStatus() + ": " + payment.getFailureReason()
+              + ", txn=" + payment.getTransactionId());
       throw new PaymentFailedException(
           payment.getFailureReason(), payment.getStatus(), payment.getTransactionId());
     }

@@ -1,6 +1,7 @@
 import './App.css';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
+import { useAuth } from './auth/useAuth';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
@@ -19,11 +20,23 @@ import AdminEventsPage from './admin/pages/AdminEventsPage';
 import AdminSeatsPage from './admin/pages/AdminSeatsPage';
 import AdminUsersPage from './admin/pages/AdminUsersPage';
 
+function SessionExpiredBanner() {
+  const { sessionExpired, clearSessionExpired } = useAuth();
+  if (!sessionExpired) return null;
+  return (
+    <div className="session-expired-banner" role="alert">
+      <span>Your session has expired. Please log in again.</span>
+      <button onClick={clearSessionExpired} className="session-expired-dismiss">Dismiss</button>
+    </div>
+  );
+}
+
 function App() {
   return (
     <div className="App">
       <Router>
         <AuthProvider>
+          <SessionExpiredBanner />
           <Navbar />
           <Routes>
             {/* Public routes */}

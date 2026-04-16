@@ -195,3 +195,49 @@
 .checkout-link:hover {
   background: #1565c0;
 }
+
+/* Skeleton loading */
+@keyframes skeleton-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-line {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+}
+
+.hold-card-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  pointer-events: none;
+}
+
+.skeleton-hold-seat {
+  height: 1rem;
+  width: 70%;
+}
+
+.skeleton-hold-timer {
+  height: 0.85rem;
+  width: 30%;
+}
+
+.skeleton-hold-actions {
+  height: 2rem;
+  width: 50%;
+  margin-top: 0.25rem;
+}
+
+/* Error state */
+.holds-error {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.holds-error .error-message {
+  margin-bottom: 1rem;
+}

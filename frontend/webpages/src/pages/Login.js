@@ -81,8 +81,14 @@ function Login() {
       } else if (err.code === 'CAPTCHA_REQUIRED') {
         setLoginAttempts((prev) => (prev < 2 ? 2 : prev));
         setError('Please complete the reCAPTCHA checkbox before logging in.');
+      } else if (err.status === 401 || err.status === 400) {
+        setError('Invalid email or password.');
+      } else if (err.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.status) {
+        setError('Login failed. Please try again.');
       } else {
-        setError(err.message || 'Login failed');
+        setError('Network error. Please check your connection.');
       }
     } finally {
       setLoading(false);

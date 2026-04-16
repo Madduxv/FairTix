@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +26,9 @@ public class PaymentController {
 
   private final OrderService orderService;
   private final PaymentRecordRepository paymentRecordRepository;
+
+  @Value("${fairtix.payment.allow-simulated-outcome:false}")
+  private boolean allowSimulatedOutcome;
 
   public PaymentController(OrderService orderService,
       PaymentRecordRepository paymentRecordRepository) {
@@ -45,9 +49,15 @@ public class PaymentController {
       @AuthenticationPrincipal CustomUserPrincipal principal,
       @Valid @RequestBody PaymentRequest request) {
 
+    if (!allowSimulatedOutcome && request.simulatedOutcome() != null) {
+      throw new IllegalArgumentException(
+          "simulatedOutcome is not allowed in this environment");
+    }
+
     try {
+      var outcome = allowSimulatedOutcome ? request.simulatedOutcome() : null;
       Order order = orderService.createOrderWithPayment(
-          principal.getUserId(), request.holdIds(), request.simulatedOutcome());
+          principal.getUserId(), request.holdIds(), outcome);
 
       var record = paymentRecordRepository.findByOrderId(order.getId())
           .orElseThrow();

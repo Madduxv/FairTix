@@ -107,7 +107,17 @@ function Events() {
         </label>
       </div>
 
-      {loading && <div className="loading">Loading events...</div>}
+      {loading && (
+        <div className="events-grid">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="event-card-skeleton">
+              <div className="skeleton-line skeleton-title" />
+              <div className="skeleton-line skeleton-meta" />
+              <div className="skeleton-line skeleton-action" />
+            </div>
+          ))}
+        </div>
+      )}
       {error && <div className="error-message">{error}</div>}
 
       {!loading && !error && events.length === 0 && (

@@ -1,5 +1,6 @@
 package com.fairtix.inventory.application;
 
+import com.fairtix.audit.application.AuditService;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.HoldStatus;
 import com.fairtix.inventory.domain.Seat;
@@ -25,6 +26,7 @@ public class SeatHoldService {
   private final SeatRepository seatRepository;
   private final SeatHoldRepository seatHoldRepository;
   private final EventRepository eventRepository;
+  private final AuditService auditService;
 
   @Value("${holds.duration-minutes:10}")
   private int defaultDurationMinutes;
@@ -40,10 +42,12 @@ public class SeatHoldService {
 
   public SeatHoldService(SeatRepository seatRepository,
       SeatHoldRepository seatHoldRepository,
-      EventRepository eventRepository) {
+      EventRepository eventRepository,
+      AuditService auditService) {
     this.seatRepository = seatRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.eventRepository = eventRepository;
+    this.auditService = auditService;
   }
 
   /**
@@ -135,7 +139,19 @@ public class SeatHoldService {
         .distinct()
         .map(id -> new SeatHold(seatById.get(id), ownerId, expiresAt))
         .toList();
-    return seatHoldRepository.saveAll(holds);
+    List<SeatHold> saved = seatHoldRepository.saveAll(holds);
+    String holdIdsSummary = saved.stream()
+        .map(SeatHold::getId).map(UUID::toString)
+        .collect(Collectors.joining(", "));
+    String seatIdsSummary = saved.stream()
+        .map(h -> h.getSeat().getId()).map(UUID::toString)
+        .collect(Collectors.joining(", "));
+    auditService.log(ownerId, "CREATE", "HOLD", saved.get(0).getId(),
+        "Created " + saved.size() + " hold(s) for event " + eventId
+            + "; seatIds=[" + seatIdsSummary + "]"
+            + "; holdIds=[" + holdIdsSummary + "]"
+            + "; expires in " + duration + " min");
+    return saved;
   }
 
   /**
@@ -170,7 +186,10 @@ public class SeatHoldService {
       seat.setStatus(SeatStatus.AVAILABLE);
       seatRepository.save(seat);
     }
-    return seatHoldRepository.save(hold);
+    SeatHold saved = seatHoldRepository.save(hold);
+    auditService.log(ownerId, "RELEASE", "HOLD", holdId,
+        "Hold released, seat " + seat.getId() + " returned to AVAILABLE");
+    return saved;
   }
 
   /**
@@ -207,7 +226,10 @@ public class SeatHoldService {
     Seat seat = hold.getSeat();
     seat.setStatus(SeatStatus.BOOKED);
     seatRepository.save(seat);
-    return seatHoldRepository.save(hold);
+    SeatHold saved = seatHoldRepository.save(hold);
+    auditService.log(ownerId, "CONFIRM", "HOLD", holdId,
+        "Hold confirmed, seat " + seat.getId() + " status set to BOOKED");
+    return saved;
   }
 
   /**

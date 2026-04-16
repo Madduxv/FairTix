@@ -13,8 +13,6 @@ const PASSWORD_RULES = [
 
 function Signup() {
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [birthday, setBirthday] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -46,27 +44,22 @@ function Signup() {
       return;
     }
 
-    if (birthday) {
-      const [y, m, d] = birthday.split('-').map(Number);
-      const birthDate = new Date(y, m - 1, d);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        setError('You must be at least 18 years old to sign up.');
-        return;
-      }
-    }
-
     setLoading(true);
     try {
       await signup(email, password);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      if (err.status === 409) {
+        setError('Email already exists.');
+      } else if (err.status === 400) {
+        setError('Invalid registration details.');
+      } else if (err.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.status) {
+        setError('Registration failed. Please try again.');
+      } else {
+        setError('Network error. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,24 +78,6 @@ function Signup() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="phone">Phone number</label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="birthday">Birthday</label>
-          <input
-            id="birthday"
-            type="date"
-            value={birthday}
-            onChange={(e) => setBirthday(e.target.value)}
           />
         </div>
         <div className="form-group">
