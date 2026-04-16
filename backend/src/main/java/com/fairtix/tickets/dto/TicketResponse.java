@@ -31,7 +31,7 @@ public record TicketResponse(
                 ticket.getOrder().getId(),
                 ticket.getEvent().getId(),
                 ticket.getEvent().getTitle(),
-                ticket.getEvent().getVenue(),
+                ticket.getEvent().getVenue() != null ? ticket.getEvent().getVenue().getName() : null,
                 ticket.getEvent().getStartTime(),
                 ticket.getSeat().getId(),
                 ticket.getSeat().getSection(),

@@ -1,6 +1,7 @@
 package com.fairtix.tickets.infrastructure;
 
 import com.fairtix.tickets.domain.Ticket;
+import com.fairtix.tickets.domain.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -11,4 +12,6 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
   List<Ticket> findAllByUser_IdOrderByIssuedAtDesc(UUID userId);
 
   List<Ticket> findAllByOrder_Id(UUID orderId);
+
+  long countByUser_IdAndEvent_IdAndStatusNot(UUID userId, UUID eventId, TicketStatus status);
 }

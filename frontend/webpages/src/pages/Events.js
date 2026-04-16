@@ -133,7 +133,7 @@ function Events() {
               <Link key={event.id} to={`/events/${event.id}`} className="event-card">
                 <h3>{event.title}</h3>
                 <div className="event-card-meta">
-                  <span>{event.venue}</span>
+                  <span>{event.venue?.name ?? ''}</span>
                   <span>{formatDate(event.startTime)}</span>
                 </div>
                 <div className="event-card-action">View details &rarr;</div>

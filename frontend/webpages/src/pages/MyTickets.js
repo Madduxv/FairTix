@@ -62,7 +62,7 @@ function MyTickets() {
       {!loading && !error && tickets.length > 0 && (
         <div className="tickets-grid">
           {tickets.map((ticket) => (
-            <TicketCard key={ticket.id} ticket={ticket} />
+            <TicketCard key={ticket.id} ticket={ticket} onTransferred={fetchTickets} />
           ))}
         </div>
       )}

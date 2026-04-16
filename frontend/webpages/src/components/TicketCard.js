@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import TransferDialog from './TransferDialog';
 
-function TicketCard({ ticket }) {
+function TicketCard({ ticket, onTransferred }) {
+  const [showTransfer, setShowTransfer] = useState(false);
   const statusClass = ticket.status.toLowerCase();
 
   return (
@@ -44,6 +46,20 @@ function TicketCard({ ticket }) {
           </div>
         )}
       </div>
+      {ticket.status === 'VALID' && (
+        <div className="ticket-card-actions">
+          <button className="btn-transfer" onClick={() => setShowTransfer(true)}>
+            Transfer
+          </button>
+        </div>
+      )}
+      {showTransfer && (
+        <TransferDialog
+          ticket={ticket}
+          onClose={() => setShowTransfer(false)}
+          onSuccess={() => { if (onTransferred) onTransferred(); }}
+        />
+      )}
     </div>
   );
 }

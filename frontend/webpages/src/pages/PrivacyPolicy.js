@@ -56,9 +56,10 @@ function PrivacyPolicy() {
       <section>
         <h3>Cookies</h3>
         <p>
-          FairTix uses a single HTTP-only authentication cookie to maintain your
-          session. This cookie cannot be read by JavaScript and is automatically
-          cleared when you log out or 15 minutes after login.
+          FairTix uses HTTP-only cookies to maintain your session. These cookies
+          cannot be read by JavaScript. A short-lived access token expires after
+          15 minutes and is silently renewed using a refresh token that persists
+          for up to 7 days. Both tokens are cleared when you log out.
         </p>
       </section>
 

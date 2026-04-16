@@ -16,5 +16,7 @@ public record UpdateEventRequest(
         @Schema(description = "Whether this event requires queue admission before seat holds")
         Boolean queueRequired,
         @Schema(description = "Maximum queue capacity (null = unlimited)")
-        Integer queueCapacity) {
+        Integer queueCapacity,
+        @Schema(description = "Maximum tickets a single user may purchase for this event (null = no cap)")
+        Integer maxTicketsPerUser) {
 }

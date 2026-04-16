@@ -65,7 +65,7 @@ class AccountDeletionTest {
     adminUser.setRole(Role.ADMIN);
     adminUser = userRepository.save(adminUser);
 
-    event = new Event("Test Event", "Test Venue", Instant.now().plusSeconds(86400 * 30), null);
+    event = new Event("Test Event", null, Instant.now().plusSeconds(86400 * 30), null);
     event = eventRepository.save(event);
   }
 
@@ -108,9 +108,9 @@ class AccountDeletionTest {
   }
 
   @Test
-  void deleteOwnAccount_unauthenticated_returns403() throws Exception {
+  void deleteOwnAccount_unauthenticated_returns401() throws Exception {
     mockMvc.perform(delete("/api/users/me"))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

@@ -222,12 +222,12 @@ function Checkout() {
   // Check hold expiration
   const now = Date.now();
   const expiringHolds = holds.filter((h) => {
-    if (!h.expiresAt) return false;
+    if (!h.expiresAt || h.status === 'CONFIRMED') return false;
     const remaining = new Date(h.expiresAt).getTime() - now;
     return remaining > 0 && remaining < 120000; // < 2 minutes
   });
   const expiredHolds = holds.filter((h) => {
-    if (!h.expiresAt) return false;
+    if (!h.expiresAt || h.status === 'CONFIRMED') return false;
     return new Date(h.expiresAt).getTime() <= now;
   });
 

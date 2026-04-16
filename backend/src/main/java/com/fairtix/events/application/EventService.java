@@ -4,8 +4,11 @@ import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.infrastructure.EventRepository;
+import com.fairtix.venues.domain.Venue;
+import com.fairtix.venues.infrastructure.VenueRepository;
 
 import jakarta.transaction.Transactional;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.data.domain.Page;
@@ -23,9 +26,11 @@ import java.util.UUID;
 public class EventService {
 
   private final EventRepository repository;
+  private final VenueRepository venueRepository;
 
-  public EventService(EventRepository repository) {
+  public EventService(EventRepository repository, VenueRepository venueRepository) {
     this.repository = repository;
+    this.venueRepository = venueRepository;
   }
 
   /**
@@ -36,10 +41,15 @@ public class EventService {
    * @param venue     the name of the venue for the event
    * @return a newly created event
    */
-  public Event createEvent(String title, Instant startTime, String venue, UUID organizerId,
-      boolean queueRequired, Integer queueCapacity) {
+  public Event createEvent(String title, Instant startTime, UUID venueId, UUID organizerId,
+      boolean queueRequired, Integer queueCapacity, Integer maxTicketsPerUser) {
+    Venue venue = venueId != null
+        ? venueRepository.findById(venueId)
+            .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + venueId))
+        : null;
     Event event = new Event(title, venue, startTime, organizerId);
     event.updateQueueSettings(queueRequired, queueCapacity);
+    event.setMaxTicketsPerUser(maxTicketsPerUser);
     return repository.save(event);
   }
 
@@ -71,6 +81,9 @@ public class EventService {
     if (request.queueRequired() != null || request.queueCapacity() != null) {
       boolean qr = request.queueRequired() != null ? request.queueRequired() : event.isQueueRequired();
       event.updateQueueSettings(qr, request.queueCapacity());
+    }
+    if (request.maxTicketsPerUser() != null) {
+      event.setMaxTicketsPerUser(request.maxTicketsPerUser());
     }
     return event;
   }
@@ -116,7 +129,7 @@ public class EventService {
       if (venue != null && !venue.isBlank()) {
         predicates.add(
             cb.like(
-                cb.lower(root.get("venue")),
+                cb.lower(root.join("venue", JoinType.LEFT).get("name")),
                 "%" + venue.toLowerCase() + "%"));
       }
 

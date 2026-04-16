@@ -1,6 +1,8 @@
 const API_BASE = process.env.REACT_APP_API_URL || '';
 
-async function apiRequest(path, options = {}) {
+let refreshPromise = null;
+
+async function apiRequest(path, options = {}, isRetry = false) {
   const headers = {
     ...options.headers,
   };
@@ -14,6 +16,28 @@ async function apiRequest(path, options = {}) {
     headers,
     credentials: 'include',
   });
+
+  if ((response.status === 401 || response.status === 403) && !isRetry && path !== '/auth/refresh' && path !== '/auth/login') {
+    if (!refreshPromise) {
+      refreshPromise = fetch(API_BASE + '/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      }).finally(() => {
+        refreshPromise = null;
+      });
+    }
+    try {
+      const refreshResponse = await refreshPromise;
+      if (refreshResponse.ok) {
+        return apiRequest(path, options, true);
+      }
+    } catch (_) {
+      // network error during refresh — fall through to logout
+    }
+    // Refresh failed — signal session expiry to AuthContext via a custom event
+    window.dispatchEvent(new CustomEvent('auth:session-expired'));
+    throw buildError(response, 'Session expired');
+  }
 
   if (!response.ok) {
     let error;
@@ -32,6 +56,12 @@ async function apiRequest(path, options = {}) {
 
   if (response.status === 204) return null;
   return response.json();
+}
+
+function buildError(response, message) {
+  const error = new Error(message);
+  error.status = response.status;
+  return error;
 }
 
 const api = {

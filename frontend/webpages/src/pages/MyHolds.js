@@ -194,6 +194,15 @@ function MyHolds() {
                         </span>
                         <span className="hold-card-status confirmed">CONFIRMED</span>
                       </div>
+                      <div className="hold-card-actions">
+                        <button
+                          className="hold-btn-release"
+                          disabled={!!actionLoading[hold.id]}
+                          onClick={() => handleRelease(hold.id)}
+                        >
+                          {actionLoading[hold.id] === 'release' ? 'Releasing...' : 'Release'}
+                        </button>
+                      </div>
                     </div>
                   );
                 })}

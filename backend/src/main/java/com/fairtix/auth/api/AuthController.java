@@ -1,5 +1,7 @@
 package com.fairtix.auth.api;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.view.RedirectView;
 
 import com.fairtix.auth.application.AuthService;
@@ -16,6 +20,8 @@ import com.fairtix.auth.application.EmailVerificationService;
 import com.fairtix.auth.application.JwtService;
 import com.fairtix.auth.application.PasswordResetService;
 import com.fairtix.auth.domain.CustomUserPrincipal;
+import com.fairtix.auth.domain.RefreshToken;
+import com.fairtix.auth.infrastructure.RefreshTokenRepository;
 import com.fairtix.users.dto.AuthResponse;
 import com.fairtix.users.dto.ForgotPasswordRequest;
 import com.fairtix.users.dto.LoginRequest;
@@ -27,6 +33,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -40,14 +48,17 @@ import jakarta.servlet.http.HttpServletResponse;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private static final String COOKIE_NAME = "fairtix_token";
-    private static final int COOKIE_MAX_AGE = 900; // 15 minutes
+    private static final String ACCESS_COOKIE = "fairtix_token";
+    private static final String REFRESH_COOKIE = "fairtix_refresh";
+    private static final int ACCESS_MAX_AGE = 900;          // 15 minutes
+    private static final int REFRESH_MAX_AGE = 7 * 24 * 3600; // 7 days
 
     private final AuthService service;
     private final JwtService jwtService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
@@ -59,12 +70,14 @@ public class AuthController {
                           JwtService jwtService,
                           EmailVerificationService emailVerificationService,
                           PasswordResetService passwordResetService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          RefreshTokenRepository refreshTokenRepository) {
         this.service = service;
         this.jwtService = jwtService;
         this.emailVerificationService = emailVerificationService;
         this.passwordResetService = passwordResetService;
         this.userRepository = userRepository;
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
     @Operation(summary = "Register a new user",
@@ -73,21 +86,33 @@ public class AuthController {
     @ApiResponse(responseCode = "409", description = "Email already in use")
     @SecurityRequirements
     @PostMapping("/register")
+    @Transactional
     public AuthResponse register(@RequestBody RegisterRequest request, HttpServletResponse response) {
         String jwt = service.register(request);
-        addAuthCookie(response, jwt);
+        var claims = jwtService.extractAllClaims(jwt);
+        UUID userId = UUID.fromString(claims.get("userId", String.class));
+
+        String rawRefresh = jwtService.generateRefreshToken(userId);
+        addAccessCookie(response, jwt);
+        addRefreshCookie(response, rawRefresh);
         return buildAuthResponse(jwt);
     }
 
     @Operation(summary = "Log in",
-            description = "Authenticates with email/password, sets an HTTP-only auth cookie, and returns user info.")
+            description = "Authenticates with email/password, sets HTTP-only access and refresh token cookies, and returns user info.")
     @ApiResponse(responseCode = "200", description = "Login successful")
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @SecurityRequirements
     @PostMapping("/login")
+    @Transactional
     public AuthResponse login(@RequestBody LoginRequest request, HttpServletResponse response) {
         String jwt = service.login(request);
-        addAuthCookie(response, jwt);
+        var claims = jwtService.extractAllClaims(jwt);
+        UUID userId = UUID.fromString(claims.get("userId", String.class));
+
+        String rawRefresh = jwtService.generateRefreshToken(userId);
+        addAccessCookie(response, jwt);
+        addRefreshCookie(response, rawRefresh);
         return buildAuthResponse(jwt);
     }
 
@@ -108,6 +133,41 @@ public class AuthController {
                 .map(u -> u.isEmailVerified())
                 .orElse(false);
         return new AuthResponse(principal.getUserId(), principal.getUsername(), role, emailVerified);
+    }
+
+    @Operation(summary = "Refresh access token",
+            description = "Exchanges a valid refresh token cookie for a new access + refresh token pair.")
+    @ApiResponse(responseCode = "200", description = "Tokens refreshed")
+    @ApiResponse(responseCode = "401", description = "Refresh token missing, invalid, expired, or revoked")
+    @SecurityRequirements
+    @PostMapping("/refresh")
+    @Transactional
+    public AuthResponse refresh(HttpServletRequest request, HttpServletResponse response) {
+        String rawToken = extractCookieValue(request, REFRESH_COOKIE)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token"));
+
+        String hash = jwtService.hashRefreshToken(rawToken);
+        RefreshToken stored = refreshTokenRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+
+        if (stored.isRevoked() || stored.isExpired()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token expired or revoked");
+        }
+
+        // Rotate: revoke old, issue new
+        stored.setRevoked(true);
+        refreshTokenRepository.save(stored);
+
+        UUID userId = stored.getUserId();
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+        String newJwt = jwtService.generateToken(userId, user.getEmail(), user.getRole().name());
+        String newRawRefresh = jwtService.generateRefreshToken(userId);
+
+        addAccessCookie(response, newJwt);
+        addRefreshCookie(response, newRawRefresh);
+        return buildAuthResponse(newJwt);
     }
 
     @Operation(summary = "Verify email address",
@@ -173,31 +233,65 @@ public class AuthController {
     }
 
     @Operation(summary = "Log out",
-            description = "Clears the HTTP-only auth cookie.")
+            description = "Revokes the refresh token and clears both auth cookies.")
     @ApiResponse(responseCode = "204", description = "Logged out")
     @SecurityRequirements
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "")
+    @Transactional
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        extractCookieValue(request, REFRESH_COOKIE).ifPresent(raw -> {
+            String hash = jwtService.hashRefreshToken(raw);
+            refreshTokenRepository.findByTokenHash(hash).ifPresent(token -> {
+                token.setRevoked(true);
+                refreshTokenRepository.save(token);
+            });
+        });
+        clearCookie(response, ACCESS_COOKIE, "/");
+        clearCookie(response, REFRESH_COOKIE, "/auth");
+    }
+
+    // --- helpers ---
+
+    private void addAccessCookie(HttpServletResponse response, String jwt) {
+        ResponseCookie cookie = ResponseCookie.from(ACCESS_COOKIE, jwt)
                 .httpOnly(true)
                 .secure(cookieSecure)
                 .sameSite("Lax")
                 .path("/")
+                .maxAge(ACCESS_MAX_AGE)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void addRefreshCookie(HttpServletResponse response, String rawToken) {
+        ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, rawToken)
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path("/auth")
+                .maxAge(REFRESH_MAX_AGE)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void clearCookie(HttpServletResponse response, String name, String path) {
+        ResponseCookie cookie = ResponseCookie.from(name, "")
+                .httpOnly(true)
+                .secure(cookieSecure)
+                .sameSite("Lax")
+                .path(path)
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
-    private void addAuthCookie(HttpServletResponse response, String jwt) {
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, jwt)
-                .httpOnly(true)
-                .secure(cookieSecure)
-                .sameSite("Lax")
-                .path("/")
-                .maxAge(COOKIE_MAX_AGE)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    private Optional<String> extractCookieValue(HttpServletRequest request, String name) {
+        if (request.getCookies() == null) return Optional.empty();
+        return Arrays.stream(request.getCookies())
+                .filter(c -> name.equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst();
     }
 
     private AuthResponse buildAuthResponse(String jwt) {

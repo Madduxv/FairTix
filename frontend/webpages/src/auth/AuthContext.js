@@ -39,6 +39,13 @@ export function AuthProvider({ children }) {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // Listen for session expiry signal from the API client
+  useEffect(() => {
+    const handler = () => logout(true);
+    window.addEventListener('auth:session-expired', handler);
+    return () => window.removeEventListener('auth:session-expired', handler);
+  }, [logout]);
+
   async function login(email, password) {
     const data = await api.post('/auth/login', { email, password });
     if (!data || !data.userId || !data.email || !data.role) {

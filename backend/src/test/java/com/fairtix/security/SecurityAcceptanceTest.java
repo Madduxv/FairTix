@@ -12,6 +12,8 @@ import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.users.domain.Role;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
+import com.fairtix.venues.domain.Venue;
+import com.fairtix.venues.infrastructure.VenueRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -44,11 +46,13 @@ class SecurityAcceptanceTest {
   @Autowired private EventRepository eventRepository;
   @Autowired private SeatRepository seatRepository;
   @Autowired private SeatHoldRepository seatHoldRepository;
+  @Autowired private VenueRepository venueRepository;
 
   private MockMvc mockMvc;
   private User regularUser;
   private User adminUser;
   private Event testEvent;
+  private Venue testVenue;
 
   @BeforeEach
   void setUp() {
@@ -69,8 +73,10 @@ class SecurityAcceptanceTest {
     adminUser.setEmailVerified(true);
     adminUser = userRepository.save(adminUser);
 
+    testVenue = venueRepository.save(new Venue("Test Venue", null, null, null, null));
+
     testEvent = eventRepository.save(
-        new Event("Security Test Event", "Test Venue", Instant.now().plusSeconds(86400), (UUID) null));
+        new Event("Security Test Event", testVenue, Instant.now().plusSeconds(86400), (UUID) null));
   }
 
   @Nested
@@ -92,10 +98,10 @@ class SecurityAcceptanceTest {
               .content("""
                   { "seatIds": ["00000000-0000-0000-0000-000000000001"], "durationMinutes": 10 }
                   """))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
 
       mockMvc.perform(get("/api/holds"))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -105,16 +111,16 @@ class SecurityAcceptanceTest {
               .content("""
                   { "holdIds": ["00000000-0000-0000-0000-000000000001"] }
                   """))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
 
       mockMvc.perform(get("/api/orders"))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
     }
 
     @Test
     void ticketEndpoints_requireAuth() throws Exception {
       mockMvc.perform(get("/api/tickets"))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -124,13 +130,13 @@ class SecurityAcceptanceTest {
               .content("""
                   { "holdIds": ["00000000-0000-0000-0000-000000000001"] }
                   """))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
     }
 
     @Test
     void adminEndpoints_requireAuth() throws Exception {
       mockMvc.perform(get("/api/admin/users"))
-          .andExpect(status().isForbidden());
+          .andExpect(status().isUnauthorized());
     }
   }
 
@@ -170,10 +176,10 @@ class SecurityAcceptanceTest {
       String body = """
           {
             "title": "Admin Event",
-            "venue": "Admin Venue",
+            "venueId": "%s",
             "startTime": "%s"
           }
-          """.formatted(Instant.now().plusSeconds(86400).toString());
+          """.formatted(testVenue.getId(), Instant.now().plusSeconds(86400).toString());
 
       mockMvc.perform(post("/api/events")
               .with(WithMockPrincipal.admin(adminUser.getId(), adminUser.getEmail()))
@@ -187,10 +193,10 @@ class SecurityAcceptanceTest {
       String body = """
           {
             "title": "User Event",
-            "venue": "User Venue",
+            "venueId": "%s",
             "startTime": "%s"
           }
-          """.formatted(Instant.now().plusSeconds(86400).toString());
+          """.formatted(testVenue.getId(), Instant.now().plusSeconds(86400).toString());
 
       mockMvc.perform(post("/api/events")
               .with(WithMockPrincipal.user(regularUser.getId(), regularUser.getEmail()))

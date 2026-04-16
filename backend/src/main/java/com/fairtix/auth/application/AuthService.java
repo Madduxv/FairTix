@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.fairtix.audit.application.AuditService;
 import com.fairtix.notifications.application.NotificationPreferenceService;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.dto.LoginRequest;
@@ -27,6 +28,7 @@ public class AuthService {
   private final LoginAttemptService loginAttemptService;
   private final NotificationPreferenceService notificationPreferenceService;
   private final EmailVerificationService emailVerificationService;
+  private final AuditService auditService;
 
   private static final Pattern UPPERCASE = Pattern.compile("[A-Z]");
   private static final Pattern LOWERCASE = Pattern.compile("[a-z]");
@@ -39,13 +41,15 @@ public class AuthService {
       JwtService jwtService,
       LoginAttemptService loginAttemptService,
       NotificationPreferenceService notificationPreferenceService,
-      EmailVerificationService emailVerificationService) {
+      EmailVerificationService emailVerificationService,
+      AuditService auditService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;
     this.loginAttemptService = loginAttemptService;
     this.notificationPreferenceService = notificationPreferenceService;
     this.emailVerificationService = emailVerificationService;
+    this.auditService = auditService;
   }
 
   @Transactional
@@ -62,6 +66,7 @@ public class AuthService {
 
     userRepository.save(user);
     notificationPreferenceService.createDefault(user.getId());
+    auditService.log(user.getId(), "USER_REGISTERED", "USER", user.getId(), null);
 
     try {
       emailVerificationService.sendVerificationEmail(user);
@@ -93,6 +98,7 @@ public class AuthService {
 
     // Successful login — reset attempts
     loginAttemptService.resetAttempts(request.email());
+    auditService.log(user.getId(), "USER_LOGIN", "USER", user.getId(), null);
 
     return jwtService.generateToken(
         user.getId(),

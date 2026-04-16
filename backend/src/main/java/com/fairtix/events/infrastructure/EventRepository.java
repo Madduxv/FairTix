@@ -14,6 +14,8 @@ public interface EventRepository extends JpaRepository<Event, UUID>,
 
   long countByStartTimeAfter(Instant now);
 
-  @Query("SELECT e.venue, COUNT(e) FROM Event e GROUP BY e.venue")
+  boolean existsByVenue_Id(UUID venueId);
+
+  @Query("SELECT e.venue.name, COUNT(e) FROM Event e GROUP BY e.venue.name")
   List<Object[]> countByVenueGrouped();
 }
