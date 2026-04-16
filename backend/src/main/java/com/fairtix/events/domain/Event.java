@@ -30,6 +30,12 @@ public class Event {
   @Column(name = "organizer_id")
   private UUID organizerId;
 
+  @Column(name = "queue_required", nullable = false)
+  private boolean queueRequired = false;
+
+  @Column(name = "queue_capacity")
+  private Integer queueCapacity;
+
   public Event(String title, String venue, Instant startTime, UUID organizerId) {
     this.title = title;
     this.venue = venue;
@@ -43,6 +49,11 @@ public class Event {
   public void update(String title, Instant startTime) {
     this.title = title;
     this.startTime = startTime;
+  }
+
+  public void updateQueueSettings(boolean queueRequired, Integer queueCapacity) {
+    this.queueRequired = queueRequired;
+    this.queueCapacity = queueCapacity;
   }
 
   public UUID getId() {
@@ -63,5 +74,13 @@ public class Event {
 
   public UUID getOrganizerId() {
     return organizerId;
+  }
+
+  public boolean isQueueRequired() {
+    return queueRequired;
+  }
+
+  public Integer getQueueCapacity() {
+    return queueCapacity;
   }
 }

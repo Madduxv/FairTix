@@ -36,8 +36,10 @@ public class EventService {
    * @param venue     the name of the venue for the event
    * @return a newly created event
    */
-  public Event createEvent(String title, Instant startTime, String venue, UUID organizerId) {
+  public Event createEvent(String title, Instant startTime, String venue, UUID organizerId,
+      boolean queueRequired, Integer queueCapacity) {
     Event event = new Event(title, venue, startTime, organizerId);
+    event.updateQueueSettings(queueRequired, queueCapacity);
     return repository.save(event);
   }
 
@@ -66,6 +68,10 @@ public class EventService {
         .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
     verifyOwnership(event, callerId);
     event.update(request.title(), request.startTime());
+    if (request.queueRequired() != null || request.queueCapacity() != null) {
+      boolean qr = request.queueRequired() != null ? request.queueRequired() : event.isQueueRequired();
+      event.updateQueueSettings(qr, request.queueCapacity());
+    }
     return event;
   }
 

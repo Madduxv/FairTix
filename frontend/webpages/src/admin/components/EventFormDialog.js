@@ -4,6 +4,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
@@ -14,6 +16,8 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
   const [title, setTitle] = useState('');
   const [venue, setVenue] = useState('');
   const [startTime, setStartTime] = useState('');
+  const [queueRequired, setQueueRequired] = useState(false);
+  const [queueCapacity, setQueueCapacity] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -28,10 +32,14 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
       } else {
         setStartTime('');
       }
+      setQueueRequired(event.queueRequired || false);
+      setQueueCapacity(event.queueCapacity != null ? String(event.queueCapacity) : '');
     } else {
       setTitle('');
       setVenue('');
       setStartTime('');
+      setQueueRequired(false);
+      setQueueCapacity('');
     }
     setError('');
   }, [event, open]);
@@ -51,10 +59,22 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
     setError('');
     try {
       const isoTime = new Date(startTime).toISOString();
+      const capacity = queueCapacity !== '' ? parseInt(queueCapacity, 10) : null;
       if (isEdit) {
-        await api.put(`/api/events/${event.id}`, { title: title.trim(), startTime: isoTime });
+        await api.put(`/api/events/${event.id}`, {
+          title: title.trim(),
+          startTime: isoTime,
+          queueRequired,
+          queueCapacity: capacity,
+        });
       } else {
-        await api.post('/api/events', { title: title.trim(), venue: venue.trim(), startTime: isoTime });
+        await api.post('/api/events', {
+          title: title.trim(),
+          venue: venue.trim(),
+          startTime: isoTime,
+          queueRequired,
+          queueCapacity: capacity,
+        });
       }
       onSaved();
       onClose();
@@ -97,6 +117,25 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
               fullWidth
               InputLabelProps={{ shrink: true }}
             />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={queueRequired}
+                  onChange={(e) => setQueueRequired(e.target.checked)}
+                />
+              }
+              label="Require Queue Admission"
+            />
+            {queueRequired && (
+              <TextField
+                label="Queue Capacity (leave blank for unlimited)"
+                type="number"
+                value={queueCapacity}
+                onChange={(e) => setQueueCapacity(e.target.value)}
+                fullWidth
+                inputProps={{ min: 1 }}
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

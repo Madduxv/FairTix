@@ -20,5 +20,9 @@ public record CreateEventRequest(
         @Schema(description = "Event start time in UTC (ISO-8601)", example = "2026-07-15T19:00:00Z")
         @NotNull Instant startTime,
         @Schema(description = "Venue name", example = "Madison Square Garden")
-        @NotBlank String venue) {
+        @NotBlank String venue,
+        @Schema(description = "Whether this event requires queue admission before seat holds", example = "false")
+        Boolean queueRequired,
+        @Schema(description = "Maximum queue capacity (null = unlimited)")
+        Integer queueCapacity) {
 }

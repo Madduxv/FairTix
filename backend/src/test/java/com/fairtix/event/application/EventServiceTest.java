@@ -54,7 +54,7 @@ class EventServiceTest {
         "New Event",
         Instant.now().plusSeconds(7200),
         "New Venue",
-        null);
+        null, false, null);
 
     assertThat(event.getId()).isNotNull();
     assertThat(event.getTitle()).isEqualTo("New Event");
@@ -93,7 +93,7 @@ class EventServiceTest {
 
     Instant newStart = Instant.now().plusSeconds(7200);
 
-    UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart);
+    UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart, null, null);
 
     Event updated = eventService.update(testEvent.getId(), request, null);
 
@@ -104,7 +104,7 @@ class EventServiceTest {
   @Test
   void updatingNonexistentEventThrowsException() {
 
-    UpdateEventRequest request = new UpdateEventRequest("Updated", Instant.now());
+    UpdateEventRequest request = new UpdateEventRequest("Updated", Instant.now(), null, null);
 
     assertThatThrownBy(() -> eventService.update(UUID.randomUUID(), request, null))
         .isInstanceOf(ResourceNotFoundException.class)

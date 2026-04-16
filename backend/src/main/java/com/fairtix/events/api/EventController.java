@@ -58,7 +58,9 @@ public class EventController {
                 request.title(),
                 request.startTime(),
                 request.venue(),
-                principal.getUserId());
+                principal.getUserId(),
+                request.queueRequired() != null && request.queueRequired(),
+                request.queueCapacity());
         auditService.log(principal.getUserId(), "CREATE", "EVENT", event.getId(),
                 "Created event: " + event.getTitle());
         return EventResponse.from(event);

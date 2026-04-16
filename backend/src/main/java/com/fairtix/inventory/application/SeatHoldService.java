@@ -1,6 +1,7 @@
 package com.fairtix.inventory.application;
 
 import com.fairtix.audit.application.AuditService;
+import com.fairtix.events.domain.Event;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.HoldStatus;
 import com.fairtix.inventory.domain.Seat;
@@ -8,6 +9,7 @@ import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.inventory.infrastructure.SeatRepository;
+import com.fairtix.queue.application.QueueService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class SeatHoldService {
   private final SeatHoldRepository seatHoldRepository;
   private final EventRepository eventRepository;
   private final AuditService auditService;
+  private final QueueService queueService;
 
   @Value("${holds.duration-minutes:10}")
   private int defaultDurationMinutes;
@@ -43,11 +46,13 @@ public class SeatHoldService {
   public SeatHoldService(SeatRepository seatRepository,
       SeatHoldRepository seatHoldRepository,
       EventRepository eventRepository,
-      AuditService auditService) {
+      AuditService auditService,
+      QueueService queueService) {
     this.seatRepository = seatRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.eventRepository = eventRepository;
     this.auditService = auditService;
+    this.queueService = queueService;
   }
 
   /**
@@ -74,8 +79,12 @@ public class SeatHoldService {
   public List<SeatHold> createHold(UUID eventId, List<UUID> seatIds,
       UUID ownerId, Integer durationMinutes) {
 
-    if (!eventRepository.existsById(eventId)) {
-      throw new IllegalArgumentException("Event not found: " + eventId);
+    Event event = eventRepository.findById(eventId)
+        .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
+
+    // Queue gate: if the event requires queue admission, verify before proceeding
+    if (event.isQueueRequired() && !queueService.isAdmitted(eventId, ownerId)) {
+      throw new SeatHoldConflictException("Queue admission required to hold seats for this event");
     }
 
     // Soft limit: reject before acquiring any locks
@@ -151,6 +160,12 @@ public class SeatHoldService {
             + "; seatIds=[" + seatIdsSummary + "]"
             + "; holdIds=[" + holdIdsSummary + "]"
             + "; expires in " + duration + " min");
+
+    // Mark queue entry as completed if event uses a queue
+    if (event.isQueueRequired()) {
+      queueService.completeQueueEntry(eventId, ownerId);
+    }
+
     return saved;
   }
 

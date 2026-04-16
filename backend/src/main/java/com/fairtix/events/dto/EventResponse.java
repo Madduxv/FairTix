@@ -28,7 +28,11 @@ public record EventResponse(
         @Schema(description = "Venue name", example = "Madison Square Garden")
         String venue,
         @Schema(description = "Organizer user ID")
-        UUID organizerId) {
+        UUID organizerId,
+        @Schema(description = "Whether this event requires queue admission before seat holds")
+        boolean queueRequired,
+        @Schema(description = "Maximum queue capacity (null = unlimited)")
+        Integer queueCapacity) {
 
     /**
      * Maps an {@link Event} object to an API response.
@@ -42,6 +46,8 @@ public record EventResponse(
                 event.getTitle(),
                 event.getStartTime(),
                 event.getVenue(),
-                event.getOrganizerId());
+                event.getOrganizerId(),
+                event.isQueueRequired(),
+                event.getQueueCapacity());
     }
 }
