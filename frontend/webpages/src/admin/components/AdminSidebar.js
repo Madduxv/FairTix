@@ -12,12 +12,14 @@ import Box from '@mui/material/Box';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import EventIcon from '@mui/icons-material/Event';
 import PeopleIcon from '@mui/icons-material/People';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 const DRAWER_WIDTH = 240;
 
 const navItems = [
   { label: 'Dashboard', path: '/admin', icon: <DashboardIcon /> },
   { label: 'Events', path: '/admin/events', icon: <EventIcon /> },
+  { label: 'Venues', path: '/admin/venues', icon: <LocationOnIcon /> },
   { label: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
 ];
 

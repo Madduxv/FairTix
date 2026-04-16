@@ -58,9 +58,9 @@ class EventControllerTest {
     String body = """
         {
           "startTime": "%s",
-          "venue": "Test Venue"
+          "venueId": "%s"
         }
-        """.formatted(Instant.now());
+        """.formatted(Instant.now(), UUID.randomUUID());
 
     mockMvc.perform(post(EVENTS_URL)
         .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
@@ -74,13 +74,12 @@ class EventControllerTest {
   }
 
   @Test
-  void createEvent_blankVenue_returns400ValidationError() throws Exception {
+  void createEvent_missingVenueId_returns400ValidationError() throws Exception {
 
     String body = """
         {
           "title": "Test Event",
-          "startTime": "%s",
-          "venue": "   "
+          "startTime": "%s"
         }
         """.formatted(Instant.now());
 
@@ -90,7 +89,7 @@ class EventControllerTest {
         .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-        .andExpect(jsonPath("$.message").value(containsString("venue")));
+        .andExpect(jsonPath("$.message").value(containsString("venueId")));
   }
 
   @Test
@@ -99,9 +98,9 @@ class EventControllerTest {
     String body = """
         {
           "title": "Test Event",
-          "venue": "Test Venue"
+          "venueId": "%s"
         }
-        """;
+        """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(EVENTS_URL)
         .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
@@ -195,7 +194,7 @@ class EventControllerTest {
         {
           "title": "",
           "startTime": "%s",
-          "venue": ""
+          "venueId": null
         }
         """.formatted(Instant.now());
 

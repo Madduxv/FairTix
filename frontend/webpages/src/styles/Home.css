@@ -1,0 +1,38 @@
+.home-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 3rem;
+}
+
+.home-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.home-actions button {
+  padding: 0.6rem 1.5rem;
+  border: 1px solid #1a1a2e;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+.home-actions button:hover {
+  background: #2d2d4e;
+}
+
+.home-actions .home-btn-secondary {
+  background: transparent;
+  color: #1a1a2e;
+}
+
+.home-actions .home-btn-secondary:hover {
+  background: #f0f0f5;
+}

@@ -52,7 +52,7 @@ class SeatControllerTest {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
-    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), "Arena", null);
+    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), null, null, false, null, null);
   }
 
   // -------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class SeatControllerTest {
   }
 
   @Test
-  void createSeat_unauthenticated_returns403() throws Exception {
+  void createSeat_unauthenticated_returns401() throws Exception {
     String body = """
         {
           "section":    "Floor",
@@ -116,7 +116,7 @@ class SeatControllerTest {
     mockMvc.perform(post("/api/events/{eventId}/seats", testEvent.getId())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

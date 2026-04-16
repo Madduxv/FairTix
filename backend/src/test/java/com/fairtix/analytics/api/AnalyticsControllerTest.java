@@ -47,7 +47,7 @@ class AnalyticsControllerTest {
   @Test
   void getDashboard_asAdmin_returns200WithExpectedShape() throws Exception {
     // Seed some data so the response has non-empty fields
-    var event = eventService.createEvent("Test Show", Instant.parse("2026-08-01T20:00:00Z"), "Arena A", null);
+    var event = eventService.createEvent("Test Show", Instant.parse("2026-08-01T20:00:00Z"), null, null, false, null, null);
     seatService.createSeat(event.getId(), "VIP", "A", "1", new BigDecimal("75.00"));
     seatService.createSeat(event.getId(), "VIP", "A", "2", new BigDecimal("75.00"));
 
@@ -79,9 +79,9 @@ class AnalyticsControllerTest {
   }
 
   @Test
-  void getDashboard_unauthenticated_returns403() throws Exception {
+  void getDashboard_unauthenticated_returns401() throws Exception {
     mockMvc.perform(get("/api/analytics/dashboard"))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

@@ -146,7 +146,7 @@ class SeatHoldControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  void createHold_unauthenticated_returns403() throws Exception {
+  void createHold_unauthenticated_returns401() throws Exception {
     String body = """
         {
           "seatIds":  ["%s"]
@@ -156,6 +156,6 @@ class SeatHoldControllerTest {
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 }

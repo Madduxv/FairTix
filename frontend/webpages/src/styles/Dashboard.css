@@ -4,6 +4,47 @@
   margin: 0 auto;
 }
 
+.dashboard-verify-banner {
+  background: #fff8e1;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-verify-banner p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+}
+
+.dashboard-verify-btn {
+  margin-top: 0.6rem;
+  padding: 0.4rem 1rem;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.dashboard-verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-verify-success {
+  color: #16a34a;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.dashboard-verify-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
 .dashboard h2 {
   margin: 0 0 1.5rem;
 }
@@ -14,6 +55,102 @@
 
 .dashboard-info p {
   margin: 0.35rem 0;
+}
+
+/* Sections */
+.dashboard-section {
+  margin-top: 2rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fafafa;
+}
+
+.dashboard-section h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: #1a1a2e;
+}
+
+.dashboard-muted {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+/* Notification preference toggles */
+.prefs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.pref-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.pref-toggle input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+  cursor: pointer;
+}
+
+.dashboard-save-btn {
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.dashboard-save-btn:hover:not(:disabled) {
+  background: #2d2d4e;
+}
+
+.dashboard-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.prefs-message {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.prefs-message--success {
+  color: #1e7e34;
+}
+
+.prefs-message--error {
+  color: #c5221f;
+}
+
+/* Data export */
+.dashboard-export-btn {
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.dashboard-export-btn:hover:not(:disabled) {
+  background: #2d2d4e;
+}
+
+.dashboard-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Danger zone */

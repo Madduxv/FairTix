@@ -79,9 +79,9 @@ class AdminControllerTest {
   }
 
   @Test
-  void listUsers_unauthenticated_returns403() throws Exception {
+  void listUsers_unauthenticated_returns401() throws Exception {
     mockMvc.perform(get("/api/admin/users"))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test
@@ -127,9 +127,9 @@ class AdminControllerTest {
   }
 
   @Test
-  void promoteUser_unauthenticated_returns403() throws Exception {
+  void promoteUser_unauthenticated_returns401() throws Exception {
     mockMvc.perform(patch("/api/admin/users/{id}/promote", targetUser.getId()))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 
   @Test

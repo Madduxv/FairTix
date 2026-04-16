@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { useAuth } from '../auth/useAuth';
 import '../styles/Checkout.css';
 
 function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [holds, setHolds] = useState([]);
   const [seatMap, setSeatMap] = useState({});
   const [loading, setLoading] = useState(true);
@@ -154,6 +156,20 @@ function Checkout() {
     setCardNumber('');
   }
 
+  if (user && user.emailVerified === false) {
+    return (
+      <div className="checkout">
+        <div className="checkout-error-page">
+          <h2>Email verification required</h2>
+          <p>You need to verify your email address before purchasing tickets.</p>
+          <p>Check your inbox for the verification link, or{' '}
+            <Link to="/dashboard">go to your dashboard</Link> to resend it.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) return <div className="loading">Loading checkout...</div>;
 
   if (orderResult) {
@@ -206,12 +222,12 @@ function Checkout() {
   // Check hold expiration
   const now = Date.now();
   const expiringHolds = holds.filter((h) => {
-    if (!h.expiresAt) return false;
+    if (!h.expiresAt || h.status === 'CONFIRMED') return false;
     const remaining = new Date(h.expiresAt).getTime() - now;
     return remaining > 0 && remaining < 120000; // < 2 minutes
   });
   const expiredHolds = holds.filter((h) => {
-    if (!h.expiresAt) return false;
+    if (!h.expiresAt || h.status === 'CONFIRMED') return false;
     return new Date(h.expiresAt).getTime() <= now;
   });
 

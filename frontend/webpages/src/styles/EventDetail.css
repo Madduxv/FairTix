@@ -367,3 +367,59 @@
   font-size: 0.85rem;
   background: #fff;
 }
+
+/* Queue */
+.queue-join-section {
+  text-align: center;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: #f3f8ff;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+}
+
+.queue-join-message {
+  margin: 0 0 1rem;
+  color: #1565c0;
+}
+
+.queue-join-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.queue-join-btn:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.queue-join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.queue-error {
+  color: #c62828;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.queue-admitted-banner {
+  background: #e8f5e9;
+  border: 1px solid #81c784;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  margin: 1rem 0;
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+.queue-countdown {
+  font-weight: 700;
+  margin-left: 0.5rem;
+}

@@ -23,20 +23,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     this.jwtService = jwtService;
   }
 
+  private static final String COOKIE_NAME = "fairtix_token";
+
   @Override
   protected void doFilterInternal(HttpServletRequest request,
       HttpServletResponse response,
       FilterChain filterChain)
       throws ServletException, IOException {
 
-    final String authHeader = request.getHeader("Authorization");
+    // Try cookie first, then fall back to Authorization header
+    String token = null;
+    if (request.getCookies() != null) {
+      for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+        if (COOKIE_NAME.equals(cookie.getName())) {
+          token = cookie.getValue();
+          break;
+        }
+      }
+    }
+    if (token == null) {
+      final String authHeader = request.getHeader("Authorization");
+      if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7);
+      }
+    }
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+    if (token == null) {
       filterChain.doFilter(request, response);
       return;
     }
-
-    String token = authHeader.substring(7);
 
     if (SecurityContextHolder.getContext().getAuthentication() == null) {
       try {

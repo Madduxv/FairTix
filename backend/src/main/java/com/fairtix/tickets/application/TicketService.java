@@ -1,5 +1,6 @@
 package com.fairtix.tickets.application;
 
+import com.fairtix.audit.application.AuditService;
 import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.orders.domain.Order;
@@ -14,9 +15,11 @@ import java.util.UUID;
 public class TicketService {
 
   private final TicketRepository ticketRepository;
+  private final AuditService auditService;
 
-  public TicketService(TicketRepository ticketRepository) {
+  public TicketService(TicketRepository ticketRepository, AuditService auditService) {
     this.ticketRepository = ticketRepository;
+    this.auditService = auditService;
   }
 
   public void issueTickets(Order order, List<SeatHold> holds) {
@@ -29,6 +32,8 @@ public class TicketService {
             hold.getSeat().getPrice()))
         .toList();
     ticketRepository.saveAll(tickets);
+    auditService.log(order.getUser().getId(), "TICKETS_ISSUED", "TICKET", order.getId(),
+        "count=" + tickets.size());
   }
 
   public List<Ticket> listTickets(UUID userId) {

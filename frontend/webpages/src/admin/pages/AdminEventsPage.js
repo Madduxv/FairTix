@@ -149,7 +149,7 @@ function AdminEventsPage() {
               events.map((event) => (
                 <TableRow key={event.id} hover>
                   <TableCell>{event.title}</TableCell>
-                  <TableCell>{event.venue}</TableCell>
+                  <TableCell>{event.venue?.name ?? ''}</TableCell>
                   <TableCell>{formatDate(event.startTime)}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">

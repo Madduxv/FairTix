@@ -1,12 +1,15 @@
 package com.fairtix.payments.api;
 
 import com.fairtix.auth.domain.CustomUserPrincipal;
+import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.orders.application.OrderService;
 import com.fairtix.orders.domain.Order;
 import com.fairtix.payments.application.PaymentFailedException;
 import com.fairtix.payments.dto.PaymentRequest;
 import com.fairtix.payments.dto.PaymentResponse;
 import com.fairtix.payments.infrastructure.PaymentRecordRepository;
+import com.fairtix.queue.application.QueueService;
+import com.fairtix.users.infrastructure.UserRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,14 +29,23 @@ public class PaymentController {
 
   private final OrderService orderService;
   private final PaymentRecordRepository paymentRecordRepository;
+  private final UserRepository userRepository;
+  private final SeatHoldRepository seatHoldRepository;
+  private final QueueService queueService;
 
   @Value("${fairtix.payment.allow-simulated-outcome:false}")
   private boolean allowSimulatedOutcome;
 
   public PaymentController(OrderService orderService,
-      PaymentRecordRepository paymentRecordRepository) {
+      PaymentRecordRepository paymentRecordRepository,
+      UserRepository userRepository,
+      SeatHoldRepository seatHoldRepository,
+      QueueService queueService) {
     this.orderService = orderService;
     this.paymentRecordRepository = paymentRecordRepository;
+    this.userRepository = userRepository;
+    this.seatHoldRepository = seatHoldRepository;
+    this.queueService = queueService;
   }
 
   @Operation(summary = "Create order with simulated payment",
@@ -48,6 +60,30 @@ public class PaymentController {
   public PaymentResponse checkout(
       @AuthenticationPrincipal CustomUserPrincipal principal,
       @Valid @RequestBody PaymentRequest request) {
+
+    userRepository.findById(principal.getUserId()).ifPresent(user -> {
+      if (!user.isEmailVerified()) {
+        throw new org.springframework.web.server.ResponseStatusException(
+            org.springframework.http.HttpStatus.FORBIDDEN,
+            "Email address not verified. Please verify your email before purchasing tickets.");
+      }
+    });
+
+    // For any hold belonging to a queue-required event, verify the user is admitted
+    // before reaching the payment step — mirrors the gate in SeatHoldService but
+    // surfaces the error earlier with a clearer message.
+    request.holdIds().stream()
+        .flatMap(holdId -> seatHoldRepository.findById(holdId).stream())
+        .map(hold -> hold.getSeat().getEvent())
+        .filter(event -> event.isQueueRequired())
+        .distinct()
+        .forEach(event -> {
+          if (!queueService.hasCheckoutClearance(event.getId(), principal.getUserId())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.FORBIDDEN,
+                "Queue admission required. You must be admitted from the waiting room before purchasing tickets.");
+          }
+        });
 
     if (!allowSimulatedOutcome && request.simulatedOutcome() != null) {
       throw new IllegalArgumentException(

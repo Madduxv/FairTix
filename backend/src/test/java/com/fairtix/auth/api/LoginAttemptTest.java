@@ -98,7 +98,8 @@ class LoginAttemptTest {
     mockMvc.perform(post("/auth/register")
             .contentType(MediaType.APPLICATION_JSON).content(body))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").isNotEmpty());
+        .andExpect(jsonPath("$.email").value("strong@test.com"))
+        .andExpect(jsonPath("$.role").value("USER"));
   }
 
   // -------------------------------------------------------------------------

@@ -81,6 +81,12 @@
   color: #444;
 }
 
+.ticket-card-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
 .ticket-card-details .label {
   color: #888;
   font-size: 0.8rem;
@@ -97,6 +103,31 @@
 .ticket-card-seat span {
   display: flex;
   flex-direction: column;
+}
+
+.ticket-event-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.ticket-event-link:hover {
+  color: #1a73e8;
+}
+
+.tickets-browse-link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1.25rem;
+  background: #1a1a2e;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.tickets-browse-link:hover {
+  background: #2d2d4e;
 }
 
 /* Skeleton loading */
@@ -133,6 +164,207 @@
   height: 0.85rem;
   width: 50%;
   margin-top: 0.25rem;
+}
+
+/* Transfer button */
+.ticket-card-actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.btn-transfer {
+  background: none;
+  border: 1px solid #1a73e8;
+  color: #1a73e8;
+  border-radius: 4px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-transfer:hover {
+  background: #e8f0fe;
+}
+
+/* Transfer dialog */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+
+.dialog h3 {
+  margin: 0 0 1rem;
+}
+
+.dialog-ticket-summary {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.dialog-ticket-summary p {
+  margin: 0.2rem 0;
+}
+
+.dialog label {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.35rem;
+}
+
+.dialog input[type="email"] {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btn-primary {
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2d2d4e;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: none;
+  color: #444;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: #999;
+}
+
+/* Transfer requests page */
+.transfer-requests {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.transfer-requests h2 {
+  margin-bottom: 1.5rem;
+}
+
+.transfer-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #666;
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-btn.active {
+  color: #1a73e8;
+  border-bottom: 2px solid #1a73e8;
+  font-weight: 600;
+}
+
+.tab-btn .badge {
+  background: #1a73e8;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  margin-left: 0.4rem;
+}
+
+.transfers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transfer-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.transfer-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.transfer-card-info strong {
+  color: #111;
+  font-size: 0.95rem;
+}
+
+.transfer-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.transfers-empty {
+  color: #888;
+  padding: 2rem 0;
 }
 
 /* Error state */

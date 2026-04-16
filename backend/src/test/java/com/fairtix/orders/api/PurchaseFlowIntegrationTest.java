@@ -57,10 +57,11 @@ class PurchaseFlowIntegrationTest {
     testUser = new User();
     testUser.setEmail("purchaseflow@test.com");
     testUser.setPassword("$2a$10$dummyhashfortest");
+    testUser.setEmailVerified(true);
     testUser = userRepository.save(testUser);
 
     testEvent = eventRepository.save(
-        new Event("Purchase Flow Concert", "Main Arena", Instant.now().plusSeconds(86400), (UUID) null));
+        new Event("Purchase Flow Concert", null, Instant.now().plusSeconds(86400), (UUID) null));
 
     seatA = seatRepository.save(new Seat(testEvent, "VIP", "1", "1", new BigDecimal("75.00")));
     seatB = seatRepository.save(new Seat(testEvent, "VIP", "1", "2", new BigDecimal("75.00")));
@@ -245,6 +246,7 @@ class PurchaseFlowIntegrationTest {
     User otherUser = new User();
     otherUser.setEmail("otheruser@test.com");
     otherUser.setPassword("$2a$10$dummyhashfortest");
+    otherUser.setEmailVerified(true);
     otherUser = userRepository.save(otherUser);
 
     String checkoutBody = """

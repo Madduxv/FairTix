@@ -19,6 +19,7 @@ function Login() {
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/dashboard';
+  const successMessage = location.state?.message || '';
 
   useEffect(() => {
     return () => {
@@ -106,6 +107,9 @@ function Login() {
     <div className="login-page">
       <h2>Log In</h2>
       <form onSubmit={handleSubmit} className="login-form">
+        {successMessage && (
+          <div className="success-message">{successMessage}</div>
+        )}
         {error && (
           <div className={`error-message${isLocked ? ' lockout-message' : ''}`}>
             {error}
@@ -137,6 +141,9 @@ function Login() {
             required
             disabled={isLocked}
           />
+          <div className="form-link" style={{ marginTop: '4px' }}>
+            <Link to="/forgot-password">Forgot password?</Link>
+          </div>
         </div>
         {shouldShowCaptcha && (
           <Recaptcha onChange={setCaptchaToken} ref={recaptchaRef} />

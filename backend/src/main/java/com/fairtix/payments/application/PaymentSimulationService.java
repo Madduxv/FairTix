@@ -1,5 +1,6 @@
 package com.fairtix.payments.application;
 
+import com.fairtix.audit.application.AuditService;
 import com.fairtix.payments.domain.PaymentRecord;
 import com.fairtix.payments.domain.PaymentStatus;
 import com.fairtix.payments.infrastructure.PaymentRecordRepository;
@@ -13,9 +14,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public class PaymentSimulationService {
 
   private final PaymentRecordRepository paymentRecordRepository;
+  private final AuditService auditService;
 
-  public PaymentSimulationService(PaymentRecordRepository paymentRecordRepository) {
+  public PaymentSimulationService(PaymentRecordRepository paymentRecordRepository,
+      AuditService auditService) {
     this.paymentRecordRepository = paymentRecordRepository;
+    this.auditService = auditService;
   }
 
   /**
@@ -38,7 +42,15 @@ public class PaymentSimulationService {
     PaymentRecord record = new PaymentRecord(
         orderId, userId, amount, currency, outcome, transactionId, failureReason);
 
-    return paymentRecordRepository.save(record);
+    PaymentRecord saved = paymentRecordRepository.save(record);
+
+    if (outcome == PaymentStatus.SUCCESS) {
+      auditService.log(userId, "PAYMENT_PROCESSED", "PAYMENT", saved.getId(), null);
+    } else {
+      auditService.log(userId, "PAYMENT_FAILED", "PAYMENT", saved.getId(), "outcome=" + outcome);
+    }
+
+    return saved;
   }
 
   private PaymentStatus randomOutcome() {
