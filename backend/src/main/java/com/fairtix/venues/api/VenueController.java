@@ -1,6 +1,5 @@
 package com.fairtix.venues.api;
 
-import com.fairtix.events.dto.UpdateEventRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -69,7 +68,7 @@ public class VenueController {
     }
 
     @PermitAll
-    @GetMapping
+    @GetMapping("/{id}")
     public VenueResponse getVenue(@PathVariable UUID id){
         return VenueResponse.from(service.getVenue(id));
     }
@@ -79,8 +78,8 @@ public class VenueController {
      * @param id the id of the venue
      * @return the requested venue which matches the id.
      */
-    @PreAuthorize("hasRole('Admin')")
-    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
     public VenueResponse Update(@PathVariable UUID id, @Valid @RequestBody UpdateVenueRequest request){
         Venue updated = service.update(id, request);
         return VenueResponse.from(updated);

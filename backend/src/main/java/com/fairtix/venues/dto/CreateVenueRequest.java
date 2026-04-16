@@ -1,5 +1,6 @@
 package com.fairtix.venues.dto;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * Requests and creates payloads for creating new venues.
@@ -8,7 +9,7 @@ import jakarta.validation.constraints.NotBlank;
  * @param address the address of the venue.
  */
 public record CreateVenueRequest(
-        @NotBlank String name,
-        @NotBlank String address) {
+        @NotBlank @Size(max = 500) String name,
+        @NotBlank @Size(max = 500) String address) {
 
 }

@@ -7,6 +7,7 @@ import com.fairtix.venues.dto.UpdateVenueRequest;
 
 import jakarta.persistence.criteria.Predicate;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+@Transactional
 
 @Service
 public class VenueService {
@@ -66,27 +69,27 @@ public class VenueService {
 
     /**
      *
-     * @param VenueName the name of a venue
-     * @param Address the address of the venue
+     * @param name the name of a venue
+     * @param address the address of the venue
      * @param pageable determines if within a page.
      * @return finds venues within the pages.
      */
     public Page<Venue> search(
-            String VenueName,
-            String Address,
+            String name,
+            String address,
             Pageable pageable){
         Specification<Venue> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (VenueName != null && !VenueName.isBlank()){
+            if (name != null && !name.isBlank()){
                 predicates.add(
                         cb.like(
-                                cb.lower(root.get("Venue Name")), "%" + VenueName.toLowerCase() + "%"));
+                                cb.lower(root.get("Venue Name")), "%" + name.toLowerCase() + "%"));
             }
-            if (Address != null && !VenueName.isBlank()){
+            if (address != null && !address.isBlank()){
                 predicates.add(
                         cb.like(
-                                cb.lower(root.get("Venue Name")), "%" + VenueName.toLowerCase() + "%"));
+                                cb.lower(root.get("Venue Name")), "%" + address.toLowerCase() + "%"));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
