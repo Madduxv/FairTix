@@ -53,6 +53,7 @@ class PaymentControllerTest {
     user = new User();
     user.setEmail("paytest@test.com");
     user.setPassword(passwordEncoder.encode("Test1234!"));
+    user.setEmailVerified(true);
     user = userRepository.save(user);
 
     Event event = new Event("Test Event", "Test Venue", Instant.now().plusSeconds(86400 * 30), null);
