@@ -9,6 +9,7 @@ import com.fairtix.auth.application.AccountLockedException;
 import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
 import com.fairtix.payments.application.PaymentFailedException;
+import com.fairtix.queue.application.QueueConflictException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleConflict(
       SeatHoldConflictException ex, HttpServletRequest req) {
     return error(HttpStatus.CONFLICT, "HOLD_CONFLICT", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(QueueConflictException.class)
+  public ResponseEntity<Map<String, Object>> handleQueueConflict(
+      QueueConflictException ex, HttpServletRequest req) {
+    return error(HttpStatus.CONFLICT, "QUEUE_CONFLICT", ex.getMessage(), req);
   }
 
   @ExceptionHandler(DuplicateSeatException.class)
