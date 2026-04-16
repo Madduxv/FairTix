@@ -33,7 +33,7 @@ export function AuthProvider({ children }) {
     fetchCurrentUser()
       .then((data) => {
         if (data) {
-          setUser({ email: data.email, userId: data.userId, role: data.role });
+          setUser({ email: data.email, userId: data.userId, role: data.role, emailVerified: data.emailVerified });
         }
       })
       .finally(() => setIsLoading(false));
@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
       throw new Error('Authentication failed: invalid response from server.');
     }
     setSessionExpired(false);
-    const userInfo = { email: data.email, userId: data.userId, role: data.role };
+    const userInfo = { email: data.email, userId: data.userId, role: data.role, emailVerified: data.emailVerified };
     setUser(userInfo);
     return userInfo;
   }
@@ -56,10 +56,17 @@ export function AuthProvider({ children }) {
       throw new Error('Registration failed: invalid response from server.');
     }
     setSessionExpired(false);
-    const userInfo = { email: data.email, userId: data.userId, role: data.role };
+    const userInfo = { email: data.email, userId: data.userId, role: data.role, emailVerified: data.emailVerified };
     setUser(userInfo);
     return userInfo;
   }
+
+  const refreshUser = useCallback(async () => {
+    const data = await fetchCurrentUser();
+    if (data) {
+      setUser({ email: data.email, userId: data.userId, role: data.role, emailVerified: data.emailVerified });
+    }
+  }, []);
 
   const value = {
     user,
@@ -69,6 +76,7 @@ export function AuthProvider({ children }) {
     login,
     signup,
     logout,
+    refreshUser,
   };
 
   return (
