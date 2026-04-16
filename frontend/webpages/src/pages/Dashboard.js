@@ -3,6 +3,49 @@ import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
 import '../styles/Dashboard.css';
 
+function EmailVerificationBanner({ email }) {
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
+  const [resendError, setResendError] = useState(false);
+
+  async function handleResend() {
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      await api.post('/auth/resend-verification');
+      setResendError(false);
+      setResendMessage('Verification email sent. Check your inbox.');
+    } catch {
+      setResendError(true);
+      setResendMessage('Could not send email. Please try again later.');
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
+  return (
+    <div className="dashboard-verify-banner">
+      <strong>Verify your email address</strong>
+      <p>
+        We sent a verification link to <strong>{email}</strong>.
+        You must verify before purchasing tickets.
+      </p>
+      <button
+        className="dashboard-verify-btn"
+        onClick={handleResend}
+        disabled={resendLoading}
+      >
+        {resendLoading ? 'Sending...' : 'Resend verification email'}
+      </button>
+      {resendMessage && (
+        <p className={resendError ? 'dashboard-verify-error' : 'dashboard-verify-success'}>
+          {resendMessage}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function Dashboard() {
   const { user, logout } = useAuth();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -85,6 +128,9 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <h2>Dashboard</h2>
+      {user.emailVerified === false && (
+        <EmailVerificationBanner email={user.email} />
+      )}
       <div className="dashboard-info">
         <p><strong>Email:</strong> {user.email}</p>
         <p><strong>Role:</strong> {user.role}</p>
