@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import { useAuth } from '../auth/useAuth';
 import '../styles/Checkout.css';
 
 function Checkout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [holds, setHolds] = useState([]);
   const [seatMap, setSeatMap] = useState({});
   const [loading, setLoading] = useState(true);
@@ -152,6 +154,20 @@ function Checkout() {
     setPaymentState('form');
     setPaymentError('');
     setCardNumber('');
+  }
+
+  if (user && user.emailVerified === false) {
+    return (
+      <div className="checkout">
+        <div className="checkout-error-page">
+          <h2>Email verification required</h2>
+          <p>You need to verify your email address before purchasing tickets.</p>
+          <p>Check your inbox for the verification link, or{' '}
+            <Link to="/dashboard">go to your dashboard</Link> to resend it.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (loading) return <div className="loading">Loading checkout...</div>;

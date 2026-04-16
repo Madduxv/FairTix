@@ -32,6 +32,9 @@ public class User {
   @Enumerated(EnumType.STRING)
   private Role role = Role.USER;
 
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified = false;
+
   @Column(name = "deleted_at")
   private Instant deletedAt;
 
@@ -73,6 +76,14 @@ public class User {
 
   public void setDeletedAt(Instant deletedAt) {
     this.deletedAt = deletedAt;
+  }
+
+  public boolean isEmailVerified() {
+    return emailVerified;
+  }
+
+  public void setEmailVerified(boolean emailVerified) {
+    this.emailVerified = emailVerified;
   }
 
   public boolean isDeleted() {

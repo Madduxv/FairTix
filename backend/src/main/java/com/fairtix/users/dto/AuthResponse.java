@@ -8,5 +8,6 @@ import java.util.UUID;
 public record AuthResponse(
         @Schema(description = "User ID") UUID userId,
         @Schema(description = "User email") String email,
-        @Schema(description = "User role") String role) {
+        @Schema(description = "User role") String role,
+        @Schema(description = "Whether the user's email address has been verified") boolean emailVerified) {
 }

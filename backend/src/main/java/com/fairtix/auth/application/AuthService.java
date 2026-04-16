@@ -11,17 +11,22 @@ import com.fairtix.users.domain.User;
 import com.fairtix.users.dto.LoginRequest;
 import com.fairtix.users.dto.RegisterRequest;
 import com.fairtix.users.infrastructure.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
 @Service
 public class AuthService {
 
+  private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final LoginAttemptService loginAttemptService;
   private final NotificationPreferenceService notificationPreferenceService;
+  private final EmailVerificationService emailVerificationService;
 
   private static final Pattern UPPERCASE = Pattern.compile("[A-Z]");
   private static final Pattern LOWERCASE = Pattern.compile("[a-z]");
@@ -33,12 +38,14 @@ public class AuthService {
       PasswordEncoder passwordEncoder,
       JwtService jwtService,
       LoginAttemptService loginAttemptService,
-      NotificationPreferenceService notificationPreferenceService) {
+      NotificationPreferenceService notificationPreferenceService,
+      EmailVerificationService emailVerificationService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
     this.jwtService = jwtService;
     this.loginAttemptService = loginAttemptService;
     this.notificationPreferenceService = notificationPreferenceService;
+    this.emailVerificationService = emailVerificationService;
   }
 
   @Transactional
@@ -55,6 +62,13 @@ public class AuthService {
 
     userRepository.save(user);
     notificationPreferenceService.createDefault(user.getId());
+
+    try {
+      emailVerificationService.sendVerificationEmail(user);
+    } catch (Exception e) {
+      log.error("Failed to send verification email to={} error={}", user.getEmail(), e.getMessage());
+      // Don't fail registration if email delivery fails
+    }
 
     return jwtService.generateToken(
         user.getId(),

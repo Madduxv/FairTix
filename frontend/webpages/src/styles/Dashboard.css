@@ -4,6 +4,47 @@
   margin: 0 auto;
 }
 
+.dashboard-verify-banner {
+  background: #fff8e1;
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-verify-banner p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+}
+
+.dashboard-verify-btn {
+  margin-top: 0.6rem;
+  padding: 0.4rem 1rem;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.dashboard-verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-verify-success {
+  color: #16a34a;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.dashboard-verify-error {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
 .dashboard h2 {
   margin: 0 0 1.5rem;
 }

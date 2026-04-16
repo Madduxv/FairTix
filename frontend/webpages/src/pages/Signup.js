@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+import api from '../api/client';
 import '../styles/Login.css';
 
 const PASSWORD_RULES = [
@@ -17,6 +18,9 @@ function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const { signup, user } = useAuth();
   const navigate = useNavigate();
 
@@ -47,7 +51,7 @@ function Signup() {
     setLoading(true);
     try {
       await signup(email, password);
-      navigate('/dashboard', { replace: true });
+      setRegistered(true);
     } catch (err) {
       if (err.status === 409) {
         setError('Email already exists.');
@@ -63,6 +67,39 @@ function Signup() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResend() {
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      await api.post('/auth/resend-verification');
+      setResendMessage('Verification email sent. Please check your inbox.');
+    } catch {
+      setResendMessage('Could not send email. Please try again later.');
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
+  if (registered) {
+    return (
+      <div className="login-page">
+        <h2>Check your email</h2>
+        <p>We sent a verification link to <strong>{email}</strong>. Click it to activate your account.</p>
+        <p>Didn't receive it?{' '}
+          <button
+            onClick={handleResend}
+            disabled={resendLoading}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+          >
+            {resendLoading ? 'Sending...' : 'Resend'}
+          </button>
+        </p>
+        {resendMessage && <p>{resendMessage}</p>}
+        <p><Link to="/dashboard">Continue to dashboard</Link></p>
+      </div>
+    );
   }
 
   return (
