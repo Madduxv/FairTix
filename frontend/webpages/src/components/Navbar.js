@@ -1,13 +1,10 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import '../styles/Navbar.css';
 
 function Navbar() {
   const { user, logout } = useAuth();
-  const location = useLocation();
-
-  if (location.pathname.startsWith('/admin')) return null;
 
   return (
     <nav className="navbar">

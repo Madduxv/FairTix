@@ -1,21 +1,23 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { saveToken, removeToken, getAuthPayload, decodeToken } from './tokenUtils';
+import { fetchCurrentUser } from './tokenUtils';
 
 export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
   const navigate = useNavigate();
 
-  const logout = useCallback((expired = false) => {
-    removeToken();
+  const logout = useCallback(async (expired = false) => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Cookie may already be gone — that's fine
+    }
     setUser(null);
-    setToken(null);
     if (expired) {
       setSessionExpired(true);
     }
@@ -26,76 +28,41 @@ export function AuthProvider({ children }) {
     setSessionExpired(false);
   }, []);
 
-  // Hydrate from localStorage on mount
+  // Hydrate from HTTP-only cookie on mount
   useEffect(() => {
-    const payload = getAuthPayload();
-    if (payload) {
-      setToken(payload.token);
-      setUser({
-        email: payload.email,
-        userId: payload.userId,
-        role: payload.role,
-      });
-    }
-    setIsLoading(false);
+    fetchCurrentUser()
+      .then((data) => {
+        if (data) {
+          setUser({ email: data.email, userId: data.userId, role: data.role });
+        }
+      })
+      .finally(() => setIsLoading(false));
   }, []);
-
-  // Auto-logout on token expiry
-  useEffect(() => {
-    if (!token) return;
-
-    const decoded = decodeToken(token);
-    if (!decoded || !decoded.exp) return;
-
-    const msUntilExpiry = decoded.exp * 1000 - Date.now();
-    if (msUntilExpiry <= 0) {
-      logout(true);
-      return;
-    }
-
-    const timer = setTimeout(() => logout(true), msUntilExpiry);
-    return () => clearTimeout(timer);
-  }, [token, logout]);
 
   async function login(email, password) {
     const data = await api.post('/auth/login', { email, password });
-    const decoded = decodeToken(data.token);
-    if (!decoded || !decoded.sub || !decoded.userId || !decoded.role) {
-      throw new Error('Authentication failed: invalid token received from server.');
+    if (!data || !data.userId || !data.email || !data.role) {
+      throw new Error('Authentication failed: invalid response from server.');
     }
     setSessionExpired(false);
-    saveToken(data.token);
-    setToken(data.token);
-    const userInfo = {
-      email: decoded.sub,
-      userId: decoded.userId,
-      role: decoded.role,
-    };
+    const userInfo = { email: data.email, userId: data.userId, role: data.role };
     setUser(userInfo);
     return userInfo;
   }
 
   async function signup(email, password) {
     const data = await api.post('/auth/register', { email, password });
-    const decoded = decodeToken(data.token);
-    if (!decoded || !decoded.sub || !decoded.userId || !decoded.role) {
-      throw new Error('Registration failed: invalid token received from server.');
+    if (!data || !data.userId || !data.email || !data.role) {
+      throw new Error('Registration failed: invalid response from server.');
     }
     setSessionExpired(false);
-    saveToken(data.token);
-    setToken(data.token);
-    const userInfo = {
-      email: decoded.sub,
-      userId: decoded.userId,
-      role: decoded.role,
-    };
+    const userInfo = { email: data.email, userId: data.userId, role: data.role };
     setUser(userInfo);
     return userInfo;
   }
 
   const value = {
     user,
-    token,
     isLoading,
     sessionExpired,
     clearSessionExpired,

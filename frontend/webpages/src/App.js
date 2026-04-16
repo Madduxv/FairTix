@@ -2,7 +2,7 @@ import './App.css';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { useAuth } from './auth/useAuth';
-import Navbar from './components/Navbar';
+import MainLayout from './components/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import Home from './pages/Home';
@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import MyTickets from './pages/MyTickets';
 import MyHolds from './pages/MyHolds';
 import Checkout from './pages/Checkout';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import AdminLayout from './admin/AdminLayout';
 import AdminDashboard from './admin/pages/AdminDashboard';
 import AdminEventsPage from './admin/pages/AdminEventsPage';
@@ -37,24 +38,26 @@ function App() {
       <Router>
         <AuthProvider>
           <SessionExpiredBanner />
-          <Navbar />
           <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/:eventId" element={<EventDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            {/* Public & authenticated routes wrapped in MainLayout */}
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/events/:eventId" element={<EventDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
 
-            {/* Authenticated routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/my-holds" element={<MyHolds />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/my-tickets" element={<MyTickets />} />
+              {/* Authenticated routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/my-holds" element={<MyHolds />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/my-tickets" element={<MyTickets />} />
+              </Route>
             </Route>
 
-            {/* Admin routes */}
+            {/* Admin routes — own layout */}
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />

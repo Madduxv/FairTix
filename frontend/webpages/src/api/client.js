@@ -1,10 +1,6 @@
-import { getToken } from '../auth/tokenUtils';
-
 const API_BASE = process.env.REACT_APP_API_URL || '';
 
 async function apiRequest(path, options = {}) {
-  const token = getToken();
-
   const headers = {
     ...options.headers,
   };
@@ -13,13 +9,10 @@ async function apiRequest(path, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(API_BASE + path, {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   if (!response.ok) {

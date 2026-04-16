@@ -13,17 +13,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import jakarta.servlet.http.Cookie;
 
 /**
  * Integration tests for {@link AuthController}.
  *
  * <p>All /auth/** endpoints are permitAll so no mock user is needed.
- * Tests verify registration, login, duplicate-email handling, and JWT validity.
+ * Tests verify registration, login, duplicate-email handling, HTTP-only cookies,
+ * /auth/me, and /auth/logout.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @Transactional
@@ -49,7 +52,7 @@ class AuthControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  void register_success_returnsToken() throws Exception {
+  void register_success_returnsUserInfoAndCookie() throws Exception {
     String body = """
         {
           "email":    "newuser@test.com",
@@ -61,7 +64,10 @@ class AuthControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").value(notNullValue()));
+        .andExpect(jsonPath("$.userId").value(notNullValue()))
+        .andExpect(jsonPath("$.email").value("newuser@test.com"))
+        .andExpect(jsonPath("$.role").value("USER"))
+        .andExpect(header().exists("Set-Cookie"));
   }
 
   @Test
@@ -87,7 +93,7 @@ class AuthControllerTest {
   }
 
   @Test
-  void register_tokenIsValidJwt() throws Exception {
+  void register_cookieContainsValidJwt() throws Exception {
     String body = """
         {
           "email":    "jwtcheck@test.com",
@@ -101,13 +107,16 @@ class AuthControllerTest {
         .andExpect(status().isOk())
         .andReturn();
 
-    String token = com.jayway.jsonpath.JsonPath
-        .read(result.getResponse().getContentAsString(), "$.token");
+    String setCookie = result.getResponse().getHeader("Set-Cookie");
+    assertNotNull(setCookie);
+    assertTrue(setCookie.contains("fairtix_token="));
+    assertTrue(setCookie.contains("HttpOnly"));
+    assertTrue(setCookie.contains("SameSite=Lax"));
 
-    // Token should be parseable and contain the registered email
+    // Extract token from Set-Cookie header
+    String token = setCookie.split("fairtix_token=")[1].split(";")[0];
     assertDoesNotThrow(() -> jwtService.extractAllClaims(token));
-    String email = jwtService.extractEmail(token);
-    assertEquals("jwtcheck@test.com", email);
+    assertEquals("jwtcheck@test.com", jwtService.extractEmail(token));
   }
 
   // -------------------------------------------------------------------------
@@ -115,7 +124,7 @@ class AuthControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  void login_success_returnsToken() throws Exception {
+  void login_success_returnsUserInfoAndCookie() throws Exception {
     // Register first
     String registerBody = """
         {
@@ -139,7 +148,10 @@ class AuthControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(loginBody))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.token").value(notNullValue()));
+        .andExpect(jsonPath("$.userId").value(notNullValue()))
+        .andExpect(jsonPath("$.email").value("loginuser@test.com"))
+        .andExpect(jsonPath("$.role").value("USER"))
+        .andExpect(header().exists("Set-Cookie"));
   }
 
   @Test
@@ -182,5 +194,58 @@ class AuthControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isUnauthorized());
+  }
+
+  // -------------------------------------------------------------------------
+  // GET /auth/me
+  // -------------------------------------------------------------------------
+
+  @Test
+  void me_withValidCookie_returnsUserInfo() throws Exception {
+    // Register to get a cookie
+    String body = """
+        {
+          "email":    "mecheck@test.com",
+          "password": "Password123!"
+        }
+        """;
+
+    MvcResult registerResult = mockMvc.perform(post("/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isOk())
+        .andReturn();
+
+    String setCookie = registerResult.getResponse().getHeader("Set-Cookie");
+    String token = setCookie.split("fairtix_token=")[1].split(";")[0];
+
+    // Use cookie to call /auth/me
+    mockMvc.perform(get("/auth/me")
+            .cookie(new Cookie("fairtix_token", token)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.email").value("mecheck@test.com"))
+        .andExpect(jsonPath("$.role").value("USER"));
+  }
+
+  @Test
+  void me_withoutCookie_returns403() throws Exception {
+    mockMvc.perform(get("/auth/me"))
+        .andExpect(status().isForbidden());
+  }
+
+  // -------------------------------------------------------------------------
+  // POST /auth/logout
+  // -------------------------------------------------------------------------
+
+  @Test
+  void logout_clearsCookie() throws Exception {
+    MvcResult result = mockMvc.perform(post("/auth/logout"))
+        .andExpect(status().isNoContent())
+        .andReturn();
+
+    String setCookie = result.getResponse().getHeader("Set-Cookie");
+    assertNotNull(setCookie);
+    assertTrue(setCookie.contains("fairtix_token="));
+    assertTrue(setCookie.contains("Max-Age=0"));
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
 import TicketCard from '../components/TicketCard';
 import '../styles/MyTickets.css';
@@ -54,6 +55,7 @@ function MyTickets() {
         <div className="tickets-empty">
           <p>You don't have any tickets yet.</p>
           <p>Browse events and purchase tickets to see them here.</p>
+          <Link to="/events" className="tickets-browse-link">Browse Events</Link>
         </div>
       )}
 
