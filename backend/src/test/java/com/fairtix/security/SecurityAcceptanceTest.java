@@ -59,12 +59,14 @@ class SecurityAcceptanceTest {
     regularUser = new User();
     regularUser.setEmail("secuser@test.com");
     regularUser.setPassword("$2a$10$dummyhashfortest");
+    regularUser.setEmailVerified(true);
     regularUser = userRepository.save(regularUser);
 
     adminUser = new User();
     adminUser.setEmail("secadmin@test.com");
     adminUser.setPassword("$2a$10$dummyhashfortest");
     adminUser.setRole(Role.ADMIN);
+    adminUser.setEmailVerified(true);
     adminUser = userRepository.save(adminUser);
 
     testEvent = eventRepository.save(
@@ -283,6 +285,7 @@ class SecurityAcceptanceTest {
       User otherUser = new User();
       otherUser.setEmail("other5@test.com");
       otherUser.setPassword("$2a$10$dummyhashfortest");
+      otherUser.setEmailVerified(true);
       otherUser = userRepository.save(otherUser);
 
       String body = """

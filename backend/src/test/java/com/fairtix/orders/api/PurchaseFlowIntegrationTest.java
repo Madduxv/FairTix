@@ -57,6 +57,7 @@ class PurchaseFlowIntegrationTest {
     testUser = new User();
     testUser.setEmail("purchaseflow@test.com");
     testUser.setPassword("$2a$10$dummyhashfortest");
+    testUser.setEmailVerified(true);
     testUser = userRepository.save(testUser);
 
     testEvent = eventRepository.save(
@@ -245,6 +246,7 @@ class PurchaseFlowIntegrationTest {
     User otherUser = new User();
     otherUser.setEmail("otheruser@test.com");
     otherUser.setPassword("$2a$10$dummyhashfortest");
+    otherUser.setEmailVerified(true);
     otherUser = userRepository.save(otherUser);
 
     String checkoutBody = """
