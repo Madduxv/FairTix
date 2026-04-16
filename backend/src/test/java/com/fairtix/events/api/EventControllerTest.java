@@ -114,7 +114,7 @@ class EventControllerTest {
 
   @Test
   void listEvents_unauthenticated_returns200() throws Exception {
-    eventService.createEvent("Event 1", Instant.parse("2026-06-01T18:00:00Z"), "Venue A", null);
+    eventService.createEvent("Event 1", Instant.parse("2026-06-01T18:00:00Z"), "Venue A", null, false, null);
 
     mockMvc.perform(get("/api/events"))
         .andExpect(status().isOk())
@@ -125,9 +125,9 @@ class EventControllerTest {
 
   @Test
   void listEvents_pagination_works() throws Exception {
-    eventService.createEvent("Event A", Instant.parse("2026-06-01T18:00:00Z"), "Venue A", null);
-    eventService.createEvent("Event B", Instant.parse("2026-06-02T18:00:00Z"), "Venue B", null);
-    eventService.createEvent("Event C", Instant.parse("2026-06-03T18:00:00Z"), "Venue C", null);
+    eventService.createEvent("Event A", Instant.parse("2026-06-01T18:00:00Z"), "Venue A", null, false, null);
+    eventService.createEvent("Event B", Instant.parse("2026-06-02T18:00:00Z"), "Venue B", null, false, null);
+    eventService.createEvent("Event C", Instant.parse("2026-06-03T18:00:00Z"), "Venue C", null, false, null);
 
     mockMvc.perform(get("/api/events")
             .param("page", "0")
@@ -145,7 +145,7 @@ class EventControllerTest {
 
   @Test
   void getEvent_existingId_returns200() throws Exception {
-    Event event = eventService.createEvent("My Event", Instant.parse("2026-07-01T20:00:00Z"), "Stadium", null);
+    Event event = eventService.createEvent("My Event", Instant.parse("2026-07-01T20:00:00Z"), "Stadium", null, false, null);
 
     mockMvc.perform(get("/api/events/{id}", event.getId()))
         .andExpect(status().isOk())

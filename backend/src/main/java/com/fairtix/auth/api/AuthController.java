@@ -9,13 +9,19 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import com.fairtix.auth.application.AuthService;
+import com.fairtix.auth.application.EmailVerificationService;
 import com.fairtix.auth.application.JwtService;
+import com.fairtix.auth.application.PasswordResetService;
 import com.fairtix.auth.domain.CustomUserPrincipal;
 import com.fairtix.users.dto.AuthResponse;
+import com.fairtix.users.dto.ForgotPasswordRequest;
 import com.fairtix.users.dto.LoginRequest;
 import com.fairtix.users.dto.RegisterRequest;
+import com.fairtix.users.dto.ResetPasswordRequest;
+import com.fairtix.users.infrastructure.UserRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -39,13 +45,26 @@ public class AuthController {
 
     private final AuthService service;
     private final JwtService jwtService;
+    private final EmailVerificationService emailVerificationService;
+    private final PasswordResetService passwordResetService;
+    private final UserRepository userRepository;
 
     @Value("${app.cookie.secure:false}")
     private boolean cookieSecure;
 
-    public AuthController(AuthService service, JwtService jwtService) {
+    @Value("${app.base-url:http://localhost:3000}")
+    private String baseUrl;
+
+    public AuthController(AuthService service,
+                          JwtService jwtService,
+                          EmailVerificationService emailVerificationService,
+                          PasswordResetService passwordResetService,
+                          UserRepository userRepository) {
         this.service = service;
         this.jwtService = jwtService;
+        this.emailVerificationService = emailVerificationService;
+        this.passwordResetService = passwordResetService;
+        this.userRepository = userRepository;
     }
 
     @Operation(summary = "Register a new user",
@@ -85,7 +104,72 @@ public class AuthController {
                 .map(a -> a.substring(5))
                 .findFirst()
                 .orElse("USER");
-        return new AuthResponse(principal.getUserId(), principal.getUsername(), role);
+        boolean emailVerified = userRepository.findById(principal.getUserId())
+                .map(u -> u.isEmailVerified())
+                .orElse(false);
+        return new AuthResponse(principal.getUserId(), principal.getUsername(), role, emailVerified);
+    }
+
+    @Operation(summary = "Verify email address",
+            description = "Validates the email verification token and marks the user's email as verified.")
+    @ApiResponse(responseCode = "302", description = "Redirect to frontend with result")
+    @SecurityRequirements
+    @GetMapping("/verify")
+    public RedirectView verifyEmail(@RequestParam("token") String token) {
+        try {
+            emailVerificationService.verifyToken(token);
+            return new RedirectView(baseUrl + "/verify?success=true");
+        } catch (Exception e) {
+            return new RedirectView(baseUrl + "/verify?error=true");
+        }
+    }
+
+    @Operation(summary = "Resend verification email",
+            description = "Sends a new verification email for the authenticated user.")
+    @ApiResponse(responseCode = "204", description = "Email sent if account exists and is unverified")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/resend-verification")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resendVerification(@AuthenticationPrincipal CustomUserPrincipal principal) {
+        userRepository.findById(principal.getUserId()).ifPresent(user -> {
+            if (!user.isEmailVerified() && !user.isDeleted()) {
+                try {
+                    emailVerificationService.sendVerificationEmail(user);
+                } catch (Exception ignored) {
+                    // Swallow — don't leak whether send succeeded
+                }
+            }
+        });
+    }
+
+    @Operation(summary = "Request password reset",
+            description = "Sends a password reset email if the address is registered. Always returns 204 to prevent email enumeration.")
+    @ApiResponse(responseCode = "204", description = "Reset email sent if account exists")
+    @SecurityRequirements
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            passwordResetService.requestReset(request.email());
+        } catch (Exception e) {
+            // Swallow rate-limit and all other errors — never reveal account existence
+            // Re-throw only rate-limit so clients get 429 feedback without leaking data
+            if (e instanceof org.springframework.web.server.ResponseStatusException rse
+                    && rse.getStatusCode().value() == 429) {
+                throw rse;
+            }
+        }
+    }
+
+    @Operation(summary = "Reset password",
+            description = "Resets the user's password using a valid time-limited token.")
+    @ApiResponse(responseCode = "204", description = "Password reset successfully")
+    @ApiResponse(responseCode = "400", description = "Invalid, expired, or already-used token, or weak password")
+    @SecurityRequirements
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request.token(), request.newPassword());
     }
 
     @Operation(summary = "Log out",
@@ -118,9 +202,14 @@ public class AuthController {
 
     private AuthResponse buildAuthResponse(String jwt) {
         var claims = jwtService.extractAllClaims(jwt);
+        UUID userId = UUID.fromString(claims.get("userId", String.class));
+        boolean emailVerified = userRepository.findById(userId)
+                .map(u -> u.isEmailVerified())
+                .orElse(false);
         return new AuthResponse(
-                UUID.fromString(claims.get("userId", String.class)),
+                userId,
                 claims.getSubject(),
-                claims.get("role", String.class));
+                claims.get("role", String.class),
+                emailVerified);
     }
 }
