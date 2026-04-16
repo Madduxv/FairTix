@@ -78,7 +78,7 @@ public class PaymentController {
         .filter(event -> event.isQueueRequired())
         .distinct()
         .forEach(event -> {
-          if (!queueService.isAdmitted(event.getId(), principal.getUserId())) {
+          if (!queueService.hasCheckoutClearance(event.getId(), principal.getUserId())) {
             throw new org.springframework.web.server.ResponseStatusException(
                 org.springframework.http.HttpStatus.FORBIDDEN,
                 "Queue admission required. You must be admitted from the waiting room before purchasing tickets.");

@@ -113,7 +113,7 @@ public class UserController {
     Map<String, Object> map = new LinkedHashMap<>();
     map.put("ticketId", ticket.getId());
     map.put("eventTitle", ticket.getEvent().getTitle());
-    map.put("eventVenue", ticket.getEvent().getVenue());
+    map.put("eventVenue", ticket.getEvent().getVenue() != null ? ticket.getEvent().getVenue().getName() : null);
     map.put("eventStartTime", ticket.getEvent().getStartTime());
     map.put("seatSection", ticket.getSeat().getSection());
     map.put("seatRow", ticket.getSeat().getRowLabel());
