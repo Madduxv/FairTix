@@ -30,6 +30,13 @@ services:
       timeout: 3s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: fairtix-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   backend:
     build: ./backend
     container_name: fairtix-backend
@@ -44,6 +51,10 @@ services:
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
       SPRING_PROFILES_ACTIVE: dev
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_AUTH: "false"
+      MAIL_STARTTLS: "false"
     depends_on:
       postgres:
         condition: service_healthy
