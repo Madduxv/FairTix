@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Login from './Login';
 import { AuthContext } from '../auth/AuthContext';
@@ -40,7 +40,9 @@ async function submitForm(email = 'test@example.com', password = 'password') {
   const emailInput = screen.getByLabelText(/email/i);
   fireEvent.change(emailInput, { target: { value: email } });
   fireEvent.change(screen.getByLabelText(/password/i), { target: { value: password } });
-  fireEvent.submit(emailInput.closest('form'));
+  await act(async () => {
+    fireEvent.submit(emailInput.closest('form'));
+  });
 }
 
 test('shows invalid credentials message on 401', async () => {
