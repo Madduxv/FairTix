@@ -87,6 +87,15 @@ test('shows lockout message and timer on 429', async () => {
   expect(screen.getByText(/try again in/i)).toBeInTheDocument();
 });
 
+test('calls login with correct credentials on successful submit', async () => {
+  const loginFn = jest.fn().mockResolvedValue({ userId: '1', email: 'test@example.com', role: 'USER' });
+  renderLogin(loginFn);
+  await submitForm('test@example.com', 'mypassword');
+  await waitFor(() =>
+    expect(loginFn).toHaveBeenCalledWith('test@example.com', 'mypassword')
+  );
+});
+
 test('disables inputs and button during lockout', async () => {
   renderLogin(
     jest.fn().mockRejectedValue(makeError(429, 'Too many attempts', { remainingSeconds: 30 }))

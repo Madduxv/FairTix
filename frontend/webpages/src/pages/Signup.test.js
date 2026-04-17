@@ -85,6 +85,14 @@ test('shows mismatch error without calling signup', async () => {
   expect(signupFn).not.toHaveBeenCalled();
 });
 
+test('calls signup with correct email and password on submit', async () => {
+  const signupFn = jest.fn().mockResolvedValue({ userId: '1', email: 'new@example.com', role: 'USER' });
+  await fillAndSubmit(signupFn);
+  await waitFor(() =>
+    expect(signupFn).toHaveBeenCalledWith('new@example.com', VALID_PASSWORD)
+  );
+});
+
 test('shows password requirements error when rules not met', async () => {
   const signupFn = jest.fn();
   renderSignup(signupFn);
