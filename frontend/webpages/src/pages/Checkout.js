@@ -20,6 +20,7 @@ function Checkout() {
   const [paymentState, setPaymentState] = useState('form'); // form | processing | success | failed
   const [tick, setTick] = useState(0);
   const tickRef = useRef(null);
+  const holdIdsRef = useRef(location.state?.holdIds || []);
 
   // Countdown timer for hold expiration
   useEffect(() => {
@@ -31,7 +32,7 @@ function Checkout() {
   }, [holds.length, paymentState]);
 
   const fetchConfirmedHolds = useCallback(async () => {
-    const passedHoldIds = location.state?.holdIds || [];
+    const passedHoldIds = holdIdsRef.current;
     setError('');
     try {
       let confirmedHolds;
@@ -76,7 +77,7 @@ function Checkout() {
     } finally {
       setLoading(false);
     }
-  }, [location.state]);
+  }, []);
 
   useEffect(() => {
     fetchConfirmedHolds();
