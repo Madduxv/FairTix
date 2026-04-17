@@ -11,6 +11,8 @@ import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
 import com.fairtix.payments.application.PaymentFailedException;
 import com.fairtix.queue.application.QueueConflictException;
+import com.fairtix.refunds.application.RefundNotEligibleException;
+import com.fairtix.support.application.SupportTicketNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +77,12 @@ public class GlobalExceptionHandler {
     return error(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex.getMessage(), req);
   }
 
+  @ExceptionHandler(IllegalStateException.class)
+  public ResponseEntity<Map<String, Object>> handleInvalidStateTransition(
+      IllegalStateException ex, HttpServletRequest req) {
+    return error(HttpStatus.CONFLICT, "INVALID_STATE_TRANSITION", ex.getMessage(), req);
+  }
+
   /**
    * Handles @Valid failures on request bodies.
    * Reports the first field error so clients know exactly what to fix.
@@ -124,6 +132,12 @@ public class GlobalExceptionHandler {
     return error(HttpStatus.NOT_FOUND, "ORDER_NOT_FOUND", ex.getMessage(), req);
   }
 
+  @ExceptionHandler(SupportTicketNotFoundException.class)
+  public ResponseEntity<Map<String, Object>> handleSupportTicketNotFound(
+      SupportTicketNotFoundException ex, HttpServletRequest req) {
+    return error(HttpStatus.NOT_FOUND, "SUPPORT_TICKET_NOT_FOUND", ex.getMessage(), req);
+  }
+
   @ExceptionHandler(ResourceNotFoundException.class)
   public ResponseEntity<Map<String, Object>> handleResourceNotFound(
       ResourceNotFoundException ex, HttpServletRequest req) {
@@ -153,6 +167,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Object> handlePaymentProcessing(
       PaymentProcessingException ex, HttpServletRequest req) {
     return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(ex.getPaymentResponse());
+  }
+
+  @ExceptionHandler(RefundNotEligibleException.class)
+  public ResponseEntity<Map<String, Object>> handleRefundNotEligible(
+      RefundNotEligibleException ex, HttpServletRequest req) {
+    return error(HttpStatus.UNPROCESSABLE_ENTITY, "REFUND_NOT_ELIGIBLE", ex.getMessage(), req);
   }
 
   @ExceptionHandler(PaymentFailedException.class)

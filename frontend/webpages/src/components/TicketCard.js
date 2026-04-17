@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import TransferDialog from './TransferDialog';
+import RefundDialog from './RefundDialog';
 
-function TicketCard({ ticket, onTransferred }) {
+function TicketCard({ ticket, onTransferred, onRefunded }) {
   const [showTransfer, setShowTransfer] = useState(false);
+  const [showRefund, setShowRefund] = useState(false);
   const statusClass = ticket.status.toLowerCase();
 
   return (
@@ -51,6 +53,9 @@ function TicketCard({ ticket, onTransferred }) {
           <button className="btn-transfer" onClick={() => setShowTransfer(true)}>
             Transfer
           </button>
+          <button className="btn-refund" onClick={() => setShowRefund(true)}>
+            Request Refund
+          </button>
         </div>
       )}
       {showTransfer && (
@@ -58,6 +63,13 @@ function TicketCard({ ticket, onTransferred }) {
           ticket={ticket}
           onClose={() => setShowTransfer(false)}
           onSuccess={() => { if (onTransferred) onTransferred(); }}
+        />
+      )}
+      {showRefund && (
+        <RefundDialog
+          ticket={ticket}
+          onClose={() => setShowRefund(false)}
+          onSuccess={() => { if (onRefunded) onRefunded(); }}
         />
       )}
     </div>
