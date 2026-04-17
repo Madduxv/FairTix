@@ -2,6 +2,7 @@ package com.fairtix.inventory.api;
 
 import com.fairtix.inventory.application.SeatService;
 import com.fairtix.inventory.dto.CreateSeatRequest;
+import com.fairtix.inventory.dto.SeatMapResponse;
 import com.fairtix.inventory.dto.SeatResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -89,5 +90,24 @@ public class SeatController {
                 ? seatService.getAvailableSeatsForEvent(eventId)
                 : seatService.getSeatsForEvent(eventId);
         return seats.stream().map(SeatResponse::from).toList();
+    }
+
+    /**
+     * Returns seats with visual coordinates for map rendering.
+     * Seats without stored coordinates are auto-positioned via grid layout.
+     *
+     * @param eventId the event id
+     * @return list of seats with posX/posY for SVG rendering
+     */
+    @Operation(summary = "Get seat map data for an event",
+            description = "Public. Returns all seats with visual coordinates for map rendering.")
+    @ApiResponse(responseCode = "200", description = "Seat map data")
+    @SecurityRequirements
+    @PermitAll
+    @GetMapping("/map")
+    public List<SeatMapResponse> getSeatMap(@PathVariable UUID eventId) {
+        log.info("Request to fetch seat map for event {}", eventId);
+        var seats = seatService.getSeatsForEvent(eventId);
+        return SeatMapResponse.fromSeats(seats);
     }
 }

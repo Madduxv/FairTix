@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
 import WaitingRoom from '../components/WaitingRoom';
+import SeatMap from '../components/SeatMap';
 import '../styles/EventDetail.css';
 
 const MAX_SEATS_PER_HOLD = 10;
@@ -41,6 +42,8 @@ function EventDetail() {
   const [selectionError, setSelectionError] = useState('');
   const [holdDuration, setHoldDuration] = useState(10);
   const [ownedTicketCount, setOwnedTicketCount] = useState(0);
+
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
 
   const prevSeatsRef = useRef([]);
 
@@ -279,6 +282,31 @@ function EventDetail() {
         </div>
       </div>
 
+      {/* Status banners */}
+      {event.status === 'PUBLISHED' && (
+        <div className="event-status-banner event-status-banner--announced">
+          Tickets are not yet on sale. Stay tuned — this event has been announced.
+        </div>
+      )}
+      {event.status === 'CANCELLED' && (
+        <div className="event-status-banner event-status-banner--cancelled">
+          This event has been cancelled.
+          {event.cancellationReason && (
+            <span> Reason: {event.cancellationReason}</span>
+          )}
+        </div>
+      )}
+      {event.status === 'COMPLETED' && (
+        <div className="event-status-banner event-status-banner--completed">
+          This event has already taken place. Ticket sales are closed.
+        </div>
+      )}
+      {event.status === 'ARCHIVED' && (
+        <div className="event-status-banner event-status-banner--completed">
+          This event has been archived.
+        </div>
+      )}
+
       {/* Queue section for queue-required events */}
       {event.queueRequired && user && queueStatus === null && (
         <div className="queue-join-section">
@@ -358,19 +386,19 @@ function EventDetail() {
         </div>
       )}
 
-      {event.queueRequired && !user && (
+      {event.queueRequired && !user && event.status === 'ACTIVE' && (
         <div className="login-prompt">
           <Link to="/login">Log in</Link> to join the queue for this event.
         </div>
       )}
 
-      {user && event.maxTicketsPerUser != null && (
+      {user && event.maxTicketsPerUser != null && event.status === 'ACTIVE' && (
         <div className="purchase-cap-notice">
           Purchase limit: {ownedTicketCount} / {event.maxTicketsPerUser} ticket(s) used for this event.
         </div>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      {event.status === 'ACTIVE' && <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div className="seat-summary">
           <span className="seat-summary-chip total">{seats.length} total</span>
           {summary.AVAILABLE > 0 && (
@@ -386,91 +414,125 @@ function EventDetail() {
             <span className="seat-summary-chip sold">{summary.SOLD} sold</span>
           )}
         </div>
-        <button className="event-detail-refresh" onClick={fetchData}>Refresh</button>
-      </div>
-
-      {event.queueRequired && user && queueStatus === 'WAITING' ? null : seats.length === 0 ? (
-        <div className="seats-empty">
-          <p>No seats listed for this event yet.</p>
-        </div>
-      ) : (
-        Object.entries(sectionGroups).map(([section, sectionSeats]) => (
-          <div key={section} className="seat-section-group">
-            <h3>{section}{(() => {
-              const prices = sectionSeats.map(s => s.price ?? 0);
-              const min = Math.min(...prices);
-              const max = Math.max(...prices);
-              return min === max
-                ? ` \u2014 $${min.toFixed(2)}`
-                : ` \u2014 from $${min.toFixed(2)} to $${max.toFixed(2)}`;
-            })()}</h3>
-            <table className="seats-table">
-              <thead>
-                <tr>
-                  <th>Row</th>
-                  <th>Seat</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sectionSeats.map((seat) => {
-                  const isAvailable = seat.status === 'AVAILABLE';
-                  const isSelected = selectedSeatIds.has(seat.id);
-                  const queueGated = event.queueRequired && queueStatus !== 'ADMITTED';
-                  const atCap = event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser;
-                  const canSelect = user && isAvailable && !queueGated && !atCap;
-                  return (
-                    <tr
-                      key={seat.id}
-                      className={[
-                        canSelect ? 'seat-row-selectable' : '',
-                        isSelected ? 'seat-row-selected' : '',
-                      ].join(' ')}
-                      onClick={canSelect ? () => toggleSeat(seat.id) : undefined}
-                      role={canSelect ? 'button' : undefined}
-                      tabIndex={canSelect ? 0 : -1}
-                      onKeyDown={
-                        canSelect
-                          ? (e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                toggleSeat(seat.id);
-                              }
-                            }
-                          : undefined
-                      }
-                    >
-                      <td>{seat.rowLabel}</td>
-                      <td>{seat.seatNumber}</td>
-                      <td>${seat.price != null ? Number(seat.price).toFixed(2) : '—'}</td>
-                      <td>
-                        <span className={`seat-status ${seat.status.toLowerCase()}`}>
-                          {isSelected ? 'SELECTED' : seat.status}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div className="view-toggle">
+            <button
+              className={`view-toggle-btn${viewMode === 'list' ? ' active' : ''}`}
+              onClick={() => setViewMode('list')}
+            >
+              List
+            </button>
+            <button
+              className={`view-toggle-btn${viewMode === 'map' ? ' active' : ''}`}
+              onClick={() => setViewMode('map')}
+            >
+              Map
+            </button>
           </div>
-        ))
-      )}
-
-      {seats.length > 0 && (!summary.AVAILABLE || summary.AVAILABLE === 0) && (
-        <div className="seats-all-taken">
-          <p>All seats are currently held or sold. Check back later or refresh to see updates.</p>
+          <button className="event-detail-refresh" onClick={fetchData}>Refresh</button>
         </div>
+      </div>}
+
+      {event.status === 'ACTIVE' && (
+        event.queueRequired && user && queueStatus === 'WAITING' ? null : seats.length === 0 ? (
+          <div className="seats-empty">
+            <p>No seats listed for this event yet.</p>
+          </div>
+        ) : viewMode === 'map' ? (
+          <>
+            <SeatMap
+              seats={seats}
+              selectedSeatIds={selectedSeatIds}
+              onToggleSeat={toggleSeat}
+              canSelect={user && !(event.queueRequired && queueStatus !== 'ADMITTED') && !(event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser)}
+            />
+            {!user && (
+              <div className="login-prompt">
+                <Link to="/login">Log in</Link> to hold seats.
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {Object.entries(sectionGroups).map(([section, sectionSeats]) => (
+              <div key={section} className="seat-section-group">
+                <h3>{section}{(() => {
+                  const prices = sectionSeats.map(s => s.price ?? 0);
+                  const min = Math.min(...prices);
+                  const max = Math.max(...prices);
+                  return min === max
+                    ? ` \u2014 $${min.toFixed(2)}`
+                    : ` \u2014 from $${min.toFixed(2)} to $${max.toFixed(2)}`;
+                })()}</h3>
+                <table className="seats-table">
+                  <thead>
+                    <tr>
+                      <th>Row</th>
+                      <th>Seat</th>
+                      <th>Price</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sectionSeats.map((seat) => {
+                      const isAvailable = seat.status === 'AVAILABLE';
+                      const isSelected = selectedSeatIds.has(seat.id);
+                      const queueGated = event.queueRequired && queueStatus !== 'ADMITTED';
+                      const atCap = event.maxTicketsPerUser != null && ownedTicketCount >= event.maxTicketsPerUser;
+                      const canSelect = user && isAvailable && !queueGated && !atCap;
+                      return (
+                        <tr
+                          key={seat.id}
+                          className={[
+                            canSelect ? 'seat-row-selectable' : '',
+                            isSelected ? 'seat-row-selected' : '',
+                          ].join(' ')}
+                          onClick={canSelect ? () => toggleSeat(seat.id) : undefined}
+                          role={canSelect ? 'button' : undefined}
+                          tabIndex={canSelect ? 0 : -1}
+                          onKeyDown={
+                            canSelect
+                              ? (e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    toggleSeat(seat.id);
+                                  }
+                                }
+                              : undefined
+                          }
+                        >
+                          <td>{seat.rowLabel}</td>
+                          <td>{seat.seatNumber}</td>
+                          <td>${seat.price != null ? Number(seat.price).toFixed(2) : '—'}</td>
+                          <td>
+                            <span className={`seat-status ${seat.status.toLowerCase()}`}>
+                              {isSelected ? 'SELECTED' : seat.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+
+            {seats.length > 0 && (!summary.AVAILABLE || summary.AVAILABLE === 0) && (
+              <div className="seats-all-taken">
+                <p>All seats are currently held or sold. Check back later or refresh to see updates.</p>
+              </div>
+            )}
+
+            {!user && seats.length > 0 && (
+              <div className="login-prompt">
+                <Link to="/login">Log in</Link> to hold seats.
+              </div>
+            )}
+          </>
+        )
       )}
 
-      {!user && seats.length > 0 && (
-        <div className="login-prompt">
-          <Link to="/login">Log in</Link> to hold seats.
-        </div>
-      )}
-
-      {holdMessage && (
+      {event.status === 'ACTIVE' && holdMessage && (
         <div className={`hold-message ${holdMessage.type}`}>
           {holdMessage.text}
           {holdMessage.type === 'success' && createdHoldIds.length > 0 && (
@@ -488,11 +550,11 @@ function EventDetail() {
         </div>
       )}
 
-      {selectionError && (
+      {event.status === 'ACTIVE' && selectionError && (
         <div className="selection-error">{selectionError}</div>
       )}
 
-      {selectedSeatIds.size > 0 && (
+      {event.status === 'ACTIVE' && selectedSeatIds.size > 0 && (
         <div className="selection-bar">
           <span>{selectedSeatIds.size} seat{selectedSeatIds.size > 1 ? 's' : ''} selected</span>
           <div className="selection-bar-actions">
