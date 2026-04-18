@@ -73,7 +73,7 @@ class SecurityAcceptanceTest {
     adminUser.setEmailVerified(true);
     adminUser = userRepository.save(adminUser);
 
-    testVenue = venueRepository.save(new Venue("Test Venue", null, null, null, null));
+    testVenue = venueRepository.save(new Venue("Test Venue", null, null, null, null, null, null));
 
     testEvent = eventRepository.save(
         new Event("Security Test Event", testVenue, Instant.now().plusSeconds(86400), (UUID) null));
