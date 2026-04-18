@@ -156,6 +156,53 @@ test('shows login prompt for unauthenticated users', async () => {
   expect(screen.getByText(/log in/i)).toBeInTheDocument();
 });
 
+test('displays Featuring section with performer name and genre', async () => {
+  api.get.mockImplementation((url) => {
+    if (url === '/api/events/event-1')
+      return Promise.resolve({
+        ...activeEvent,
+        performers: [
+          { id: 'p1', name: 'Famous Band', genre: 'Rock' },
+          { id: 'p2', name: 'Solo Act', genre: null },
+        ],
+      });
+    if (url.includes('/seats')) return Promise.resolve([seat1]);
+    if (url === '/api/tickets') return Promise.resolve([]);
+    return Promise.resolve([]);
+  });
+  renderEventDetail();
+  await waitFor(() => expect(screen.getByText('Jazz Night')).toBeInTheDocument());
+  expect(screen.getByText(/featuring/i)).toBeInTheDocument();
+  expect(screen.getByText(/famous band \(rock\)/i)).toBeInTheDocument();
+  expect(screen.getByText(/solo act/i)).toBeInTheDocument();
+});
+
+test('does not render Featuring section when event has no performers', async () => {
+  api.get.mockImplementation((url) => {
+    if (url === '/api/events/event-1')
+      return Promise.resolve({ ...activeEvent, performers: [] });
+    if (url.includes('/seats')) return Promise.resolve([seat1]);
+    if (url === '/api/tickets') return Promise.resolve([]);
+    return Promise.resolve([]);
+  });
+  renderEventDetail();
+  await waitFor(() => expect(screen.getByText('Jazz Night')).toBeInTheDocument());
+  expect(screen.queryByText(/featuring/i)).not.toBeInTheDocument();
+});
+
+test('does not render Featuring section when performers field is absent', async () => {
+  api.get.mockImplementation((url) => {
+    if (url === '/api/events/event-1')
+      return Promise.resolve({ ...activeEvent }); // activeEvent has no performers field
+    if (url.includes('/seats')) return Promise.resolve([seat1]);
+    if (url === '/api/tickets') return Promise.resolve([]);
+    return Promise.resolve([]);
+  });
+  renderEventDetail();
+  await waitFor(() => expect(screen.getByText('Jazz Night')).toBeInTheDocument());
+  expect(screen.queryByText(/featuring/i)).not.toBeInTheDocument();
+});
+
 test('shows purchase limit notice when maxTicketsPerUser is set', async () => {
   api.get.mockImplementation((url) => {
     if (url === '/api/events/event-1') return Promise.resolve({ ...activeEvent, maxTicketsPerUser: 2 });

@@ -1,9 +1,21 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Checkout from './Checkout';
 import { AuthContext } from '../auth/AuthContext';
 import api from '../api/client';
+
+jest.mock('../components/Recaptcha', () => {
+  const React = require('react');
+  return React.forwardRef(function MockRecaptcha({ onChange }, ref) {
+    React.useImperativeHandle(ref, () => ({ reset: jest.fn() }));
+    return (
+      <button data-testid="mock-captcha" type="button" onClick={() => onChange('test-captcha-token')}>
+        Complete CAPTCHA
+      </button>
+    );
+  });
+});
 
 jest.mock('../api/client', () => ({
   get: jest.fn(),
@@ -128,4 +140,106 @@ test('cancel navigates to my-holds', async () => {
   await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
   fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
   await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/my-holds'));
+});
+
+test('auth:step-up-required event shows CAPTCHA verification modal', async () => {
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+
+  await waitFor(() =>
+    expect(screen.getByText(/additional verification required/i)).toBeInTheDocument()
+  );
+  expect(screen.getByTestId('mock-captcha')).toBeInTheDocument();
+});
+
+test('submitting CAPTCHA calls POST /auth/step-up/verify', async () => {
+  api.post.mockResolvedValue({ orderId: 'order-1' });
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+  await waitFor(() => expect(screen.getByTestId('mock-captcha')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByTestId('mock-captcha'));
+  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+
+  await waitFor(() =>
+    expect(api.post).toHaveBeenCalledWith('/auth/step-up/verify', {
+      captchaToken: 'test-captcha-token',
+    })
+  );
+});
+
+test('after successful verification original checkout is retried', async () => {
+  api.post.mockResolvedValue({ orderId: 'order-1' });
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  // Fill card and submit — simulate 428 by dispatching event and storing payload
+  fireEvent.change(screen.getByLabelText('Card Number'), { target: { value: '4242424242424242' } });
+
+  // Fake 428: reject checkout, dispatch step-up event
+  api.post.mockRejectedValueOnce({ status: 428, code: 'STEP_UP_REQUIRED' });
+  fireEvent.click(screen.getByRole('button', { name: /pay/i }));
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+  await waitFor(() => expect(screen.getByTestId('mock-captcha')).toBeInTheDocument());
+
+  api.post.mockResolvedValue({ orderId: 'order-retry' });
+  fireEvent.click(screen.getByTestId('mock-captcha'));
+  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+
+  await waitFor(() => expect(screen.getByText('Order Confirmed!')).toBeInTheDocument());
+});
+
+test('failed CAPTCHA verification shows inline error', async () => {
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+  await waitFor(() => expect(screen.getByTestId('mock-captcha')).toBeInTheDocument());
+
+  api.post.mockRejectedValue({ message: 'CAPTCHA validation failed' });
+  fireEvent.click(screen.getByTestId('mock-captcha'));
+  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+
+  await waitFor(() =>
+    expect(screen.getByText('CAPTCHA validation failed')).toBeInTheDocument()
+  );
+});
+
+test('submitting without completing CAPTCHA shows validation error', async () => {
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+  await waitFor(() => expect(screen.getByRole('button', { name: /verify/i })).toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+
+  await waitFor(() =>
+    expect(screen.getByText('Please complete the CAPTCHA.')).toBeInTheDocument()
+  );
 });
