@@ -11,7 +11,14 @@ function Events() {
   // Filters
   const [titleSearch, setTitleSearch] = useState('');
   const [venueSearch, setVenueSearch] = useState('');
+  const [performerSearch, setPerformerSearch] = useState('');
   const [showPast, setShowPast] = useState(false);
+
+  // Geolocation
+  const [nearMe, setNearMe] = useState(false);
+  const [userCoords, setUserCoords] = useState(null); // { lat, lon }
+  const [geoError, setGeoError] = useState('');
+  const [geoSupported] = useState(() => Boolean(navigator.geolocation));
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -23,12 +30,32 @@ function Events() {
     setLoading(true);
     setError('');
 
+    if (nearMe && userCoords) {
+      const params = new URLSearchParams();
+      params.set('lat', userCoords.lat);
+      params.set('lon', userCoords.lon);
+      params.set('page', page);
+      params.set('size', pageSize);
+      api.get(`/api/events/nearby?${params.toString()}`)
+        .then((data) => {
+          setEvents(data.content || []);
+          setTotalPages(data.page?.totalPages || 0);
+          setTotalElements(data.page?.totalElements || 0);
+        })
+        .catch((err) => {
+          setError(err.message || 'Failed to load nearby events');
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const params = new URLSearchParams();
     params.set('page', page);
     params.set('size', pageSize);
     params.set('upcoming', !showPast);
     if (titleSearch.trim()) params.set('title', titleSearch.trim());
     if (venueSearch.trim()) params.set('venueName', venueSearch.trim());
+    if (performerSearch.trim()) params.set('performerName', performerSearch.trim());
 
     api.get(`/api/events?${params.toString()}`)
       .then((data) => {
@@ -42,7 +69,31 @@ function Events() {
       .finally(() => {
         setLoading(false);
       });
-  }, [page, pageSize, titleSearch, venueSearch, showPast]);
+  }, [page, pageSize, titleSearch, venueSearch, performerSearch, showPast, nearMe, userCoords]);
+
+  const handleNearMeToggle = () => {
+    if (nearMe) {
+      setNearMe(false);
+      setGeoError('');
+      setPage(0);
+      return;
+    }
+    if (!geoSupported) {
+      setGeoError('Geolocation is not supported by your browser.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setNearMe(true);
+        setGeoError('');
+        setPage(0);
+      },
+      () => {
+        setGeoError('Location access denied. Enable location permissions to use Near Me.');
+      }
+    );
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -97,6 +148,13 @@ function Events() {
           onChange={handleSearchChange(setVenueSearch)}
           className="filter-input"
         />
+        <input
+          type="text"
+          placeholder="Filter by performer..."
+          value={performerSearch}
+          onChange={handleSearchChange(setPerformerSearch)}
+          className="filter-input"
+        />
         <label className="filter-toggle">
           <input
             type="checkbox"
@@ -105,7 +163,17 @@ function Events() {
           />
           Show past events
         </label>
+        {geoSupported && (
+          <button
+            className={`filter-toggle-btn${nearMe ? ' filter-toggle-btn--active' : ''}`}
+            onClick={handleNearMeToggle}
+            type="button"
+          >
+            {nearMe ? 'Near Me (on)' : 'Near Me'}
+          </button>
+        )}
       </div>
+      {geoError && <div className="error-message">{geoError}</div>}
 
       {loading && (
         <div className="events-grid">
@@ -135,6 +203,9 @@ function Events() {
                 <div className="event-card-meta">
                   <span>{event.venue?.name ?? ''}</span>
                   <span>{formatDate(event.startTime)}</span>
+                  {nearMe && event.distanceKm != null && (
+                    <span>{event.distanceKm.toFixed(1)} km away</span>
+                  )}
                 </div>
                 {event.status === 'PUBLISHED' && (
                   <div className="event-card-status event-card-status--announced">Coming Soon</div>

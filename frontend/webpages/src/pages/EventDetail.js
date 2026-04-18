@@ -291,6 +291,16 @@ function EventDetail() {
           <span>{event.venue?.name ?? ''}</span>
           <span>{new Date(event.startTime).toLocaleString()}</span>
         </div>
+        {event.performers && event.performers.length > 0 && (
+          <div className="event-detail-performers">
+            <span className="event-detail-performers-label">Featuring: </span>
+            {event.performers.map((p, i) => (
+              <span key={p.id} className="event-detail-performer">
+                {p.name}{p.genre ? ` (${p.genre})` : ''}{i < event.performers.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Status banners */}
