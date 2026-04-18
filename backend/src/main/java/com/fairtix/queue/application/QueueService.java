@@ -2,8 +2,9 @@ package com.fairtix.queue.application;
 
 import com.fairtix.audit.application.AuditService;
 import com.fairtix.common.ResourceNotFoundException;
-import com.fairtix.fraud.application.SuspiciousFlagService;
+import com.fairtix.fraud.application.RiskScoringService;
 import com.fairtix.fraud.application.UserFlaggedForAbuseException;
+import com.fairtix.fraud.domain.RiskTier;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.SeatStatus;
@@ -40,7 +41,7 @@ public class QueueService {
     private final TicketRepository ticketRepository;
     private final RedissonClient redissonClient;
     private final AuditService auditService;
-    private final SuspiciousFlagService suspiciousFlagService;
+    private final RiskScoringService riskScoringService;
 
     @Value("${queue.admission-window-minutes:15}")
     private int admissionWindowMinutes;
@@ -54,14 +55,14 @@ public class QueueService {
                         TicketRepository ticketRepository,
                         RedissonClient redissonClient,
                         AuditService auditService,
-                        SuspiciousFlagService suspiciousFlagService) {
+                        RiskScoringService riskScoringService) {
         this.queueRepository = queueRepository;
         this.eventRepository = eventRepository;
         this.seatRepository = seatRepository;
         this.ticketRepository = ticketRepository;
         this.redissonClient = redissonClient;
         this.auditService = auditService;
-        this.suspiciousFlagService = suspiciousFlagService;
+        this.riskScoringService = riskScoringService;
     }
 
     @Transactional
@@ -73,7 +74,7 @@ public class QueueService {
             throw new IllegalArgumentException("This event does not require a queue");
         }
 
-        if (suspiciousFlagService.hasActiveCriticalFlag(userId)) {
+        if (riskScoringService.getTier(userId) == RiskTier.CRITICAL) {
             throw new UserFlaggedForAbuseException();
         }
 

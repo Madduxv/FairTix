@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/MySupportTickets.css';
 
@@ -151,7 +151,7 @@ function SupportTicketDetail() {
 
       {isClosed && (
         <div className="support-closed-notice">
-          This ticket is closed. <a href="/support/new">Open a new ticket</a> if you need further help.
+          This ticket is closed. <Link to="/support/new">Open a new ticket</Link> if you need further help.
         </div>
       )}
     </div>

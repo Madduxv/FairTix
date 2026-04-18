@@ -8,5 +8,5 @@ public record NotificationPreferenceRequest(
         @Schema(description = "Email on ticket issuance") boolean emailTicket,
         @Schema(description = "Email on hold creation/expiry") boolean emailHold,
         @Schema(description = "Marketing emails (opt-in only)") boolean emailMarketing,
-        @Schema(description = "Support ticket notifications") boolean emailSupport) {
+        @Schema(description = "Support ticket notifications") Boolean emailSupport) {
 }

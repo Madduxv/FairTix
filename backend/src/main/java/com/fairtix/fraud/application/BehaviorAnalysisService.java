@@ -85,13 +85,10 @@ public class BehaviorAnalysisService {
         }
         long released = auditLogRepository.countByUserIdAndActionAndResourceTypeAndCreatedAtAfter(
                 userId, "RELEASE", "HOLD", since);
-        long confirmed = auditLogRepository.countByUserIdAndActionAndResourceTypeAndCreatedAtAfter(
-                userId, "CONFIRM", "HOLD", since);
-        long unconfirmedReleases = released - confirmed;
-        if (unconfirmedReleases > 0 && (double) unconfirmedReleases / created > highReleaseRateThreshold) {
+        if (released > 0 && (double) released / created > highReleaseRateThreshold) {
             suspiciousFlagService.flag(userId, SuspiciousFlagType.HIGH_RELEASE_RATE,
                     SuspiciousFlagSeverity.MEDIUM,
-                    unconfirmedReleases + "/" + created + " holds released without purchase");
+                    released + "/" + created + " holds released");
         }
     }
 

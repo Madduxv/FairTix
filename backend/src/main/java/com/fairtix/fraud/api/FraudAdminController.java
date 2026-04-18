@@ -50,11 +50,11 @@ public class FraudAdminController {
     }
 
     @PatchMapping("/flags/{flagId}/resolve")
-    public ResponseEntity<FlagResponse> resolveFlag(
+    public ResponseEntity<Void> resolveFlag(
             @PathVariable UUID flagId,
             @AuthenticationPrincipal CustomUserPrincipal principal) {
         suspiciousFlagService.resolve(flagId, principal.getUserId());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/risk/{userId}")

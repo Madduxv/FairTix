@@ -31,8 +31,8 @@ function RefundDialog({ ticket, onClose, onSuccess }) {
 
   return (
     <div className="refund-dialog-overlay" onClick={onClose}>
-      <div className="refund-dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>Request a Refund</h3>
+      <div className="refund-dialog" role="dialog" aria-modal="true" aria-labelledby="refund-dialog-title" onClick={(e) => e.stopPropagation()}>
+        <h3 id="refund-dialog-title">Request a Refund</h3>
         <div className="refund-dialog-event">
           <strong>{ticket.eventTitle}</strong>
           <span>

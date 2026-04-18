@@ -237,7 +237,7 @@ test('submitting without completing CAPTCHA shows validation error', async () =>
   });
   await waitFor(() => expect(screen.getByRole('button', { name: /verify/i })).toBeInTheDocument());
 
-  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+  fireEvent.submit(screen.getByRole('button', { name: /verify/i }).closest('form'));
 
   await waitFor(() =>
     expect(screen.getByText('Please complete the CAPTCHA.')).toBeInTheDocument()

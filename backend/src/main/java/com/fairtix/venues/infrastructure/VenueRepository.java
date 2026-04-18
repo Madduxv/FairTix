@@ -18,20 +18,20 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
   @Query(nativeQuery = true, value = """
       SELECT v.id AS venueId,
              (6371 * acos(
-               LEAST(1.0,
+               GREATEST(-1.0, LEAST(1.0,
                  cos(radians(:lat)) * cos(radians(v.latitude)) *
                  cos(radians(v.longitude) - radians(:lon)) +
                  sin(radians(:lat)) * sin(radians(v.latitude))
-               )
+               ))
              )) AS distanceKm
       FROM venues v
       WHERE v.latitude IS NOT NULL AND v.longitude IS NOT NULL
         AND (6371 * acos(
-               LEAST(1.0,
+               GREATEST(-1.0, LEAST(1.0,
                  cos(radians(:lat)) * cos(radians(v.latitude)) *
                  cos(radians(v.longitude) - radians(:lon)) +
                  sin(radians(:lat)) * sin(radians(v.latitude))
-               )
+               ))
              )) <= :radiusKm
       ORDER BY distanceKm ASC
       """)

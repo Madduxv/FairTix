@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/MyRefunds.css';
 
@@ -52,7 +53,7 @@ function MyRefunds() {
       {!loading && !error && refunds.length === 0 && (
         <div className="refunds-empty">
           <p>You have no refund requests.</p>
-          <p>To request a refund, go to <a href="/my-tickets">My Tickets</a> and click "Request Refund" on a valid ticket.</p>
+          <p>To request a refund, go to <Link to="/my-tickets">My Tickets</Link> and click "Request Refund" on a valid ticket.</p>
         </div>
       )}
 
