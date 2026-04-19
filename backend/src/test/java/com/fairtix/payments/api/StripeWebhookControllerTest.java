@@ -20,6 +20,8 @@ import org.springframework.web.context.WebApplicationContext;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import com.stripe.Stripe;
+
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -78,7 +80,7 @@ class StripeWebhookControllerTest {
           "id": "evt_test",
           "object": "event",
           "type": "%s",
-          "api_version": "2023-10-16",
+          "api_version": "%s",
           "data": {
             "object": {
               "id": "%s",
@@ -89,7 +91,7 @@ class StripeWebhookControllerTest {
             }
           }
         }
-        """.formatted(type, piId);
+        """.formatted(type, Stripe.API_VERSION, piId);
   }
 
   private static String chargeRefundedEvent(String piId) {
@@ -98,7 +100,7 @@ class StripeWebhookControllerTest {
           "id": "evt_test_charge",
           "object": "event",
           "type": "charge.refunded",
-          "api_version": "2023-10-16",
+          "api_version": "%s",
           "data": {
             "object": {
               "id": "ch_test",
@@ -109,7 +111,7 @@ class StripeWebhookControllerTest {
             }
           }
         }
-        """.formatted(piId);
+        """.formatted(Stripe.API_VERSION, piId);
   }
 
   // --- tests ---

@@ -48,7 +48,7 @@ test('createDialog_submitsPost calls POST with form values', async () => {
   await waitFor(() => screen.getByText('The Beatles'));
 
   fireEvent.click(screen.getByRole('button', { name: /new performer/i }));
-  fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: 'New Artist' } });
+  fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'New Artist' } });
   fireEvent.change(screen.getByLabelText(/genre/i), { target: { value: 'Jazz' } });
   fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
@@ -73,7 +73,7 @@ test('editDialog_prefillsAndSubmitsPut pre-fills form and calls PUT', async () =
   await waitFor(() => expect(screen.getByDisplayValue('The Beatles')).toBeInTheDocument());
   expect(screen.getByDisplayValue('Rock')).toBeInTheDocument();
 
-  fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: 'The Beatles (Remaster)' } });
+  fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'The Beatles (Remaster)' } });
   fireEvent.click(screen.getByRole('button', { name: /^update$/i }));
 
   await waitFor(() =>
@@ -93,7 +93,7 @@ test('duplicateName_shows409Error surfaces conflict error in dialog', async () =
   await waitFor(() => screen.getByText('The Beatles'));
 
   fireEvent.click(screen.getByRole('button', { name: /new performer/i }));
-  fireEvent.change(screen.getByLabelText(/^name$/i), { target: { value: 'The Beatles' } });
+  fireEvent.change(screen.getByLabelText(/name/i), { target: { value: 'The Beatles' } });
   fireEvent.click(screen.getByRole('button', { name: /^create$/i }));
 
   await waitFor(() =>

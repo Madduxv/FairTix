@@ -101,7 +101,7 @@ test('severityFilter_sendsCorrectParam includes severity in API request', async 
   render(<AdminFraudPage />);
   await waitFor(() => screen.getByText('No flags found.'));
 
-  fireEvent.mouseDown(screen.getByRole('combobox'));
+  fireEvent.mouseDown(screen.getByRole('combobox', { name: /severity/i }));
   const highOption = await screen.findByRole('option', { name: 'HIGH' });
   fireEvent.click(highOption);
 
