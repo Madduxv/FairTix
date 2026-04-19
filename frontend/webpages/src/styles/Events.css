@@ -237,3 +237,73 @@
   background: #e8f5e9;
   color: #2e7d32;
 }
+
+/* City/address fallback form */
+.city-fallback {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+}
+
+.city-fallback-title {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.city-fallback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.address-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 480px) {
+  .address-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.address-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.address-field--full {
+  grid-column: 1 / -1;
+}
+
+.address-field label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #444;
+}
+
+.address-optional {
+  font-weight: 400;
+  color: #888;
+}
+
+.address-field .filter-input {
+  min-width: unset;
+  width: 100%;
+}
+
+.address-radius-select {
+  width: auto;
+  min-width: 100px;
+}
+
+.address-search-btn {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+}

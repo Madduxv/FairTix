@@ -20,6 +20,17 @@ function Events() {
   const [geoError, setGeoError] = useState('');
   const [geoSupported] = useState(() => Boolean(navigator.geolocation));
 
+  // City/zip fallback (shown when geolocation is denied)
+  const [showCityFallback, setShowCityFallback] = useState(false);
+  const [streetInput, setStreetInput] = useState('');
+  const [cityInput, setCityInput] = useState('');
+  const [stateInput, setStateInput] = useState('');
+  const [zipInput, setZipInput] = useState('');
+  const [countryInput, setCountryInput] = useState('');
+  const [radiusKm, setRadiusKm] = useState(50);
+  const [geocodingError, setGeocodingError] = useState('');
+  const [geocoding, setGeocoding] = useState(false);
+
   // Pagination
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
@@ -34,6 +45,7 @@ function Events() {
       const params = new URLSearchParams();
       params.set('lat', userCoords.lat);
       params.set('lon', userCoords.lon);
+      params.set('radiusKm', radiusKm);
       params.set('page', page);
       params.set('size', pageSize);
       api.get(`/api/events/nearby?${params.toString()}`)
@@ -69,17 +81,25 @@ function Events() {
       .finally(() => {
         setLoading(false);
       });
-  }, [page, pageSize, titleSearch, venueSearch, performerSearch, showPast, nearMe, userCoords]);
+  }, [page, pageSize, titleSearch, venueSearch, performerSearch, showPast, nearMe, userCoords, radiusKm]);
 
   const handleNearMeToggle = () => {
     if (nearMe) {
       setNearMe(false);
       setGeoError('');
+      setShowCityFallback(false);
+      setStreetInput('');
+      setCityInput('');
+      setStateInput('');
+      setZipInput('');
+      setCountryInput('');
+      setGeocodingError('');
       setPage(0);
       return;
     }
     if (!geoSupported) {
       setGeoError('Geolocation is not supported by your browser.');
+      setShowCityFallback(true);
       return;
     }
     navigator.geolocation.getCurrentPosition(
@@ -87,13 +107,49 @@ function Events() {
         setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
         setNearMe(true);
         setGeoError('');
+        setShowCityFallback(false);
         setPage(0);
       },
       () => {
-        setGeoError('Location access denied. Enable location permissions to use Near Me.');
+        setShowCityFallback(true);
+        setGeoError('');
       }
     );
   };
+
+  async function handleAddressSearch() {
+    if (!cityInput.trim() && !zipInput.trim()) {
+      setGeocodingError('Enter at least a city or ZIP / postal code.');
+      return;
+    }
+    setGeocoding(true);
+    setGeocodingError('');
+    try {
+      const params = new URLSearchParams({ format: 'json', limit: '1' });
+      if (streetInput.trim()) params.set('street', streetInput.trim());
+      if (cityInput.trim()) params.set('city', cityInput.trim());
+      if (stateInput.trim()) params.set('state', stateInput.trim());
+      if (zipInput.trim()) params.set('postalcode', zipInput.trim());
+      if (countryInput.trim()) params.set('country', countryInput.trim());
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+        { headers: { 'User-Agent': 'FairTix/1.0' } }
+      );
+      const results = await res.json();
+      if (!results.length) {
+        setGeocodingError('Address not found. Try removing some fields or check your spelling.');
+        return;
+      }
+      setUserCoords({ lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) });
+      setNearMe(true);
+      setShowCityFallback(false);
+      setPage(0);
+    } catch {
+      setGeocodingError('Unable to reach geocoding service. Try again.');
+    } finally {
+      setGeocoding(false);
+    }
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -174,6 +230,97 @@ function Events() {
         )}
       </div>
       {geoError && <div className="error-message">{geoError}</div>}
+
+      {showCityFallback && !nearMe && (
+        <div className="city-fallback">
+          <p className="city-fallback-title">Location access denied. Enter your address to find events nearby.</p>
+          <div className="city-fallback-form">
+            <div className="address-field address-field--full">
+              <label>Street address <span className="address-optional">(optional)</span></label>
+              <input
+                type="text"
+                placeholder="123 Main St"
+                value={streetInput}
+                onChange={(e) => setStreetInput(e.target.value)}
+                className="filter-input"
+                disabled={geocoding}
+              />
+            </div>
+            <div className="address-row">
+              <div className="address-field">
+                <label>City</label>
+                <input
+                  type="text"
+                  placeholder="Austin"
+                  value={cityInput}
+                  onChange={(e) => setCityInput(e.target.value)}
+                  className="filter-input"
+                  disabled={geocoding}
+                />
+              </div>
+              <div className="address-field">
+                <label>State / Province <span className="address-optional">(optional)</span></label>
+                <input
+                  type="text"
+                  placeholder="TX"
+                  value={stateInput}
+                  onChange={(e) => setStateInput(e.target.value)}
+                  className="filter-input"
+                  disabled={geocoding}
+                />
+              </div>
+            </div>
+            <div className="address-row">
+              <div className="address-field">
+                <label>ZIP / Postal code</label>
+                <input
+                  type="text"
+                  placeholder="78701"
+                  value={zipInput}
+                  onChange={(e) => setZipInput(e.target.value)}
+                  className="filter-input"
+                  disabled={geocoding}
+                />
+              </div>
+              <div className="address-field">
+                <label>Country <span className="address-optional">(optional)</span></label>
+                <input
+                  type="text"
+                  placeholder="US"
+                  value={countryInput}
+                  onChange={(e) => setCountryInput(e.target.value)}
+                  className="filter-input"
+                  disabled={geocoding}
+                />
+              </div>
+            </div>
+            <div className="address-field">
+              <label>Search radius</label>
+              <select
+                value={radiusKm}
+                onChange={(e) => setRadiusKm(Number(e.target.value))}
+                className="page-size-select address-radius-select"
+                disabled={geocoding}
+              >
+                <option value={10}>10 km</option>
+                <option value={25}>25 km</option>
+                <option value={50}>50 km</option>
+                <option value={100}>100 km</option>
+                <option value={200}>200 km</option>
+              </select>
+            </div>
+            {geocodingError && <div className="error-message">{geocodingError}</div>}
+            <button
+              type="button"
+              onClick={handleAddressSearch}
+              disabled={geocoding || (!cityInput.trim() && !zipInput.trim())}
+              className="filter-toggle-btn address-search-btn"
+            >
+              {geocoding ? 'Searching...' : 'Search Nearby'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div className="events-grid">
