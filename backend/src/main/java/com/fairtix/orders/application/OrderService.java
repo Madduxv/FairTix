@@ -18,6 +18,7 @@ import com.fairtix.orders.domain.OrderStatus;
 import com.fairtix.orders.infrastructure.OrderRepository;
 import com.fairtix.payments.application.PaymentFailedException;
 import com.fairtix.payments.application.PaymentSimulationService;
+import com.fairtix.payments.application.StripePaymentService;
 import com.fairtix.payments.domain.PaymentRecord;
 import com.fairtix.payments.domain.PaymentStatus;
 import com.fairtix.queue.application.QueueService;
@@ -55,6 +56,7 @@ public class OrderService {
   private final TicketService ticketService;
   private final TicketRepository ticketRepository;
   private final PaymentSimulationService paymentSimulationService;
+  private final StripePaymentService stripePaymentService;
   private final QueueService queueService;
   private final AuditService auditService;
   private final EmailService emailService;
@@ -68,6 +70,7 @@ public class OrderService {
       TicketService ticketService,
       TicketRepository ticketRepository,
       PaymentSimulationService paymentSimulationService,
+      StripePaymentService stripePaymentService,
       QueueService queueService,
       AuditService auditService,
       EmailService emailService,
@@ -80,6 +83,7 @@ public class OrderService {
     this.ticketService = ticketService;
     this.ticketRepository = ticketRepository;
     this.paymentSimulationService = paymentSimulationService;
+    this.stripePaymentService = stripePaymentService;
     this.queueService = queueService;
     this.auditService = auditService;
     this.emailService = emailService;
@@ -204,6 +208,59 @@ public class OrderService {
           payment.getFailureReason(), payment.getStatus(), payment.getTransactionId());
     }
 
+    return order;
+  }
+
+  /**
+   * Creates an order for a payment already confirmed by Stripe.
+   * Payment verification must happen before calling this method.
+   */
+  @Transactional
+  public Order createOrderWithStripePayment(UUID userId, List<UUID> holdIds, String paymentIntentId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+    List<SeatHold> holds = validateHolds(userId, holdIds);
+    validatePurchaseCaps(userId, holds);
+
+    for (SeatHold hold : holds) {
+      Seat seat = hold.getSeat();
+      if (seat.getStatus() == SeatStatus.SOLD) {
+        throw new SeatHoldConflictException("Seat " + seat.getId() + " has already been sold");
+      }
+      if (seat.getStatus() != SeatStatus.BOOKED) {
+        throw new SeatHoldConflictException(
+            "Seat " + seat.getId() + " is not in BOOKED state (status: " + seat.getStatus() + ")");
+      }
+      seat.setStatus(SeatStatus.SOLD);
+      seatRepository.save(seat);
+    }
+
+    BigDecimal totalAmount = holds.stream()
+        .map(hold -> hold.getSeat().getPrice())
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Order order = new Order(user, holdIds, totalAmount, "USD", OrderStatus.PENDING);
+    order = orderRepository.save(order);
+
+    stripePaymentService.recordStripePayment(paymentIntentId, order.getId(), userId, totalAmount, "USD");
+
+    order.setStatus(OrderStatus.COMPLETED);
+    orderRepository.save(order);
+    ticketService.issueTickets(order, holds);
+
+    for (SeatHold hold : holds) {
+      hold.setStatus(HoldStatus.RELEASED);
+      seatHoldRepository.save(hold);
+      if (hold.getSeat().getEvent().isQueueRequired()) {
+        queueService.completeQueueEntry(hold.getSeat().getEvent().getId(), userId);
+      }
+    }
+
+    auditService.log(userId, "CREATE", "ORDER", order.getId(),
+        "Order completed via Stripe: " + holdIds.size() + " hold(s), total=" + totalAmount
+            + " USD, txn=" + paymentIntentId);
+    sendOrderConfirmationEmail(user, order, holds);
     return order;
   }
 

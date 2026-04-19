@@ -1,9 +1,58 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import api from '../api/client';
 import { useAuth } from '../auth/useAuth';
 import Recaptcha from '../components/Recaptcha';
 import '../styles/Checkout.css';
+
+const stripeEnabled = !!process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeEnabled
+  ? loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY)
+  : null;
+
+function StripeCardForm({ holds, total, clientSecret, onSuccess, onError, onCancel, submitting, setSubmitting }) {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card: elements.getElement(CardElement) },
+    });
+    setSubmitting(false);
+    if (error) {
+      onError(error.message);
+      return;
+    }
+    if (paymentIntent.status === 'succeeded') {
+      await onSuccess(paymentIntent.id);
+    }
+  }
+
+  return (
+    <form className="checkout-payment-form" onSubmit={handleSubmit}>
+      <h3>Payment Details</h3>
+      <div className="checkout-field">
+        <label>Card Details</label>
+        <div className="stripe-card-element" style={{ border: '1px solid #ccc', borderRadius: 4, padding: '10px 12px' }}>
+          <CardElement options={{ style: { base: { fontSize: '16px', color: '#424770' } } }} />
+        </div>
+      </div>
+      <div className="checkout-actions">
+        <button type="button" className="checkout-btn-secondary" onClick={onCancel} disabled={submitting}>
+          Cancel
+        </button>
+        <button type="submit" className="checkout-btn-primary" disabled={submitting || !stripe}>
+          Pay ${total.toFixed(2)}
+        </button>
+      </div>
+    </form>
+  );
+}
 
 function Checkout() {
   const location = useLocation();
@@ -28,6 +77,8 @@ function Checkout() {
   const [tick, setTick] = useState(0);
   const tickRef = useRef(null);
   const holdIdsRef = useRef(location.state?.holdIds || []);
+
+  const [clientSecret, setClientSecret] = useState(null);
 
   // Countdown timer for hold expiration
   useEffect(() => {
@@ -90,6 +141,14 @@ function Checkout() {
     fetchConfirmedHolds();
   }, [fetchConfirmedHolds]);
 
+  // Fetch Stripe PaymentIntent once holds are loaded
+  useEffect(() => {
+    if (!stripeEnabled || holds.length === 0 || clientSecret) return;
+    api.post('/api/payments/intent', { holdIds: holds.map((h) => h.id) })
+      .then((r) => setClientSecret(r.clientSecret))
+      .catch(() => setError('Failed to initialize payment. Please try again.'));
+  }, [holds, clientSecret]);
+
   useEffect(() => {
     function onStepUpRequired(e) {
       setStepUpAction(e.detail?.action || 'CHECKOUT');
@@ -136,6 +195,12 @@ function Checkout() {
     }
   }
 
+  async function handleStripeSuccess(paymentIntentId) {
+    const payload = { holdIds: holds.map((h) => h.id), paymentIntentId };
+    pendingPayloadRef.current = payload;
+    await submitPayload(payload);
+  }
+
   async function handlePayment(e) {
     e.preventDefault();
     const digits = cardNumber.replace(/\s/g, '');
@@ -180,8 +245,8 @@ function Checkout() {
   }
 
   async function handleCancel() {
-    // Record cancellation via the payment API before navigating away
-    if (holds.length > 0 && paymentState !== 'failed') {
+    // In simulation mode, record cancellation server-side before navigating
+    if (!stripeEnabled && holds.length > 0 && paymentState !== 'failed') {
       try {
         setSubmitting(true);
         await api.post('/api/payments/checkout', {
@@ -404,7 +469,29 @@ function Checkout() {
         </div>
       )}
 
-      {paymentState === 'form' && (
+      {paymentState === 'form' && stripeEnabled && (
+        clientSecret ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <StripeCardForm
+              holds={holds}
+              total={total}
+              clientSecret={clientSecret}
+              onSuccess={handleStripeSuccess}
+              onError={(msg) => { setPaymentError(msg); setPaymentState('failed'); }}
+              onCancel={handleCancel}
+              submitting={submitting}
+              setSubmitting={setSubmitting}
+            />
+          </Elements>
+        ) : (
+          <div className="checkout-processing">
+            <div className="checkout-spinner" />
+            <p>Loading payment form...</p>
+          </div>
+        )
+      )}
+
+      {paymentState === 'form' && !stripeEnabled && (
         <form className="checkout-payment-form" onSubmit={handlePayment}>
           <h3>Payment Details</h3>
           {paymentError && <div className="checkout-error">{paymentError}</div>}

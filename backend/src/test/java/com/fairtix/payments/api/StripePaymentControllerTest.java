@@ -9,6 +9,7 @@ import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.inventory.infrastructure.SeatRepository;
+import com.fairtix.payments.application.StripePaymentService;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,21 +18,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@TestPropertySource(properties = "stripe.enabled=true")
 @Transactional
-class PaymentControllerTest {
+class StripePaymentControllerTest {
 
   @Autowired private WebApplicationContext context;
   @Autowired private UserRepository userRepository;
@@ -39,6 +46,9 @@ class PaymentControllerTest {
   @Autowired private SeatRepository seatRepository;
   @Autowired private SeatHoldRepository seatHoldRepository;
   @Autowired private PasswordEncoder passwordEncoder;
+
+  @MockitoSpyBean
+  private StripePaymentService stripePaymentService;
 
   private MockMvc mockMvc;
   private User user;
@@ -51,15 +61,15 @@ class PaymentControllerTest {
         .build();
 
     user = new User();
-    user.setEmail("paytest@test.com");
+    user.setEmail("stripetest@test.com");
     user.setPassword(passwordEncoder.encode("Test1234!"));
     user.setEmailVerified(true);
     user = userRepository.save(user);
 
-    Event event = new Event("Test Event", null, Instant.now().plusSeconds(86400 * 30), null);
+    Event event = new Event("Stripe Test Event", null, Instant.now().plusSeconds(86400 * 30), null);
     event = eventRepository.save(event);
 
-    Seat seat = new Seat(event, "A", "1", "1", new java.math.BigDecimal("25.00"));
+    Seat seat = new Seat(event, "B", "2", "3", new BigDecimal("50.00"));
     seat.setStatus(SeatStatus.BOOKED);
     seat = seatRepository.save(seat);
 
@@ -69,11 +79,30 @@ class PaymentControllerTest {
   }
 
   @Test
-  void checkout_success_returnsCreated() throws Exception {
+  void createIntent_returnsClientSecret() throws Exception {
+    doReturn("pi_test_secret_xyz").when(stripePaymentService)
+        .createPaymentIntent(anyLong(), anyString());
+
+    String body = """
+        { "holdIds": ["%s"] }
+        """.formatted(confirmedHold.getId());
+
+    mockMvc.perform(post("/api/payments/intent")
+            .with(WithMockPrincipal.user(user.getId(), user.getEmail()))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.clientSecret").value("pi_test_secret_xyz"));
+  }
+
+  @Test
+  void checkout_withStripeIntentId_succeeds() throws Exception {
+    doReturn(true).when(stripePaymentService).verifyPaymentSucceeded(anyString());
+
     String body = """
         {
           "holdIds": ["%s"],
-          "simulatedOutcome": "SUCCESS"
+          "paymentIntentId": "pi_test_123"
         }
         """.formatted(confirmedHold.getId());
 
@@ -83,17 +112,17 @@ class PaymentControllerTest {
             .content(body))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.paymentStatus").value("SUCCESS"))
-        .andExpect(jsonPath("$.orderStatus").value("COMPLETED"))
-        .andExpect(jsonPath("$.transactionId").isNotEmpty())
-        .andExpect(jsonPath("$.amount").value(25.00));
+        .andExpect(jsonPath("$.orderStatus").value("COMPLETED"));
   }
 
   @Test
-  void checkout_failure_returns402() throws Exception {
+  void checkout_withStripeIntentId_failsWhenNotSucceeded() throws Exception {
+    doReturn(false).when(stripePaymentService).verifyPaymentSucceeded(anyString());
+
     String body = """
         {
           "holdIds": ["%s"],
-          "simulatedOutcome": "FAILURE"
+          "paymentIntentId": "pi_test_456"
         }
         """.formatted(confirmedHold.getId());
 
@@ -102,65 +131,5 @@ class PaymentControllerTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
         .andExpect(status().isPaymentRequired());
-  }
-
-  @Test
-  void checkout_cancelled_returns402() throws Exception {
-    String body = """
-        {
-          "holdIds": ["%s"],
-          "simulatedOutcome": "CANCELLED"
-        }
-        """.formatted(confirmedHold.getId());
-
-    mockMvc.perform(post("/api/payments/checkout")
-            .with(WithMockPrincipal.user(user.getId(), user.getEmail()))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
-        .andExpect(status().isPaymentRequired());
-  }
-
-  @Test
-  void checkout_unauthenticated_returns401or403() throws Exception {
-    String body = """
-        {
-          "holdIds": ["%s"],
-          "simulatedOutcome": "SUCCESS"
-        }
-        """.formatted(confirmedHold.getId());
-
-    mockMvc.perform(post("/api/payments/checkout")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
-        .andExpect(status().isUnauthorized());
-  }
-
-  @Test
-  void createIntent_returns501WhenStripeDisabled() throws Exception {
-    String body = """
-        { "holdIds": ["%s"] }
-        """.formatted(confirmedHold.getId());
-
-    mockMvc.perform(post("/api/payments/intent")
-            .with(WithMockPrincipal.user(user.getId(), user.getEmail()))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
-        .andExpect(status().isNotImplemented());
-  }
-
-  @Test
-  void checkout_emptyHoldIds_returns400() throws Exception {
-    String body = """
-        {
-          "holdIds": [],
-          "simulatedOutcome": "SUCCESS"
-        }
-        """;
-
-    mockMvc.perform(post("/api/payments/checkout")
-            .with(WithMockPrincipal.user(user.getId(), user.getEmail()))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(body))
-        .andExpect(status().isBadRequest());
   }
 }

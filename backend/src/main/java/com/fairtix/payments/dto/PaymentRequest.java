@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.UUID;
 
-@Schema(description = "Payment request for simulated payment processing")
+@Schema(description = "Payment request — simulation mode or Stripe mode")
 public record PaymentRequest(
 
     @Schema(description = "IDs of confirmed holds to pay for",
@@ -16,7 +16,11 @@ public record PaymentRequest(
     List<UUID> holdIds,
 
     @Schema(description = "Simulated payment outcome (SUCCESS, FAILURE, CANCELLED). "
-        + "Omit or set to null for random outcome.",
+        + "Omit or set to null for random outcome. Ignored when Stripe is enabled.",
         example = "SUCCESS")
-    PaymentStatus simulatedOutcome) {
+    PaymentStatus simulatedOutcome,
+
+    @Schema(description = "Stripe PaymentIntent ID. Required when Stripe is enabled.",
+        example = "pi_3...")
+    String paymentIntentId) {
 }
