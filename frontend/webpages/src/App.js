@@ -27,6 +27,8 @@ import AdminUsersPage from './admin/pages/AdminUsersPage';
 import AdminVenuesPage from './admin/pages/AdminVenuesPage';
 import AdminRefundsPage from './admin/pages/AdminRefundsPage';
 import AdminSupportPage from './admin/pages/AdminSupportPage';
+import AdminFraudPage from './admin/pages/AdminFraudPage';
+import AdminPerformersPage from './admin/pages/AdminPerformersPage';
 import MyRefunds from './pages/MyRefunds';
 import MySupportTickets from './pages/MySupportTickets';
 import SupportPage from './pages/SupportPage';
@@ -86,6 +88,8 @@ function App() {
                 <Route path="users" element={<AdminUsersPage />} />
                 <Route path="refunds" element={<AdminRefundsPage />} />
                 <Route path="support" element={<AdminSupportPage />} />
+                <Route path="fraud" element={<AdminFraudPage />} />
+                <Route path="performers" element={<AdminPerformersPage />} />
               </Route>
             </Route>
 

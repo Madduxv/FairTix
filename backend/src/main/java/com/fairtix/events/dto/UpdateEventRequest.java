@@ -1,6 +1,8 @@
 package com.fairtix.events.dto;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -18,5 +20,7 @@ public record UpdateEventRequest(
         @Schema(description = "Maximum queue capacity (null = unlimited)")
         Integer queueCapacity,
         @Schema(description = "Maximum tickets a single user may purchase for this event (null = no cap)")
-        Integer maxTicketsPerUser) {
+        Integer maxTicketsPerUser,
+        @Schema(description = "Performer IDs to associate with this event (null = no change, empty list = remove all)")
+        List<UUID> performerIds) {
 }

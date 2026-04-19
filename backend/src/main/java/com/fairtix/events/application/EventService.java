@@ -13,6 +13,8 @@ import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.tickets.domain.Ticket;
 import com.fairtix.tickets.domain.TicketStatus;
 import com.fairtix.tickets.infrastructure.TicketRepository;
+import com.fairtix.performers.domain.Performer;
+import com.fairtix.performers.infrastructure.PerformerRepository;
 import com.fairtix.venues.domain.Venue;
 import com.fairtix.venues.infrastructure.VenueRepository;
 
@@ -36,15 +38,18 @@ public class EventService {
 
   private final EventRepository repository;
   private final VenueRepository venueRepository;
+  private final PerformerRepository performerRepository;
   private final SeatHoldRepository seatHoldRepository;
   private final TicketRepository ticketRepository;
   private final RefundService refundService;
 
   public EventService(EventRepository repository, VenueRepository venueRepository,
+      PerformerRepository performerRepository,
       SeatHoldRepository seatHoldRepository, TicketRepository ticketRepository,
       RefundService refundService) {
     this.repository = repository;
     this.venueRepository = venueRepository;
+    this.performerRepository = performerRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.ticketRepository = ticketRepository;
     this.refundService = refundService;
@@ -78,6 +83,11 @@ public class EventService {
     }
     if (request.maxTicketsPerUser() != null) {
       event.setMaxTicketsPerUser(request.maxTicketsPerUser());
+    }
+    if (request.performerIds() != null) {
+      List<Performer> performers = performerRepository.findAllById(request.performerIds());
+      event.getPerformers().clear();
+      event.getPerformers().addAll(performers);
     }
     return event;
   }

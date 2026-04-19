@@ -48,6 +48,14 @@ public class PerformerService {
     return repository.findAll(pageable);
   }
 
+  public void delete(UUID id, UUID actorId) {
+    Performer performer = repository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Performer not found: " + id));
+    repository.deleteEventAssociations(id);
+    repository.delete(performer);
+    auditService.log(actorId, "DELETE", "PERFORMER", id, "Deleted performer: " + performer.getName());
+  }
+
   public Performer update(UUID id, UpdatePerformerRequest request, UUID actorId) {
     Performer performer = repository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Performer not found: " + id));

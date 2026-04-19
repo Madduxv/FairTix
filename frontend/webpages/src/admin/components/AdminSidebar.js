@@ -15,6 +15,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import GppMaybeOutlinedIcon from '@mui/icons-material/GppMaybeOutlined';
+import MicNoneOutlinedIcon from '@mui/icons-material/MicNoneOutlined';
 
 const DRAWER_WIDTH = 240;
 
@@ -25,6 +27,8 @@ const navItems = [
   { label: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
   { label: 'Refunds', path: '/admin/refunds', icon: <ReceiptLongIcon /> },
   { label: 'Support', path: '/admin/support', icon: <SupportAgentIcon /> },
+  { label: 'Fraud', path: '/admin/fraud', icon: <GppMaybeOutlinedIcon /> },
+  { label: 'Performers', path: '/admin/performers', icon: <MicNoneOutlinedIcon /> },
 ];
 
 function AdminSidebar() {

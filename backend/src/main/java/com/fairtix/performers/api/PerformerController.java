@@ -57,6 +57,16 @@ public class PerformerController {
         return PerformerResponse.from(service.get(id));
     }
 
+    @Operation(summary = "Delete a performer", description = "Admin-only. Removes performer from all events before deleting.")
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        service.delete(id, principal.getUserId());
+    }
+
     @Operation(summary = "Update a performer", description = "Admin-only.")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
