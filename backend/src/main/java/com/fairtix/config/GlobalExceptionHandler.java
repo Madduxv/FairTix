@@ -12,6 +12,7 @@ import com.fairtix.auth.application.InvalidCaptchaException;
 import com.fairtix.auth.application.RecaptchaUnavailableException;
 import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
+import com.fairtix.payments.application.PaymentDeclinedException;
 import com.fairtix.payments.application.PaymentFailedException;
 import com.fairtix.fraud.application.StepUpRequiredException;
 import com.fairtix.fraud.application.UserFlaggedForAbuseException;
@@ -220,6 +221,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handlePaymentFailed(
       PaymentFailedException ex, HttpServletRequest req) {
     return error(HttpStatus.PAYMENT_REQUIRED, "PAYMENT_FAILED", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(PaymentDeclinedException.class)
+  public ResponseEntity<Map<String, Object>> handleCardDeclined(
+      PaymentDeclinedException ex, HttpServletRequest req) {
+    return error(HttpStatus.UNPROCESSABLE_ENTITY, "CARD_DECLINED", ex.getMessage(), req);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
