@@ -166,22 +166,56 @@
   margin-top: 0.25rem;
 }
 
-/* Transfer button */
+/* Ticket card action buttons */
 .ticket-card-actions {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f0f0f0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.btn-transfer {
+/* Shared base for all ticket action buttons */
+.btn-qr,
+.btn-calendar,
+.btn-transfer,
+.btn-refund,
+.download-ticket-btn {
+  display: inline-block;
   background: none;
-  border: 1px solid #1a73e8;
-  color: #1a73e8;
   border-radius: 4px;
   padding: 0.35rem 0.9rem;
   font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.2s;
+  text-decoration: none;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.btn-qr {
+  border: 1px solid #5f6368;
+  color: #5f6368;
+}
+
+.btn-qr:hover {
+  background: #f1f3f4;
+}
+
+.btn-calendar {
+  border: 1px solid #1a73e8;
+  color: #1a73e8;
+}
+
+.btn-calendar:hover {
+  background: #e8f0fe;
+}
+
+.btn-transfer {
+  border: 1px solid #1a73e8;
+  color: #1a73e8;
 }
 
 .btn-transfer:hover {
@@ -189,18 +223,21 @@
 }
 
 .btn-refund {
-  background: none;
   border: 1px solid #d93025;
   color: #d93025;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.2s;
 }
 
 .btn-refund:hover {
   background: #fce8e6;
+}
+
+.download-ticket-btn {
+  border: 1px solid #34a853;
+  color: #34a853;
+}
+
+.download-ticket-btn:hover {
+  background: #e6f4ea;
 }
 
 /* Transfer dialog */
