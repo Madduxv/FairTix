@@ -41,15 +41,15 @@ public class BehaviorAnalysisSweepScheduler {
         }
 
         log.debug("Fraud sweep: analyzing {} active users", activeUserIds.size());
-        int flagged = 0;
+        int processed = 0;
         for (UUID userId : activeUserIds) {
             try {
                 behaviorAnalysisService.analyzeUser(userId);
-                flagged++;
+                processed++;
             } catch (Exception ex) {
                 log.warn("Fraud sweep error for user {}: {}", userId, ex.getMessage());
             }
         }
-        log.debug("Fraud sweep complete: processed {} users", flagged);
+        log.debug("Fraud sweep complete: processed {} users", processed);
     }
 }

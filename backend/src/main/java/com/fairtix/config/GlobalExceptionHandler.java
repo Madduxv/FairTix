@@ -14,7 +14,6 @@ import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
 import com.fairtix.payments.application.PaymentDeclinedException;
 import com.fairtix.payments.application.PaymentFailedException;
-import com.fairtix.fraud.application.StepUpRequiredException;
 import com.fairtix.fraud.application.UserFlaggedForAbuseException;
 import com.fairtix.queue.application.QueueConflictException;
 import com.fairtix.refunds.application.RefundNotEligibleException;
@@ -69,18 +68,6 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleUserFlagged(
       UserFlaggedForAbuseException ex, HttpServletRequest req) {
     return error(HttpStatus.FORBIDDEN, "USER_FLAGGED_FOR_ABUSE", ex.getMessage(), req);
-  }
-
-  @ExceptionHandler(StepUpRequiredException.class)
-  public ResponseEntity<Map<String, Object>> handleStepUpRequired(
-      StepUpRequiredException ex, HttpServletRequest req) {
-    return ResponseEntity.status(428).body(Map.of(
-        "status", 428,
-        "code", "STEP_UP_REQUIRED",
-        "action", ex.getAction(),
-        "message", ex.getMessage(),
-        "path", req.getRequestURI(),
-        "timestamp", Instant.now().toString()));
   }
 
   @ExceptionHandler(QueueConflictException.class)

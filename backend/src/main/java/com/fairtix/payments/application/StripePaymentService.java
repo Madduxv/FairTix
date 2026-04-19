@@ -10,6 +10,8 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,11 @@ import java.util.UUID;
 
 @Service
 public class StripePaymentService {
+
+  private static final Logger log = LoggerFactory.getLogger(StripePaymentService.class);
+
+  @Value("${stripe.enabled:false}")
+  private boolean stripeEnabled;
 
   @Value("${stripe.secret-key:}")
   private String secretKey;
@@ -34,6 +41,9 @@ public class StripePaymentService {
   @PostConstruct
   void init() {
     Stripe.apiKey = secretKey;
+    if (stripeEnabled && secretKey.isBlank()) {
+      log.warn("stripe.enabled=true but stripe.secret-key is blank; payment endpoints will fail at runtime");
+    }
   }
 
   public String createPaymentIntent(long amountCents, String currency) {
