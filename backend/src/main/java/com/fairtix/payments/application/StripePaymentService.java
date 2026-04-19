@@ -43,11 +43,12 @@ public class StripePaymentService {
     }
   }
 
-  public boolean verifyPaymentSucceeded(String paymentIntentId) {
+  public boolean verifyPaymentSucceeded(String paymentIntentId, long expectedAmountCents) {
     Stripe.apiKey = secretKey;
     try {
       PaymentIntent intent = PaymentIntent.retrieve(paymentIntentId);
-      return "succeeded".equals(intent.getStatus());
+      return "succeeded".equals(intent.getStatus())
+          && intent.getAmountReceived() == expectedAmountCents;
     } catch (StripeException e) {
       throw new RuntimeException("Failed to verify Stripe payment: " + e.getMessage(), e);
     }

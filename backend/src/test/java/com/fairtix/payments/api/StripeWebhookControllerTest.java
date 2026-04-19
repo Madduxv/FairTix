@@ -31,7 +31,6 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -141,7 +140,7 @@ class StripeWebhookControllerTest {
             .content(payload))
         .andExpect(status().isOk());
 
-    verify(auditService, never()).log(isNull(), eq("STRIPE_UNMATCHED_PAYMENT"), anyString(), any(), anyString());
+    verify(auditService, never()).log(eq(new UUID(0L, 0L)), eq("STRIPE_UNMATCHED_PAYMENT"), anyString(), any(), anyString());
   }
 
   @Test
@@ -169,6 +168,6 @@ class StripeWebhookControllerTest {
         .andExpect(status().isOk());
 
     verify(refundRepository).save(refundRequest);
-    verify(auditService).log(isNull(), eq("REFUND_COMPLETED"), eq("REFUND"), any(), anyString());
+    verify(auditService).log(eq(new UUID(0L, 0L)), eq("REFUND_COMPLETED"), eq("REFUND"), any(), anyString());
   }
 }

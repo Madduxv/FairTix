@@ -97,7 +97,7 @@ class StripePaymentControllerTest {
 
   @Test
   void checkout_withStripeIntentId_succeeds() throws Exception {
-    doReturn(true).when(stripePaymentService).verifyPaymentSucceeded(anyString());
+    doReturn(true).when(stripePaymentService).verifyPaymentSucceeded(anyString(), anyLong());
 
     String body = """
         {
@@ -117,7 +117,7 @@ class StripePaymentControllerTest {
 
   @Test
   void checkout_withStripeIntentId_failsWhenNotSucceeded() throws Exception {
-    doReturn(false).when(stripePaymentService).verifyPaymentSucceeded(anyString());
+    doReturn(false).when(stripePaymentService).verifyPaymentSucceeded(anyString(), anyLong());
 
     String body = """
         {

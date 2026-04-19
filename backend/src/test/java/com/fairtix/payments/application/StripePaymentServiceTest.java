@@ -35,9 +35,10 @@ class StripePaymentServiceTest {
     try (MockedStatic<PaymentIntent> mocked = Mockito.mockStatic(PaymentIntent.class)) {
       PaymentIntent mockIntent = mock(PaymentIntent.class);
       when(mockIntent.getStatus()).thenReturn("succeeded");
+      when(mockIntent.getAmountReceived()).thenReturn(5000L);
       mocked.when(() -> PaymentIntent.retrieve("pi_test_123")).thenReturn(mockIntent);
 
-      assertTrue(service.verifyPaymentSucceeded("pi_test_123"));
+      assertTrue(service.verifyPaymentSucceeded("pi_test_123", 5000L));
     }
   }
 
@@ -48,7 +49,7 @@ class StripePaymentServiceTest {
       when(mockIntent.getStatus()).thenReturn("requires_payment_method");
       mocked.when(() -> PaymentIntent.retrieve("pi_failed")).thenReturn(mockIntent);
 
-      assertFalse(service.verifyPaymentSucceeded("pi_failed"));
+      assertFalse(service.verifyPaymentSucceeded("pi_failed", 5000L));
     }
   }
 }

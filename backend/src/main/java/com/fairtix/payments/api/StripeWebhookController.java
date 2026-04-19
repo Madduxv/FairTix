@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Tag(name = "Webhooks", description = "Stripe event webhooks")
 @RestController
@@ -30,6 +31,7 @@ import java.util.Optional;
 public class StripeWebhookController {
 
   private static final Logger log = LoggerFactory.getLogger(StripeWebhookController.class);
+  private static final UUID SYSTEM_ACTOR = new UUID(0L, 0L);
 
   @Value("${stripe.enabled:false}")
   private boolean stripeEnabled;
@@ -84,7 +86,7 @@ public class StripeWebhookController {
       boolean alreadyRecorded = paymentRecordRepository.findByTransactionId(piId).isPresent();
       if (!alreadyRecorded) {
         log.warn("payment_intent.succeeded for {} has no matching order — manual review needed", piId);
-        auditService.log(null, "STRIPE_UNMATCHED_PAYMENT", "PAYMENT", null,
+        auditService.log(SYSTEM_ACTOR, "STRIPE_UNMATCHED_PAYMENT", "PAYMENT", null,
             "paymentIntentId=" + piId + " succeeded but no FairTix order found");
       }
     });
@@ -101,7 +103,7 @@ public class StripeWebhookController {
               .ifPresent(refundRequest -> {
                 refundRequest.complete();
                 refundRepository.save(refundRequest);
-                auditService.log(null, "REFUND_COMPLETED", "REFUND", refundRequest.getId(),
+                auditService.log(SYSTEM_ACTOR, "REFUND_COMPLETED", "REFUND", refundRequest.getId(),
                     "Completed via Stripe charge.refunded for paymentIntent=" + piId);
               })
       );
@@ -112,7 +114,7 @@ public class StripeWebhookController {
     getObject(event, PaymentIntent.class).ifPresent(pi -> {
       String reason = pi.getLastPaymentError() != null
           ? pi.getLastPaymentError().getMessage() : "unknown";
-      auditService.log(null, "STRIPE_PAYMENT_FAILED", "PAYMENT", null,
+      auditService.log(SYSTEM_ACTOR, "STRIPE_PAYMENT_FAILED", "PAYMENT", null,
           "paymentIntentId=" + pi.getId() + " failed: " + reason);
     });
   }

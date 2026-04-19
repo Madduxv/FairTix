@@ -58,6 +58,7 @@ beforeEach(() => {
     if (url.includes('/seats')) return Promise.resolve([seatData]);
     return Promise.resolve([]);
   });
+  api.post.mockResolvedValue({});
 });
 
 test('shows loading state initially', () => {

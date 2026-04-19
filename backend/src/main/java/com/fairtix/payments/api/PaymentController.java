@@ -124,7 +124,13 @@ public class PaymentController {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
             "paymentIntentId is required when Stripe is enabled");
       }
-      if (!stripePaymentService.verifyPaymentSucceeded(paymentIntentId)) {
+      BigDecimal expectedTotal = request.holdIds().stream()
+          .map(id -> seatHoldRepository.findByIdAndOwnerId(id, principal.getUserId())
+              .map(h -> h.getSeat().getPrice())
+              .orElse(BigDecimal.ZERO))
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+      long expectedAmountCents = expectedTotal.multiply(BigDecimal.valueOf(100)).longValue();
+      if (!stripePaymentService.verifyPaymentSucceeded(paymentIntentId, expectedAmountCents)) {
         throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED,
             "Stripe payment has not succeeded");
       }

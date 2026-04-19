@@ -18,6 +18,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -76,7 +79,9 @@ public class TicketController {
         Venue venue = event.getVenue();
 
         String location = venue != null
-                ? escapeIcs(venue.getName() + ", " + venue.getAddress() + ", " + venue.getCity())
+                ? escapeIcs(Stream.of(venue.getName(), venue.getAddress(), venue.getCity())
+                        .filter(s -> s != null && !s.isBlank())
+                        .collect(Collectors.joining(", ")))
                 : "";
         String description = escapeIcs(
                 "Ticket ID: " + ticket.getId() + ". Seat: "
