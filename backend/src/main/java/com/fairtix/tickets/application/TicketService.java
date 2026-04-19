@@ -48,4 +48,13 @@ public class TicketService {
     }
     return ticket;
   }
+
+  public Ticket getTicketForCalendar(UUID ticketId, UUID userId) {
+    Ticket ticket = ticketRepository.findByIdWithEventAndVenue(ticketId)
+        .orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + ticketId));
+    if (!ticket.getUser().getId().equals(userId)) {
+      throw new ResourceNotFoundException("Ticket not found: " + ticketId);
+    }
+    return ticket;
+  }
 }

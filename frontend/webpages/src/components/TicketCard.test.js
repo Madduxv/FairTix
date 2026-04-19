@@ -124,3 +124,51 @@ test('calls onRefunded when refund is confirmed', () => {
   fireEvent.click(screen.getByText('Confirm Refund'));
   expect(onRefunded).toHaveBeenCalled();
 });
+
+test('Show QR button is always present', () => {
+  renderTicketCard();
+  expect(screen.getByRole('button', { name: /show qr/i })).toBeInTheDocument();
+});
+
+test('QR panel is hidden by default', () => {
+  renderTicketCard();
+  expect(screen.queryByAltText('Ticket QR Code')).not.toBeInTheDocument();
+});
+
+test('Show QR button reveals QR image with correct api.qrserver.com URL containing ticket ID', () => {
+  renderTicketCard();
+  fireEvent.click(screen.getByRole('button', { name: /show qr/i }));
+  const img = screen.getByAltText('Ticket QR Code');
+  expect(img).toBeInTheDocument();
+  expect(img.src).toContain('api.qrserver.com');
+  expect(img.src).toContain('t1');
+});
+
+test('Download link has correct href and download attribute', () => {
+  renderTicketCard();
+  fireEvent.click(screen.getByRole('button', { name: /show qr/i }));
+  const link = screen.getByRole('link', { name: /download/i });
+  expect(link).toBeInTheDocument();
+  expect(link.href).toContain('api.qrserver.com');
+  expect(link.href).toContain('t1');
+  expect(link.getAttribute('download')).toBe('ticket-qr.png');
+});
+
+test('Show QR toggles to Hide QR when panel is open', () => {
+  renderTicketCard();
+  fireEvent.click(screen.getByRole('button', { name: /show qr/i }));
+  expect(screen.getByRole('button', { name: /hide qr/i })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /hide qr/i }));
+  expect(screen.queryByAltText('Ticket QR Code')).not.toBeInTheDocument();
+});
+
+test('calendarLink_isVisible renders Add to Calendar link for valid ticket', () => {
+  renderTicketCard();
+  expect(screen.getByRole('link', { name: /add to calendar/i })).toBeInTheDocument();
+});
+
+test('calendarLink_hasCorrectHref points to iCal endpoint for the ticket', () => {
+  renderTicketCard();
+  const link = screen.getByRole('link', { name: /add to calendar/i });
+  expect(link.getAttribute('href')).toBe('/api/tickets/t1/calendar.ics');
+});

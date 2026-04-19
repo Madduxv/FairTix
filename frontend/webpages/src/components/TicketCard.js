@@ -6,7 +6,9 @@ import RefundDialog from './RefundDialog';
 function TicketCard({ ticket, onTransferred, onRefunded }) {
   const [showTransfer, setShowTransfer] = useState(false);
   const [showRefund, setShowRefund] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const statusClass = ticket.status.toLowerCase();
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ticket.id)}`;
 
   return (
     <div className="ticket-card">
@@ -48,14 +50,33 @@ function TicketCard({ ticket, onTransferred, onRefunded }) {
           </div>
         )}
       </div>
-      {ticket.status === 'VALID' && (
-        <div className="ticket-card-actions">
-          <button className="btn-transfer" onClick={() => setShowTransfer(true)}>
-            Transfer
-          </button>
-          <button className="btn-refund" onClick={() => setShowRefund(true)}>
-            Request Refund
-          </button>
+      <div className="ticket-card-actions">
+        <button className="btn-qr" onClick={() => setShowQr(v => !v)}>
+          {showQr ? 'Hide QR' : 'Show QR'}
+        </button>
+        <a className="btn-calendar" href={`/api/tickets/${ticket.id}/calendar.ics`} download="fairtix-event.ics">
+          Add to Calendar
+        </a>
+        {ticket.status === 'VALID' && (
+          <>
+            <button className="btn-transfer" onClick={() => setShowTransfer(true)}>
+              Transfer
+            </button>
+            <button className="btn-refund" onClick={() => setShowRefund(true)}>
+              Request Refund
+            </button>
+          </>
+        )}
+      </div>
+      {showQr && (
+        <div className="ticket-qr-panel">
+          <img
+            src={qrUrl}
+            alt="Ticket QR Code"
+          />
+          <a href={qrUrl} download="ticket-qr.png" className="btn-qr-download">
+            Download
+          </a>
         </div>
       )}
       {showTransfer && (
