@@ -89,11 +89,12 @@ public class SupportTicketController {
 
     @GetMapping("/api/admin/support/tickets")
     @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Admin: list all support tickets with optional status filter")
+    @Operation(summary = "Admin: list all support tickets with optional status and userId filter")
     public Page<SupportTicketResponse> adminListTickets(
             @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) UUID userId,
             @RequestParam(defaultValue = "0") int page) {
-        return supportTicketService.getAdminTickets(status, page);
+        return supportTicketService.getAdminTickets(status, userId, page);
     }
 
     @PatchMapping("/api/admin/support/tickets/{id}")

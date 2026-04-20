@@ -16,5 +16,9 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, UU
 
     Page<SupportTicket> findByStatus(TicketStatus status, Pageable pageable);
 
+    Page<SupportTicket> findByUser_IdAndStatus(UUID userId, TicketStatus status, Pageable pageable);
+
+    Page<SupportTicket> findByUser_Id(UUID userId, Pageable pageable);
+
     Page<SupportTicket> findAll(Pageable pageable);
 }

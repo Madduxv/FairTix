@@ -194,8 +194,16 @@ public class SupportTicketService {
         return SupportTicketResponse.summary(ticket);
     }
 
-    public Page<SupportTicketResponse> getAdminTickets(TicketStatus statusFilter, int page) {
+    public Page<SupportTicketResponse> getAdminTickets(TicketStatus statusFilter, UUID userId, int page) {
         PageRequest pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "updatedAt"));
+        if (userId != null && statusFilter != null) {
+            return ticketRepository.findByUser_IdAndStatus(userId, statusFilter, pageable)
+                    .map(SupportTicketResponse::summary);
+        }
+        if (userId != null) {
+            return ticketRepository.findByUser_Id(userId, pageable)
+                    .map(SupportTicketResponse::summary);
+        }
         if (statusFilter != null) {
             return ticketRepository.findByStatus(statusFilter, pageable)
                     .map(SupportTicketResponse::summary);
