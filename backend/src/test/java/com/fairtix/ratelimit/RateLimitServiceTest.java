@@ -2,11 +2,15 @@ package com.fairtix.ratelimit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.redisson.api.RRateLimiter;
 import org.redisson.api.RedissonClient;
 import org.redisson.api.RateType;
 import org.redisson.api.RateIntervalUnit;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -35,190 +39,34 @@ public class RateLimitServiceTest {
         ReflectionTestUtils.setField(rateLimitService, "defaultLimit", 100);
     }
 
-    @Test
-    public void testAuthEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(10L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        String ip = "1.2.3.4";
-        String url = "/api/auth/login";
-        for (int i = 0; i < 10; i++) {
-            assertTrue(rateLimitService.isAllowed(ip, url));
-        }
-        assertFalse(rateLimitService.isAllowed(ip, url));
-    }
+    @ParameterizedTest(name = "{0} → limit {1}")
+    @CsvSource({
+        "/api/auth/login,           10",
+        "/auth/register,            10",
+        "/api/admin/users/promote,  20",
+        "/api/payments/checkout,    20",
+        "/api/events/456/holds,     20",
+        "/api/orders/create,        20",
+        "/api/holds/abc,            20",
+        "/api/events/789/seats,     60",
+        "/api/inventory/list,       60",
+        "/api/events,               100",
+        "/api/other,                100",
+    })
+    public void isAllowed_enforcesLimitForEndpoint(String url, int limit) {
+        Boolean[] answers = new Boolean[limit + 1];
+        Arrays.fill(answers, 0, limit, Boolean.TRUE);
+        answers[limit] = Boolean.FALSE;
+        Boolean[] rest = Arrays.copyOfRange(answers, 1, answers.length);
 
-    @Test
-    public void testAuthRegisterEndpointUsesAuthLimit() {
         when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(10L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        for (int i = 0; i < 10; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", "/auth/register"));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", "/auth/register"));
-    }
+        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq((long) limit), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
+        when(rateLimiter.tryAcquire(1)).thenReturn(answers[0], rest);
 
-    @Test
-    public void testAdminEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(20L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        String url = "/api/admin/users/123/promote";
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < limit; i++) {
             assertTrue(rateLimitService.isAllowed("1.2.3.4", url));
         }
         assertFalse(rateLimitService.isAllowed("1.2.3.4", url));
-    }
-
-    @Test
-    public void testPaymentsEndpointUsesOrdersLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(20L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        for (int i = 0; i < 20; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", "/api/payments/checkout"));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", "/api/payments/checkout"));
-    }
-
-    @Test
-    public void testEventsHoldsEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(20L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        String url = "/api/events/456/holds";
-        for (int i = 0; i < 20; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", url));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", url));
-    }
-
-    @Test
-    public void testEventsSeatsEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(60L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            false
-        );
-        String url = "/api/events/789/seats";
-        for (int i = 0; i < 60; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", url));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", url));
-    }
-
-    @Test
-    public void testEventsDefaultEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(100L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            false
-        );
-        String url = "/api/events";
-        for (int i = 0; i < 100; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", url));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", url));
-    }
-
-    @Test
-    public void testOrdersAndHoldsEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(20L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        String url = "/api/orders/create";
-        for (int i = 0; i < 20; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", url));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", url));
-
-        // Also test /api/holds
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(20L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true, false
-        );
-        url = "/api/holds/abc";
-        for (int i = 0; i < 20; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", url));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", url));
-    }
-
-    @Test
-    public void testInventoryAndSeatsEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(60L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            false
-        );
-        for (int i = 0; i < 60; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", "/api/inventory/list"));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", "/api/inventory/list"));
-    }
-
-    @Test
-    public void testDefaultEndpointRateLimit() {
-        when(rateLimiter.isExists()).thenReturn(false);
-        when(rateLimiter.trySetRate(eq(RateType.OVERALL), eq(100L), eq(1L), eq(RateIntervalUnit.MINUTES))).thenReturn(true);
-        when(rateLimiter.tryAcquire(1)).thenReturn(
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            true, true, true, true, true, true, true, true, true, true,
-            false
-        );
-        for (int i = 0; i < 100; i++) {
-            assertTrue(rateLimitService.isAllowed("1.2.3.4", "/api/other"));
-        }
-        assertFalse(rateLimitService.isAllowed("1.2.3.4", "/api/other"));
     }
 
     @Test

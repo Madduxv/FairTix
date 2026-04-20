@@ -136,6 +136,12 @@ function Events() {
                   <span>{event.venue?.name ?? ''}</span>
                   <span>{formatDate(event.startTime)}</span>
                 </div>
+                {event.status === 'PUBLISHED' && (
+                  <div className="event-card-status event-card-status--announced">Coming Soon</div>
+                )}
+                {event.status === 'ACTIVE' && (
+                  <div className="event-card-status event-card-status--active">On Sale</div>
+                )}
                 <div className="event-card-action">View details &rarr;</div>
               </Link>
             ))}

@@ -188,6 +188,21 @@
   background: #e8f0fe;
 }
 
+.btn-refund {
+  background: none;
+  border: 1px solid #d93025;
+  color: #d93025;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-refund:hover {
+  background: #fce8e6;
+}
+
 /* Transfer dialog */
 .dialog-overlay {
   position: fixed;

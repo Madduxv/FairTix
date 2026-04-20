@@ -30,6 +30,7 @@ public class NotificationPreferenceService {
         prefs.setEmailTicket(request.emailTicket());
         prefs.setEmailHold(request.emailHold());
         prefs.setEmailMarketing(request.emailMarketing());
+        prefs.setEmailSupport(request.emailSupport());
         return repository.save(prefs);
     }
 

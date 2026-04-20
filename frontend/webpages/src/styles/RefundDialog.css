@@ -1,0 +1,120 @@
+.refund-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.refund-dialog {
+  background: var(--card-bg, #1e1e2e);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 28px;
+  width: 100%;
+  max-width: 480px;
+  color: var(--text-primary, #e0e0e0);
+}
+
+.refund-dialog h3 {
+  margin: 0 0 16px;
+  font-size: 1.2rem;
+  color: var(--accent, #e94560);
+}
+
+.refund-dialog-event {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.refund-amount {
+  color: var(--accent, #e94560);
+  font-weight: 600;
+}
+
+.refund-dialog-note {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #a0a0b0);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.refund-dialog label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.refund-dialog textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: inherit;
+  font-size: 0.9rem;
+  padding: 10px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.refund-dialog textarea:focus {
+  outline: none;
+  border-color: var(--accent, #e94560);
+}
+
+.refund-dialog-error {
+  color: #e94560;
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
+.refund-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn-cancel-dialog {
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: var(--text-secondary, #a0a0b0);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-cancel-dialog:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-submit-refund {
+  padding: 8px 18px;
+  background: var(--accent, #e94560);
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.btn-submit-refund:hover:not(:disabled) {
+  background: #c73652;
+}
+
+.btn-submit-refund:disabled,
+.btn-cancel-dialog:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

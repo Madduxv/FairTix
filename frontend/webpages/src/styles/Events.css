@@ -216,3 +216,24 @@
   font-size: 0.85rem;
   background: #fff;
 }
+
+.event-card-status {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+}
+
+.event-card-status--announced {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.event-card-status--active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}

@@ -1,6 +1,9 @@
 package com.fairtix.inventory.api;
 
 import com.fairtix.auth.WithMockPrincipal;
+import com.fairtix.events.application.EventService;
+import com.fairtix.inventory.application.SeatService;
+import com.fairtix.inventory.domain.Seat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +14,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -36,7 +41,15 @@ class SeatHoldControllerTest {
   @Autowired
   private WebApplicationContext context;
 
+  @Autowired
+  private EventService eventService;
+
+  @Autowired
+  private SeatService seatService;
+
   private MockMvc mockMvc;
+  private Seat testSeat;
+  private UUID testEventId;
 
   private static final String CREATE_URL = "/api/events/{eventId}/holds";
   private static final UUID TEST_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
@@ -46,6 +59,35 @@ class SeatHoldControllerTest {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
+    var event = eventService.createEvent("Hold Test Event", Instant.parse("2026-08-01T19:00:00Z"), null, null, false, null, null);
+    testEventId = event.getId();
+    testSeat = seatService.createSeat(testEventId, "Floor", "A", "1", new BigDecimal("25.00"));
+  }
+
+  // -------------------------------------------------------------------------
+  // Happy path → 201 Created
+  // -------------------------------------------------------------------------
+
+  @Test
+  void createHold_validRequest_returns201WithHoldData() throws Exception {
+    String body = """
+        {
+          "seatIds": ["%s"]
+        }
+        """.formatted(testSeat.getId());
+
+    mockMvc.perform(post(CREATE_URL, testEventId)
+        .with(WithMockPrincipal.user(TEST_USER_ID, "user@test.com"))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].id").value(notNullValue()))
+        .andExpect(jsonPath("$[0].seatId").value(testSeat.getId().toString()))
+        .andExpect(jsonPath("$[0].eventId").value(testEventId.toString()))
+        .andExpect(jsonPath("$[0].ownerId").value(TEST_USER_ID.toString()))
+        .andExpect(jsonPath("$[0].status").value("ACTIVE"));
   }
 
   // -------------------------------------------------------------------------

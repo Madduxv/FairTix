@@ -26,6 +26,7 @@ function Navbar() {
             <NavLink to="/my-holds">My Holds</NavLink>
             <NavLink to="/my-tickets">My Tickets</NavLink>
             <NavLink to="/transfers">Transfers</NavLink>
+            <NavLink to="/support">Support</NavLink>
             <NavLink to="/dashboard">Dashboard</NavLink>
             {user.role === 'ADMIN' && (
               <NavLink to="/admin">Admin Panel</NavLink>

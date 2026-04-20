@@ -24,6 +24,9 @@ public class NotificationPreference {
     @Column(name = "email_marketing", nullable = false)
     private boolean emailMarketing = false;
 
+    @Column(name = "email_support", nullable = false)
+    private boolean emailSupport = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -49,6 +52,9 @@ public class NotificationPreference {
 
     public boolean isEmailMarketing() { return emailMarketing; }
     public void setEmailMarketing(boolean emailMarketing) { this.emailMarketing = emailMarketing; }
+
+    public boolean isEmailSupport() { return emailSupport; }
+    public void setEmailSupport(boolean emailSupport) { this.emailSupport = emailSupport; }
 
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

@@ -121,7 +121,8 @@ class EventControllerTest {
 
   @Test
   void listEvents_unauthenticated_returns200() throws Exception {
-    eventService.createEvent("Event 1", Instant.parse("2026-06-01T18:00:00Z"), testVenue.getId(), null, false, null, null);
+    Event ev = eventService.createEvent("Event 1", Instant.parse("2026-06-01T18:00:00Z"), testVenue.getId(), null, false, null, null);
+    eventService.publishEvent(ev.getId(), null);
 
     mockMvc.perform(get("/api/events"))
         .andExpect(status().isOk())
@@ -134,9 +135,12 @@ class EventControllerTest {
   void listEvents_pagination_works() throws Exception {
     Venue venueB = venueRepository.save(new Venue("Venue B", null, null, null, null));
     Venue venueC = venueRepository.save(new Venue("Venue C", null, null, null, null));
-    eventService.createEvent("Event A", Instant.parse("2026-06-01T18:00:00Z"), testVenue.getId(), null, false, null, null);
-    eventService.createEvent("Event B", Instant.parse("2026-06-02T18:00:00Z"), venueB.getId(), null, false, null, null);
-    eventService.createEvent("Event C", Instant.parse("2026-06-03T18:00:00Z"), venueC.getId(), null, false, null, null);
+    Event evA = eventService.createEvent("Event A", Instant.parse("2026-06-01T18:00:00Z"), testVenue.getId(), null, false, null, null);
+    Event evB = eventService.createEvent("Event B", Instant.parse("2026-06-02T18:00:00Z"), venueB.getId(), null, false, null, null);
+    Event evC = eventService.createEvent("Event C", Instant.parse("2026-06-03T18:00:00Z"), venueC.getId(), null, false, null, null);
+    eventService.publishEvent(evA.getId(), null);
+    eventService.publishEvent(evB.getId(), null);
+    eventService.publishEvent(evC.getId(), null);
 
     mockMvc.perform(get("/api/events")
             .param("page", "0")

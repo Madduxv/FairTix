@@ -423,3 +423,152 @@
   font-weight: 700;
   margin-left: 0.5rem;
 }
+
+.event-status-banner {
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+  font-weight: 500;
+}
+
+.event-status-banner--announced {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.event-status-banner--cancelled {
+  background: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #ef9a9a;
+}
+
+.event-status-banner--completed {
+  background: #f3e5f5;
+  color: #4a148c;
+  border: 1px solid #ce93d8;
+}
+
+/* View toggle (List / Map) */
+.view-toggle {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.view-toggle-btn:not(:last-child) {
+  border-right: 1px solid #ddd;
+}
+
+.view-toggle-btn.active {
+  background: #1e7e34;
+  color: #fff;
+  font-weight: 600;
+}
+
+.view-toggle-btn:hover:not(.active) {
+  background: #f5f5f5;
+  color: #111;
+}
+
+/* Seat Map */
+.seat-map-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.seat-map-controls {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.seat-map-zoom-btn {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #444;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.seat-map-zoom-btn:hover {
+  border-color: #999;
+  color: #111;
+}
+
+.seat-map-reset-btn {
+  width: auto;
+  padding: 0 0.75rem;
+  font-size: 0.8rem;
+}
+
+.seat-map-container {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  user-select: none;
+}
+
+.seat-map-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.seat-map-tooltip {
+  position: absolute;
+  background: rgba(30, 30, 30, 0.92);
+  color: #fff;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.seat-map-legend {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: #555;
+}
+
+.seat-map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.seat-map-legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}

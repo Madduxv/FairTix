@@ -10,6 +10,8 @@ import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.queue.application.QueueService;
+import com.fairtix.tickets.domain.TicketStatus;
+import com.fairtix.tickets.infrastructure.TicketRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class SeatHoldService {
   private final EventRepository eventRepository;
   private final AuditService auditService;
   private final QueueService queueService;
+  private final TicketRepository ticketRepository;
 
   @Value("${holds.duration-minutes:10}")
   private int defaultDurationMinutes;
@@ -47,12 +50,14 @@ public class SeatHoldService {
       SeatHoldRepository seatHoldRepository,
       EventRepository eventRepository,
       AuditService auditService,
-      QueueService queueService) {
+      QueueService queueService,
+      TicketRepository ticketRepository) {
     this.seatRepository = seatRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.eventRepository = eventRepository;
     this.auditService = auditService;
     this.queueService = queueService;
+    this.ticketRepository = ticketRepository;
   }
 
   /**
@@ -85,6 +90,20 @@ public class SeatHoldService {
     // Queue gate: if the event requires queue admission, verify before proceeding
     if (event.isQueueRequired() && !queueService.isAdmitted(eventId, ownerId)) {
       throw new SeatHoldConflictException("Queue admission required to hold seats for this event");
+    }
+
+    // Purchase-cap hold gate: count tickets already purchased + active holds for this event
+    Integer cap = event.getMaxTicketsPerUser();
+    if (cap != null) {
+      long requested = seatIds.stream().distinct().count();
+      long purchased = ticketRepository.countByUser_IdAndEvent_IdAndStatusNotIn(ownerId, eventId,
+          List.of(TicketStatus.CANCELLED, TicketStatus.REFUNDED));
+      long heldAlready = seatHoldRepository.countByOwnerIdAndSeat_Event_IdAndStatus(ownerId, eventId, HoldStatus.ACTIVE);
+      if (purchased + heldAlready + requested > cap) {
+        throw new SeatHoldConflictException(
+            "Purchase cap of " + cap + " ticket(s) per user exceeded for event: " + event.getTitle()
+                + " (purchased: " + purchased + ", held: " + heldAlready + ", requested: " + requested + ")");
+      }
     }
 
     // Soft limit: reject before acquiring any locks

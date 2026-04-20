@@ -25,6 +25,12 @@ import AdminEventsPage from './admin/pages/AdminEventsPage';
 import AdminSeatsPage from './admin/pages/AdminSeatsPage';
 import AdminUsersPage from './admin/pages/AdminUsersPage';
 import AdminVenuesPage from './admin/pages/AdminVenuesPage';
+import AdminRefundsPage from './admin/pages/AdminRefundsPage';
+import AdminSupportPage from './admin/pages/AdminSupportPage';
+import MyRefunds from './pages/MyRefunds';
+import MySupportTickets from './pages/MySupportTickets';
+import SupportPage from './pages/SupportPage';
+import SupportTicketDetail from './pages/SupportTicketDetail';
 
 function SessionExpiredBanner() {
   const { sessionExpired, clearSessionExpired } = useAuth();
@@ -63,6 +69,10 @@ function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/my-tickets" element={<MyTickets />} />
                 <Route path="/transfers" element={<TransferRequests />} />
+                <Route path="/refunds" element={<MyRefunds />} />
+                <Route path="/support" element={<MySupportTickets />} />
+                <Route path="/support/new" element={<SupportPage />} />
+                <Route path="/support/tickets/:id" element={<SupportTicketDetail />} />
               </Route>
             </Route>
 
@@ -74,6 +84,8 @@ function App() {
                 <Route path="events/:eventId/seats" element={<AdminSeatsPage />} />
                 <Route path="venues" element={<AdminVenuesPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
+                <Route path="refunds" element={<AdminRefundsPage />} />
+                <Route path="support" element={<AdminSupportPage />} />
               </Route>
             </Route>
 

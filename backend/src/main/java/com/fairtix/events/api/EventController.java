@@ -11,6 +11,8 @@ import com.fairtix.audit.application.AuditService;
 import com.fairtix.auth.domain.CustomUserPrincipal;
 import com.fairtix.events.application.EventService;
 import com.fairtix.events.domain.Event;
+import com.fairtix.events.domain.EventStatus;
+import com.fairtix.events.dto.CancelEventRequest;
 import com.fairtix.events.dto.CreateEventRequest;
 import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.dto.EventResponse;
@@ -26,9 +28,9 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 
 /**
- * CRUD operations for events.
+ * CRUD operations and lifecycle transitions for events.
  *
- * <p>Read endpoints are public; create, update, and delete require the ADMIN role.
+ * <p>Read endpoints are public; create, update, delete, and lifecycle transitions require the ADMIN role.
  * Update and delete also enforce organizer ownership.
  */
 @Tag(name = "Events", description = "Event management")
@@ -68,7 +70,9 @@ public class EventController {
     }
 
     @Operation(summary = "Search events",
-            description = "Public. Returns a paginated list of events, optionally filtered.")
+            description = "Public. Returns a paginated list of events, optionally filtered. " +
+                    "Non-admin callers only see PUBLISHED and ACTIVE events unless a status filter is provided " +
+                    "(in which case ADMIN role is required).")
     @ApiResponse(responseCode = "200", description = "Page of matching events")
     @SecurityRequirements
     @PermitAll
@@ -77,10 +81,16 @@ public class EventController {
             @Parameter(description = "Filter by venue name") @RequestParam(required = false) String venueName,
             @Parameter(description = "Filter by title (contains)") @RequestParam(required = false) String title,
             @Parameter(description = "Only future events") @RequestParam(required = false) Boolean upcoming,
+            @Parameter(description = "Filter by lifecycle status (ADMIN-only)") @RequestParam(required = false) EventStatus status,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "20") int size) {
+            @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
 
-        Page<Event> events = service.search(venueName, title, upcoming, PageRequest.of(page, Math.min(size, 100)));
+        boolean adminView = principal != null && principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        EventStatus effectiveStatus = adminView ? status : null;
+        Page<Event> events = service.search(venueName, title, upcoming, effectiveStatus, adminView,
+                PageRequest.of(page, Math.min(size, 100)));
         return events.map(EventResponse::from);
     }
 
@@ -123,5 +133,74 @@ public class EventController {
             @PathVariable UUID id) {
         service.delete(id, principal.getUserId());
         auditService.log(principal.getUserId(), "DELETE", "EVENT", id, "Deleted event");
+    }
+
+    // --- Lifecycle transition endpoints ---
+
+    @Operation(summary = "Publish an event", description = "Admin-only. Transitions event from DRAFT to PUBLISHED.")
+    @ApiResponse(responseCode = "200", description = "Event published")
+    @ApiResponse(responseCode = "409", description = "Invalid state transition")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/publish")
+    public EventResponse publish(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        Event event = service.publishEvent(id, principal.getUserId());
+        auditService.log(principal.getUserId(), "PUBLISH", "EVENT", id, "Published event: " + event.getTitle());
+        return EventResponse.from(event);
+    }
+
+    @Operation(summary = "Activate an event", description = "Admin-only. Transitions event from PUBLISHED to ACTIVE (on sale).")
+    @ApiResponse(responseCode = "200", description = "Event activated")
+    @ApiResponse(responseCode = "409", description = "Invalid state transition")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/activate")
+    public EventResponse activate(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        Event event = service.activateEvent(id, principal.getUserId());
+        auditService.log(principal.getUserId(), "ACTIVATE", "EVENT", id, "Activated event: " + event.getTitle());
+        return EventResponse.from(event);
+    }
+
+    @Operation(summary = "Complete an event", description = "Admin-only. Transitions event from ACTIVE to COMPLETED.")
+    @ApiResponse(responseCode = "200", description = "Event completed")
+    @ApiResponse(responseCode = "409", description = "Invalid state transition")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/complete")
+    public EventResponse complete(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        Event event = service.completeEvent(id, principal.getUserId());
+        auditService.log(principal.getUserId(), "COMPLETE", "EVENT", id, "Completed event: " + event.getTitle());
+        return EventResponse.from(event);
+    }
+
+    @Operation(summary = "Cancel an event", description = "Admin-only. Cancels the event and releases all holds and tickets.")
+    @ApiResponse(responseCode = "200", description = "Event cancelled")
+    @ApiResponse(responseCode = "409", description = "Invalid state transition")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/cancel")
+    public EventResponse cancel(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody CancelEventRequest request) {
+        Event event = service.cancelEvent(id, principal.getUserId(), request.reason());
+        auditService.log(principal.getUserId(), "CANCEL", "EVENT", id,
+                "Cancelled event: " + event.getTitle() + " — reason: " + request.reason());
+        return EventResponse.from(event);
+    }
+
+    @Operation(summary = "Archive an event", description = "Admin-only. Transitions event from COMPLETED or CANCELLED to ARCHIVED.")
+    @ApiResponse(responseCode = "200", description = "Event archived")
+    @ApiResponse(responseCode = "409", description = "Invalid state transition")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/archive")
+    public EventResponse archive(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable UUID id) {
+        Event event = service.archiveEvent(id, principal.getUserId());
+        auditService.log(principal.getUserId(), "ARCHIVE", "EVENT", id, "Archived event: " + event.getTitle());
+        return EventResponse.from(event);
     }
 }

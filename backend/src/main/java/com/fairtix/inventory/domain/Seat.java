@@ -41,6 +41,15 @@ public class Seat {
   @Column(nullable = false)
   private SeatStatus status = SeatStatus.AVAILABLE;
 
+  @Column(name = "pos_x")
+  private Double posX;
+
+  @Column(name = "pos_y")
+  private Double posY;
+
+  @Column(name = "rotation")
+  private Double rotation;
+
   @Version
   private long version;
 
@@ -90,5 +99,17 @@ public class Seat {
 
   public void setStatus(SeatStatus status) {
     this.status = status;
+  }
+
+  public Double getPosX() {
+    return posX;
+  }
+
+  public Double getPosY() {
+    return posY;
+  }
+
+  public Double getRotation() {
+    return rotation;
   }
 }

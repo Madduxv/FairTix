@@ -6,7 +6,15 @@ import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.inventory.infrastructure.SeatRepository;
+import com.fairtix.notifications.application.EmailService;
+import com.fairtix.notifications.application.EmailTemplateService;
+import com.fairtix.notifications.application.NotificationPreferenceService;
+import com.fairtix.notifications.domain.NotificationPreference;
+import com.fairtix.users.domain.User;
+import com.fairtix.users.infrastructure.UserRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,6 +23,7 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Periodically scans for active holds whose expiry has passed and marks them
@@ -34,15 +43,28 @@ import java.util.List;
 @Component
 public class HoldExpirationScheduler {
 
+  private static final Logger log = LoggerFactory.getLogger(HoldExpirationScheduler.class);
   private static final int PAGE_SIZE = 500;
 
   private final SeatHoldRepository seatHoldRepository;
   private final SeatRepository seatRepository;
+  private final UserRepository userRepository;
+  private final EmailService emailService;
+  private final EmailTemplateService emailTemplateService;
+  private final NotificationPreferenceService notificationPreferenceService;
 
   public HoldExpirationScheduler(SeatHoldRepository seatHoldRepository,
-      SeatRepository seatRepository) {
+      SeatRepository seatRepository,
+      UserRepository userRepository,
+      EmailService emailService,
+      EmailTemplateService emailTemplateService,
+      NotificationPreferenceService notificationPreferenceService) {
     this.seatHoldRepository = seatHoldRepository;
     this.seatRepository = seatRepository;
+    this.userRepository = userRepository;
+    this.emailService = emailService;
+    this.emailTemplateService = emailTemplateService;
+    this.notificationPreferenceService = notificationPreferenceService;
   }
 
   @Scheduled(fixedDelayString = "${holds.cleanup.interval-ms:30000}")
@@ -58,8 +80,10 @@ public class HoldExpirationScheduler {
     }
 
     List<Seat> seatsToRelease = new ArrayList<>();
+    List<SeatHold> expiredHolds = new ArrayList<>();
     for (SeatHold hold : batch.getContent()) {
       hold.setStatus(HoldStatus.EXPIRED);
+      expiredHolds.add(hold);
       Seat seat = hold.getSeat();
       if (seat.getStatus() == SeatStatus.HELD) {
         seat.setStatus(SeatStatus.AVAILABLE);
@@ -67,7 +91,36 @@ public class HoldExpirationScheduler {
       }
     }
 
-    seatHoldRepository.saveAll(batch.getContent());
+    seatHoldRepository.saveAll(expiredHolds);
     seatRepository.saveAll(seatsToRelease);
+
+    for (SeatHold hold : expiredHolds) {
+      sendHoldExpiryEmail(hold);
+    }
+  }
+
+  private void sendHoldExpiryEmail(SeatHold hold) {
+    try {
+      NotificationPreference prefs = notificationPreferenceService.getPreferences(hold.getOwnerId());
+      if (!prefs.isEmailHold()) return;
+
+      Optional<User> userOpt = userRepository.findById(hold.getOwnerId());
+      if (userOpt.isEmpty()) return;
+
+      User user = userOpt.get();
+      Seat seat = hold.getSeat();
+      if (seat == null || seat.getEvent() == null) {
+        log.warn("Seat or event missing for hold {}; skipping expiry email", hold.getId());
+        return;
+      }
+      String seatLine = seat.getSection() + " / Row " + seat.getRowLabel() + " / Seat " + seat.getSeatNumber();
+      String eventTitle = seat.getEvent().getTitle();
+
+      String body = emailTemplateService.buildHoldExpiryEmail(
+          user.getEmail(), eventTitle, List.of(seatLine), hold.getId().toString());
+      emailService.sendEmail(user.getEmail(), "Your held seat has been released — " + eventTitle, body);
+    } catch (Exception ex) {
+      log.warn("Failed to send hold expiry email for hold {}: {}", hold.getId(), ex.getMessage());
+    }
   }
 }

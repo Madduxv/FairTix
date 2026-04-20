@@ -13,6 +13,8 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import EventIcon from '@mui/icons-material/Event';
 import PeopleIcon from '@mui/icons-material/People';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
 
 const DRAWER_WIDTH = 240;
 
@@ -21,6 +23,8 @@ const navItems = [
   { label: 'Events', path: '/admin/events', icon: <EventIcon /> },
   { label: 'Venues', path: '/admin/venues', icon: <LocationOnIcon /> },
   { label: 'Users', path: '/admin/users', icon: <PeopleIcon /> },
+  { label: 'Refunds', path: '/admin/refunds', icon: <ReceiptLongIcon /> },
+  { label: 'Support', path: '/admin/support', icon: <SupportAgentIcon /> },
 ];
 
 function AdminSidebar() {

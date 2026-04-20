@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import com.fairtix.events.domain.Event;
+import com.fairtix.events.domain.EventStatus;
 import com.fairtix.venues.dto.VenueResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,7 +36,19 @@ public record EventResponse(
         @Schema(description = "Maximum queue capacity (null = unlimited)")
         Integer queueCapacity,
         @Schema(description = "Maximum tickets a single user may purchase for this event (null = no cap)")
-        Integer maxTicketsPerUser) {
+        Integer maxTicketsPerUser,
+        @Schema(description = "Lifecycle status of the event")
+        EventStatus status,
+        @Schema(description = "When the event was published (null if not yet published)")
+        Instant publishedAt,
+        @Schema(description = "When the event was cancelled (null if not cancelled)")
+        Instant cancelledAt,
+        @Schema(description = "When the event was completed (null if not completed)")
+        Instant completedAt,
+        @Schema(description = "When the event was archived (null if not archived)")
+        Instant archivedAt,
+        @Schema(description = "Reason for cancellation (null if not cancelled)")
+        String cancellationReason) {
 
     public static EventResponse from(Event event) {
         return new EventResponse(
@@ -46,6 +59,12 @@ public record EventResponse(
                 event.getOrganizerId(),
                 event.isQueueRequired(),
                 event.getQueueCapacity(),
-                event.getMaxTicketsPerUser());
+                event.getMaxTicketsPerUser(),
+                event.getStatus(),
+                event.getPublishedAt(),
+                event.getCancelledAt(),
+                event.getCompletedAt(),
+                event.getArchivedAt(),
+                event.getCancellationReason());
     }
 }

@@ -159,6 +159,8 @@ class EventServiceTest {
         "Test Venue",
         null,
         true,
+        null,
+        false,
         PageRequest.of(0, 10));
 
     assertThat(results.getContent())
@@ -173,6 +175,8 @@ class EventServiceTest {
         null,
         "Test",
         true,
+        null,
+        false,
         PageRequest.of(0, 10));
 
     assertThat(results.getContent())
@@ -191,6 +195,8 @@ class EventServiceTest {
         null,
         null,
         true,
+        null,
+        false,
         PageRequest.of(0, 10));
 
     assertThat(results.getContent())
@@ -208,6 +214,8 @@ class EventServiceTest {
         null,
         null,
         false,
+        null,
+        true,
         PageRequest.of(0, 10));
 
     assertThat(results.getContent()).isNotEmpty();

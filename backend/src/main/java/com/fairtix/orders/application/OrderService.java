@@ -9,6 +9,10 @@ import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.inventory.infrastructure.SeatRepository;
+import com.fairtix.notifications.application.EmailService;
+import com.fairtix.notifications.application.EmailTemplateService;
+import com.fairtix.notifications.application.NotificationPreferenceService;
+import com.fairtix.notifications.domain.NotificationPreference;
 import com.fairtix.orders.domain.Order;
 import com.fairtix.orders.domain.OrderStatus;
 import com.fairtix.orders.infrastructure.OrderRepository;
@@ -22,10 +26,16 @@ import com.fairtix.tickets.domain.TicketStatus;
 import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,6 +43,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
+
+  private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+  private static final DateTimeFormatter EMAIL_DATE_FMT =
+      DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy 'at' h:mm a z").withZone(ZoneId.of("UTC"));
 
   private final OrderRepository orderRepository;
   private final SeatHoldRepository seatHoldRepository;
@@ -43,6 +57,9 @@ public class OrderService {
   private final PaymentSimulationService paymentSimulationService;
   private final QueueService queueService;
   private final AuditService auditService;
+  private final EmailService emailService;
+  private final EmailTemplateService emailTemplateService;
+  private final NotificationPreferenceService notificationPreferenceService;
 
   public OrderService(OrderRepository orderRepository,
       SeatHoldRepository seatHoldRepository,
@@ -52,7 +69,10 @@ public class OrderService {
       TicketRepository ticketRepository,
       PaymentSimulationService paymentSimulationService,
       QueueService queueService,
-      AuditService auditService) {
+      AuditService auditService,
+      EmailService emailService,
+      EmailTemplateService emailTemplateService,
+      NotificationPreferenceService notificationPreferenceService) {
     this.orderRepository = orderRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.seatRepository = seatRepository;
@@ -62,6 +82,9 @@ public class OrderService {
     this.paymentSimulationService = paymentSimulationService;
     this.queueService = queueService;
     this.auditService = auditService;
+    this.emailService = emailService;
+    this.emailTemplateService = emailTemplateService;
+    this.notificationPreferenceService = notificationPreferenceService;
   }
 
   /**
@@ -98,6 +121,7 @@ public class OrderService {
     ticketService.issueTickets(order, holds);
     auditService.log(userId, "CREATE", "ORDER", order.getId(),
         "Order completed: " + holdIds.size() + " hold(s), total=" + totalAmount + " USD");
+    sendOrderConfirmationEmail(user, order, holds);
     return order;
   }
 
@@ -163,6 +187,7 @@ public class OrderService {
       auditService.log(userId, "CREATE", "ORDER", order.getId(),
           "Order completed via payment: " + holdIds.size() + " hold(s), total=" + totalAmount
               + " USD, txn=" + payment.getTransactionId());
+      sendOrderConfirmationEmail(user, order, holds);
     } else {
       // Rollback: mark order cancelled and revert seats to BOOKED
       order.setStatus(OrderStatus.CANCELLED);
@@ -180,6 +205,49 @@ public class OrderService {
     }
 
     return order;
+  }
+
+  /**
+   * Defers email sending to after the transaction commits so that SMTP latency
+   * or failures never block or roll back the order creation.
+   */
+  private void sendOrderConfirmationEmail(User user, Order order, List<SeatHold> holds) {
+    try {
+      NotificationPreference prefs = notificationPreferenceService.getPreferences(user.getId());
+      if (!prefs.isEmailOrder()) return;
+
+      // Capture all data needed for the email now (entities may be detached after commit)
+      Event event = holds.get(0).getSeat().getEvent();
+      String toEmail = user.getEmail();
+      String orderId = order.getId().toString();
+      String eventTitle = event.getTitle();
+      String venueName = event.getVenue() != null ? event.getVenue().getName() : "TBD";
+      String eventDate = EMAIL_DATE_FMT.format(event.getStartTime());
+      String total = order.getTotalAmount().toPlainString() + " " + order.getCurrency();
+
+      List<String> seatLines = holds.stream()
+          .map(h -> {
+            Seat s = h.getSeat();
+            return s.getSection() + " / Row " + s.getRowLabel() + " / Seat " + s.getSeatNumber()
+                + " — $" + s.getPrice().toPlainString();
+          })
+          .toList();
+
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          try {
+            String body = emailTemplateService.buildOrderConfirmationEmail(
+                toEmail, orderId, eventTitle, venueName, eventDate, seatLines, total);
+            emailService.sendEmail(toEmail, "Your FairTix order is confirmed!", body);
+          } catch (Exception ex) {
+            log.warn("Failed to send order confirmation email for order {}: {}", orderId, ex.getMessage());
+          }
+        }
+      });
+    } catch (Exception ex) {
+      log.warn("Failed to prepare order confirmation email for order {}: {}", order.getId(), ex.getMessage());
+    }
   }
 
   private List<SeatHold> validateHolds(UUID userId, List<UUID> holdIds) {

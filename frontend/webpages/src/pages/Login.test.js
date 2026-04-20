@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Login from './Login';
 import { AuthContext } from '../auth/AuthContext';
@@ -37,9 +37,12 @@ function renderLogin(loginFn) {
 }
 
 async function submitForm(email = 'test@example.com', password = 'password') {
-  fireEvent.change(screen.getByLabelText(/email/i), { target: { value: email } });
+  const emailInput = screen.getByLabelText(/email/i);
+  fireEvent.change(emailInput, { target: { value: email } });
   fireEvent.change(screen.getByLabelText(/password/i), { target: { value: password } });
-  fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+  await act(async () => {
+    fireEvent.submit(emailInput.closest('form'));
+  });
 }
 
 test('shows invalid credentials message on 401', async () => {
@@ -85,6 +88,15 @@ test('shows lockout message and timer on 429', async () => {
     ).toBeInTheDocument()
   );
   expect(screen.getByText(/try again in/i)).toBeInTheDocument();
+});
+
+test('calls login with correct credentials on successful submit', async () => {
+  const loginFn = jest.fn().mockResolvedValue({ userId: '1', email: 'test@example.com', role: 'USER' });
+  renderLogin(loginFn);
+  await submitForm('test@example.com', 'mypassword');
+  await waitFor(() =>
+    expect(loginFn).toHaveBeenCalledWith('test@example.com', 'mypassword', '')
+  );
 });
 
 test('disables inputs and button during lockout', async () => {
