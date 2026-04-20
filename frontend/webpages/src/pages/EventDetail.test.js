@@ -193,7 +193,7 @@ test('does not render Featuring section when event has no performers', async () 
 test('does not render Featuring section when performers field is absent', async () => {
   api.get.mockImplementation((url) => {
     if (url === '/api/events/event-1')
-      return Promise.resolve({ ...activeEvent }); // activeEvent has no performers field
+      return Promise.resolve({ ...activeEvent });
     if (url.includes('/seats')) return Promise.resolve([seat1]);
     if (url === '/api/tickets') return Promise.resolve([]);
     return Promise.resolve([]);
