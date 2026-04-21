@@ -4,10 +4,23 @@ import api from '../api/client';
 import { useNearbyEvents } from '../hooks/useNearbyEvents';
 import '../styles/Events.css';
 
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function Events() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [silentCoords, setSilentCoords] = useState(null);
 
   // Filters
   const [titleSearch, setTitleSearch] = useState('');
@@ -41,6 +54,22 @@ function Events() {
   } = useNearbyEvents({ autoRequest: false, autoFetch: false });
 
   const nearMe = coords !== null;
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.permissions?.query({ name: 'geolocation' }).then((result) => {
+      if (result.state === 'granted') {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => setSilentCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          () => {}
+        );
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (coords) setSilentCoords(coords);
+  }, [coords]);
 
   const handleNearMeToggle = () => {
     if (nearMe) {
@@ -295,9 +324,17 @@ function Events() {
                 <div className="event-card-meta">
                   <span>{event.venue?.name ?? ''}</span>
                   <span>{formatDate(event.startTime)}</span>
-                  {nearMe && event.distanceKm != null && (
-                    <span>{event.distanceKm.toFixed(1)} km away</span>
-                  )}
+                  {(() => {
+                    if (nearMe && event.distanceKm != null) {
+                      return <span>{event.distanceKm.toFixed(1)} km away</span>;
+                    }
+                    const uc = silentCoords || coords;
+                    if (!nearMe && uc && event.venue?.latitude != null && event.venue?.longitude != null) {
+                      const d = haversineKm(uc.lat, uc.lon, event.venue.latitude, event.venue.longitude);
+                      return <span>{d.toFixed(1)} km away</span>;
+                    }
+                    return null;
+                  })()}
                 </div>
                 {event.status === 'PUBLISHED' && (
                   <div className="event-card-status event-card-status--announced">Coming Soon</div>
