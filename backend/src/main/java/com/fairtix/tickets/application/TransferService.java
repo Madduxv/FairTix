@@ -3,6 +3,7 @@ package com.fairtix.tickets.application;
 import com.fairtix.audit.application.AuditService;
 import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.fraud.application.RiskScoringService;
+import com.fairtix.fraud.application.UserFlaggedForAbuseException;
 import com.fairtix.fraud.domain.RiskTier;
 import com.fairtix.notifications.application.EmailService;
 import com.fairtix.notifications.application.EmailTemplateService;
@@ -74,7 +75,7 @@ public class TransferService {
         if (tier == RiskTier.CRITICAL) {
             auditService.log(fromUserId, "TRANSFER_BLOCKED_FRAUD_RISK", "TICKET", ticketId,
                     "tier=" + tier);
-            throw new IllegalStateException("Transfer blocked due to account risk level");
+            throw new UserFlaggedForAbuseException();
         }
 
         checkVelocity(fromUserId);

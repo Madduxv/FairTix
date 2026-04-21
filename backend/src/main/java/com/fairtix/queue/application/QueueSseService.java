@@ -41,7 +41,7 @@ public class QueueSseService {
         try {
             QueueEntry queueEntry = queueService.getStatus(eventId, userId);
             long totalAhead = queueEntry.getStatus() == QueueStatus.WAITING
-                    ? Math.max(0, queueService.countWaiting(eventId) - 1)
+                    ? Math.max(0, queueEntry.getPosition() - 1)
                     : 0;
             emitter.send(SseEmitter.event()
                     .data(QueueStatusResponse.from(queueEntry, totalAhead), MediaType.APPLICATION_JSON));
@@ -60,13 +60,11 @@ public class QueueSseService {
             return;
         }
 
-        long waitingCount = queueService.countWaiting(eventId);
-
         for (EmitterEntry entry : entries) {
             try {
                 QueueEntry queueEntry = queueService.getStatus(eventId, entry.userId());
                 long totalAhead = queueEntry.getStatus() == QueueStatus.WAITING
-                        ? Math.max(0, waitingCount - 1)
+                        ? Math.max(0, queueEntry.getPosition() - 1)
                         : 0;
                 entry.emitter().send(SseEmitter.event()
                         .data(QueueStatusResponse.from(queueEntry, totalAhead), MediaType.APPLICATION_JSON));

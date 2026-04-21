@@ -37,7 +37,7 @@ public class VenueSectionService {
 
   public VenueSection createSection(UUID venueId, CreateVenueSectionRequest request, UUID userId) {
     var venue = venueRepository.findById(venueId)
-        .orElseThrow(() -> new IllegalArgumentException("Venue not found: " + venueId));
+        .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + venueId));
 
     var section = new VenueSection(
         venue,
