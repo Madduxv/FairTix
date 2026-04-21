@@ -2,10 +2,12 @@ package com.fairtix.users.api;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import com.fairtix.auth.domain.CustomUserPrincipal;
 import com.fairtix.users.application.UserService;
@@ -13,6 +15,7 @@ import com.fairtix.users.infrastructure.UserRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.domain.Role;
 import com.fairtix.users.dto.UserResponse;
+import com.fairtix.config.EventSeeder;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,12 +23,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Admin-only user management endpoints.
  *
- * <p>Provides a paginated user list and the ability to promote users to admin.
+ * <p>
+ * Provides a paginated user list and the ability to promote users to admin.
  */
 @Tag(name = "Admin", description = "User administration")
 @RestController
@@ -35,6 +40,7 @@ public class AdminController {
 
     private final UserRepository userRepository;
     private final UserService userService;
+    private final EventSeeder eventSeeder;
 
     /**
      * Returns a paginated list of all users.
@@ -86,5 +92,15 @@ public class AdminController {
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable UUID id) {
         userService.adminDeleteAccount(principal.getUserId(), id);
+    }
+
+    /**
+     * Seeds the database with upcoming events
+     */
+    @PostMapping("/seed-events")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> seedEvents() {
+        eventSeeder.run();
+        return ResponseEntity.ok(Map.of("message", "Seeding started"));
     }
 }

@@ -16,7 +16,6 @@ import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.venues.domain.Venue;
 import com.fairtix.venues.infrastructure.VenueRepository;
 
-import jakarta.transaction.Transactional;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
@@ -31,7 +30,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@Transactional
 public class EventService {
 
   private final EventRepository repository;
@@ -51,14 +49,29 @@ public class EventService {
   }
 
   public Event createEvent(String title, Instant startTime, UUID venueId, UUID organizerId,
-      boolean queueRequired, Integer queueCapacity, Integer maxTicketsPerUser) {
+      String thumbnail, boolean queueRequired, Integer queueCapacity, Integer maxTicketsPerUser) {
     Venue venue = venueId != null
         ? venueRepository.findById(venueId)
             .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + venueId))
         : null;
-    Event event = new Event(title, venue, startTime, organizerId);
+    Event event = new Event(title, venue, startTime, thumbnail, organizerId);
     event.updateQueueSettings(queueRequired, queueCapacity);
     event.setMaxTicketsPerUser(maxTicketsPerUser);
+    return repository.save(event);
+  }
+
+  public Event createEvent(String title, Instant startTime, UUID venueId, UUID organizerId,
+      boolean queueRequired, Integer queueCapacity, Integer maxTicketsPerUser) {
+    return createEvent(title, startTime, venueId, organizerId, null, queueRequired, queueCapacity, maxTicketsPerUser);
+  }
+
+  public Event createEvent(String title, Instant startTime, String venueName, String thumbnail) {
+    Venue venue = null;
+    if (venueName != null && !venueName.isBlank()) {
+      venue = venueRepository.findByName(venueName.trim())
+          .orElseGet(() -> venueRepository.save(new Venue(venueName.trim(), null, null, null, null)));
+    }
+    Event event = new Event(title, venue, startTime, thumbnail, null);
     return repository.save(event);
   }
 
@@ -71,7 +84,7 @@ public class EventService {
     Event event = repository.findById(id)
         .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
     verifyOwnership(event, callerId);
-    event.update(request.title(), request.startTime());
+    event.update(request.title(), request.startTime(), request.thumbnail());
     if (request.queueRequired() != null || request.queueCapacity() != null) {
       boolean qr = request.queueRequired() != null ? request.queueRequired() : event.isQueueRequired();
       event.updateQueueSettings(qr, request.queueCapacity());

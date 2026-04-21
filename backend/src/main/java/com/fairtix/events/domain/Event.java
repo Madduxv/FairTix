@@ -15,10 +15,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
 @Entity
-@Table(name = "Events")
+@Table(name = "Events", uniqueConstraints = @UniqueConstraint(columnNames = { "title", "start_time", "venue_id" }))
 public class Event {
 
   @Id
@@ -34,6 +35,10 @@ public class Event {
 
   @Column(nullable = false)
   private Instant startTime;
+
+  @org.hibernate.validator.constraints.URL
+  @Column(length = 500)
+  private String thumbnail;
 
   @Column(name = "organizer_id")
   private UUID organizerId;
@@ -73,6 +78,15 @@ public class Event {
     this.title = title;
     this.venue = venue;
     this.startTime = startTime;
+    this.thumbnail = null;
+    this.organizerId = organizerId;
+  }
+
+  public Event(String title, Venue venue, Instant startTime, String thumbnail, UUID organizerId) {
+    this.title = title;
+    this.venue = venue;
+    this.startTime = startTime;
+    this.thumbnail = thumbnail;
     this.organizerId = organizerId;
     this.status = EventStatus.DRAFT;
   }
@@ -85,6 +99,11 @@ public class Event {
     this.startTime = startTime;
   }
 
+  public void update(String title, Instant startTime, String thumbnail) {
+    this.title = title;
+    this.startTime = startTime;
+    this.thumbnail = thumbnail;
+  }
   public void updateQueueSettings(boolean queueRequired, Integer queueCapacity) {
     this.queueRequired = queueRequired;
     this.queueCapacity = queueCapacity;
@@ -133,7 +152,6 @@ public class Event {
   }
 
   // --- Getters ---
-
   public UUID getId() {
     return id;
   }
@@ -152,6 +170,10 @@ public class Event {
 
   public Instant getStartTime() {
     return startTime;
+  }
+
+  public String getThumbnail() {
+    return thumbnail;
   }
 
   public UUID getOrganizerId() {

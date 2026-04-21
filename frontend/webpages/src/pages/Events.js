@@ -131,6 +131,14 @@ function Events() {
           <div className="events-grid">
             {events.map((event) => (
               <Link key={event.id} to={`/events/${event.id}`} className="event-card">
+                {event.thumbnail && (
+                  <img
+                    src={event.thumbnail}
+                    alt={`${event.title} thumbnail`}
+                    className="event-card-thumbnail"
+                    loading="lazy"
+                  />
+                )}
                 <h3>{event.title}</h3>
                 <div className="event-card-meta">
                   <span>{event.venue?.name ?? ''}</span>

@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Integration tests for {@link EventController}.
+ * Integration tests for the events API controller.
  *
  * Focuses on HTTP-layer behavior including:
  * validation errors, response structure, and status codes.

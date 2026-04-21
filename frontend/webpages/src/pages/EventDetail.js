@@ -286,6 +286,13 @@ function EventDetail() {
       <Link to="/events" className="event-detail-back">&larr; Back to Events</Link>
 
       <div className="event-detail-header">
+        {event.thumbnail && (
+          <img
+            src={event.thumbnail}
+            alt={`${event.title} thumbnail`}
+            className="event-detail-thumbnail"
+          />
+        )}
         <h2>{event.title}</h2>
         <div className="event-detail-meta">
           <span>{event.venue?.name ?? ''}</span>

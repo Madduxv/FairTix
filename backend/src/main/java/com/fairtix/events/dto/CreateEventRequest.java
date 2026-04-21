@@ -6,6 +6,7 @@ import java.util.UUID;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.URL;
 
 /**
  * Requests / Creates payload for creating a new event
@@ -13,6 +14,7 @@ import jakarta.validation.constraints.NotNull;
  * @param title     the event title
  * @param startTime the event start time in UTC (ISO-8601)
  * @param venueId   the ID of the venue
+ * @param thumbnail optional thumbnail URL
  */
 @Schema(description = "Payload for creating a new event")
 public record CreateEventRequest(
@@ -22,6 +24,8 @@ public record CreateEventRequest(
         @NotNull Instant startTime,
         @Schema(description = "Venue ID")
         @NotNull UUID venueId,
+        @Schema(description = "Thumbnail URL", example = "https://example.com/event-thumbnail.jpg")
+        @URL String thumbnail,
         @Schema(description = "Whether this event requires queue admission before seat holds", example = "false")
         Boolean queueRequired,
         @Schema(description = "Maximum queue capacity (null = unlimited)")

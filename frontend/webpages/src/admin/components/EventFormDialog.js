@@ -17,6 +17,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
   const [title, setTitle] = useState('');
   const [venueId, setVenueId] = useState('');
   const [startTime, setStartTime] = useState('');
+  const [thumbnail, setThumbnail] = useState('');
   const [queueRequired, setQueueRequired] = useState(false);
   const [queueCapacity, setQueueCapacity] = useState('');
   const [maxTicketsPerUser, setMaxTicketsPerUser] = useState('');
@@ -35,6 +36,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
     if (event) {
       setTitle(event.title || '');
       setVenueId(event.venue?.id || '');
+      setThumbnail(event.thumbnail || '');
       const dt = event.startTime ? new Date(event.startTime) : null;
       if (dt) {
         const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000);
@@ -49,6 +51,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
       setTitle('');
       setVenueId('');
       setStartTime('');
+      setThumbnail('');
       setQueueRequired(false);
       setQueueCapacity('');
       setMaxTicketsPerUser('');
@@ -77,6 +80,8 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
         await api.put(`/api/events/${event.id}`, {
           title: title.trim(),
           startTime: isoTime,
+          thumbnail: thumbnail.trim() || null,
+          thumbnail: thumbnail.trim() || null,
           queueRequired,
           queueCapacity: capacity,
           maxTicketsPerUser: cap,
@@ -86,6 +91,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
           title: title.trim(),
           venueId,
           startTime: isoTime,
+          thumbnail: thumbnail.trim() || null,
           queueRequired,
           queueCapacity: capacity,
           maxTicketsPerUser: cap,
@@ -136,6 +142,13 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
               required
               fullWidth
               InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Thumbnail URL"
+              value={thumbnail}
+              onChange={(e) => setThumbnail(e.target.value)}
+              placeholder="https://example.com/image.jpg"
+              fullWidth
             />
             <FormControlLabel
               control={

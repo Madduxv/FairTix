@@ -66,7 +66,8 @@ class EventControllerTest {
         {
           "title":     "Test Concert",
           "startTime": "2026-06-15T19:00:00Z",
-          "venueId":   "%s"
+          "venueId":   "%s",
+          "thumbnail": "https://cdn.example.com/thumb.jpg"
         }
         """.formatted(testVenue.getId());
 
@@ -79,6 +80,7 @@ class EventControllerTest {
         .andExpect(jsonPath("$.title").value("Test Concert"))
         .andExpect(jsonPath("$.venue.name").value("Main Arena"))
         .andExpect(jsonPath("$.startTime").value("2026-06-15T19:00:00Z"))
+        .andExpect(jsonPath("$.thumbnail").value("https://cdn.example.com/thumb.jpg"))
         .andExpect(jsonPath("$.organizerId").value(ADMIN_ID.toString()));
   }
 

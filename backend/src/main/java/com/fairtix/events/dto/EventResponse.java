@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param title     the event title
  * @param startTime the event start time in UTC (ISO-8601)
  * @param venue     the venue details
+ * @param thumbnail the thumbnail URL for the event
  */
 @Schema(description = "Event details")
 public record EventResponse(
@@ -29,6 +30,8 @@ public record EventResponse(
         Instant startTime,
         @Schema(description = "Venue details")
         VenueResponse venue,
+        @Schema(description = "Thumbnail URL", example = "https://example.com/event-thumbnail.jpg")
+        String thumbnail,
         @Schema(description = "Organizer user ID")
         UUID organizerId,
         @Schema(description = "Whether this event requires queue admission before seat holds")
@@ -56,6 +59,7 @@ public record EventResponse(
                 event.getTitle(),
                 event.getStartTime(),
                 event.getVenue() != null ? VenueResponse.from(event.getVenue()) : null,
+                event.getThumbnail(),
                 event.getOrganizerId(),
                 event.isQueueRequired(),
                 event.getQueueCapacity(),

@@ -97,16 +97,18 @@ class EventServiceTest {
   // -------------------------------------------------------------------------
 
   @Test
-  void updatingEventChangesTitleAndStartTime() {
+  void updatingEventChangesTitleStartTimeAndThumbnail() {
 
     Instant newStart = Instant.now().plusSeconds(7200);
+    String newThumbnail = "https://cdn.example.com/updated-event.jpg";
 
-    UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart, null, null, null);
+    UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart, newThumbnail, null, null, null);
 
     Event updated = eventService.update(testEvent.getId(), request, null);
 
     assertThat(updated.getTitle()).isEqualTo("Updated Event");
     assertThat(updated.getStartTime()).isEqualTo(newStart);
+    assertThat(updated.getThumbnail()).isEqualTo(newThumbnail);
   }
 
   @Test

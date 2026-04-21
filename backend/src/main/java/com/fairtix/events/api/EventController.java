@@ -61,6 +61,7 @@ public class EventController {
                 request.startTime(),
                 request.venueId(),
                 principal.getUserId(),
+                request.thumbnail(),
                 request.queueRequired() != null && request.queueRequired(),
                 request.queueCapacity(),
                 request.maxTicketsPerUser());
