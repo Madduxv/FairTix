@@ -18,23 +18,23 @@ body {
    justify-content: center;
    gap: 1rem;
    padding: 0.75rem 1rem;
-   background-color: #fff3cd;
-   color: #856404;
-   border-bottom: 1px solid #ffc107;
+   background-color: var(--warning-bg);
+   color: var(--warning-text);
+   border-bottom: 1px solid var(--warning-border);
    font-size: 0.95rem;
 }
 
 .session-expired-dismiss {
    background: none;
-   border: 1px solid #856404;
-   color: #856404;
-   border-radius: 4px;
+   border: 1px solid var(--warning-text);
+   color: var(--warning-text);
+   border-radius: var(--radius-sm);
    padding: 0.25rem 0.75rem;
    cursor: pointer;
    font-size: 0.85rem;
 }
 
 .session-expired-dismiss:hover {
-   background-color: #856404;
+   background-color: var(--warning-text);
    color: #fff;
 }
