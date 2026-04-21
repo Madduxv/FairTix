@@ -1,31 +1,36 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../api/client';
 import '../styles/WaitingRoom.css';
 
-const POLL_INTERVAL_MS = 5000;
+const API_BASE = process.env.REACT_APP_API_URL || '';
 
 function WaitingRoom({ eventId, onAdmitted, onLeft }) {
   const [status, setStatus] = useState(null);
   const [error, setError] = useState('');
   const [leaving, setLeaving] = useState(false);
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const data = await api.get(`/api/events/${eventId}/queue/status`);
+  useEffect(() => {
+    const es = new EventSource(
+      `${API_BASE}/api/events/${eventId}/queue/stream`,
+      { withCredentials: true }
+    );
+
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
       setStatus(data);
       if (data.status === 'ADMITTED') {
         onAdmitted(data.expiresAt);
       }
-    } catch (err) {
-      setError(err.message || 'Failed to get queue status.');
-    }
-  }, [eventId, onAdmitted]);
+    };
 
-  useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [fetchStatus]);
+    es.onerror = () => {
+      if (es.readyState === EventSource.CLOSED) {
+        setError('Lost connection to queue. Please refresh the page.');
+      }
+    };
+
+    return () => es.close();
+  }, [eventId, onAdmitted]);
 
   async function handleLeave() {
     if (leaving) return;
