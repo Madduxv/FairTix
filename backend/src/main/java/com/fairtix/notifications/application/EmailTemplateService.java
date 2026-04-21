@@ -275,6 +275,42 @@ public class EmailTemplateService {
                 + "</body></html>";
     }
 
+    public String buildEventCancelledEmail(String userEmail, String eventTitle, String eventDate) {
+        String safeEmail = htmlEscape(userEmail);
+        String safeEvent = htmlEscape(eventTitle);
+        String safeDate = htmlEscape(eventDate);
+        return "<html><body style=\"font-family:sans-serif;\">"
+                + "<h2>Event Cancelled: " + safeEvent + "</h2>"
+                + "<p>Hi " + safeEmail + ",</p>"
+                + "<p>We're sorry to let you know that the following event has been cancelled:</p>"
+                + "<table style=\"border-collapse:collapse;width:100%;max-width:500px;\">"
+                + "<tr><td style=\"padding:4px 8px;\"><strong>Event:</strong></td>"
+                + "<td style=\"padding:4px 8px;\">" + safeEvent + "</td></tr>"
+                + "<tr><td style=\"padding:4px 8px;\"><strong>Date:</strong></td>"
+                + "<td style=\"padding:4px 8px;\">" + safeDate + "</td></tr>"
+                + "</table>"
+                + "<p>Your tickets have been cancelled and a full refund will be processed automatically. "
+                + "Please allow 5–10 business days for the funds to appear in your account.</p>"
+                + "<p><a href=\"/refunds\">View your refund status</a></p>"
+                + "</body></html>";
+    }
+
+    public String buildQueueAdmittedEmail(String userEmail, String eventTitle, String expiresAt) {
+        String safeEmail = htmlEscape(userEmail);
+        String safeEvent = htmlEscape(eventTitle);
+        String safeExpiry = htmlEscape(expiresAt);
+        return "<html><body style=\"font-family:sans-serif;\">"
+                + "<h2>You've been admitted — " + safeEvent + "</h2>"
+                + "<p>Hi " + safeEmail + ",</p>"
+                + "<p>Good news! You've been admitted from the queue for <strong>" + safeEvent + "</strong>.</p>"
+                + "<p>Your admission window is open until <strong>" + safeExpiry + "</strong>. "
+                + "Complete your seat selection and checkout before then to secure your tickets.</p>"
+                + "<p><a href=\"/events\" style=\"background:#4CAF50;color:#fff;padding:10px 20px;"
+                + "text-decoration:none;border-radius:4px;\">Go to Event</a></p>"
+                + "<p style=\"color:#888;font-size:0.9em;\">If you no longer wish to attend, you can leave the queue from your account.</p>"
+                + "</body></html>";
+    }
+
     private String htmlEscape(String input) {
         if (input == null) return "";
         return input

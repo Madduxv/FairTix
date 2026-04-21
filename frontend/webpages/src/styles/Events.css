@@ -343,3 +343,45 @@
   align-self: flex-start;
   margin-top: 0.25rem;
 }
+
+/* Nearby events map */
+.nearby-map-container {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.nearby-map {
+  height: 400px;
+  width: 100%;
+}
+
+.nearby-map-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  min-width: 160px;
+}
+
+.nearby-map-popup strong {
+  font-size: 0.95rem;
+  margin-bottom: 0.1rem;
+}
+
+.nearby-map-popup-btn {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.nearby-map-popup-btn:hover {
+  background: #1558b0;
+}

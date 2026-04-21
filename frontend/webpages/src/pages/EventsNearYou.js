@@ -1,6 +1,15 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 import { useNearbyEvents } from '../hooks/useNearbyEvents';
 import '../styles/Events.css';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
 
 function formatDate(isoString) {
   const date = new Date(isoString);
@@ -15,6 +24,7 @@ function formatDate(isoString) {
 }
 
 function EventsNearYou() {
+  const navigate = useNavigate();
   const {
     coords,
     geoLoading,
@@ -43,6 +53,10 @@ function EventsNearYou() {
     setPageSize(Number(e.target.value));
     setPage(0);
   };
+
+  const mappableEvents = events.filter(
+    (e) => e.venue?.latitude != null && e.venue?.longitude != null
+  );
 
   return (
     <div className="events-page">
@@ -169,6 +183,46 @@ function EventsNearYou() {
           <button type="button" onClick={requestGeolocation} className="address-search-btn">
             Re-detect location
           </button>
+        </div>
+      )}
+
+      {coords && !loading && mappableEvents.length > 0 && (
+        <div className="nearby-map-container">
+          <MapContainer
+            center={[coords.lat, coords.lon]}
+            zoom={10}
+            className="nearby-map"
+            scrollWheelZoom={false}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            {mappableEvents.map((event) => (
+              <Marker
+                key={event.id}
+                position={[event.venue.latitude, event.venue.longitude]}
+              >
+                <Popup>
+                  <div className="nearby-map-popup">
+                    <strong>{event.title}</strong>
+                    <span>{event.venue.name}</span>
+                    <span>{formatDate(event.startTime)}</span>
+                    {event.distanceKm != null && (
+                      <span>{event.distanceKm.toFixed(1)} km away</span>
+                    )}
+                    <button
+                      type="button"
+                      className="nearby-map-popup-btn"
+                      onClick={() => navigate(`/events/${event.id}`)}
+                    >
+                      View details
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
       )}
 

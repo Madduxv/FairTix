@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -113,6 +114,33 @@ class StripePaymentControllerTest {
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.paymentStatus").value("SUCCESS"))
         .andExpect(jsonPath("$.orderStatus").value("COMPLETED"));
+  }
+
+  @Test
+  void checkout_withStripeIntentId_issuesTicket() throws Exception {
+    doReturn(true).when(stripePaymentService).verifyPaymentSucceeded(anyString(), anyLong());
+
+    String body = """
+        {
+          "holdIds": ["%s"],
+          "paymentIntentId": "pi_ticket_verify"
+        }
+        """.formatted(confirmedHold.getId());
+
+    mockMvc.perform(post("/api/payments/checkout")
+            .with(WithMockPrincipal.user(user.getId(), user.getEmail()))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.paymentStatus").value("SUCCESS"))
+        .andExpect(jsonPath("$.orderStatus").value("COMPLETED"));
+
+    mockMvc.perform(get("/api/tickets")
+            .with(WithMockPrincipal.user(user.getId(), user.getEmail())))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].status").value("VALID"))
+        .andExpect(jsonPath("$[0].price").value(50.00));
   }
 
   @Test

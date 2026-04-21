@@ -6,6 +6,7 @@ import com.fairtix.orders.application.OrderService;
 import com.fairtix.orders.domain.Order;
 import com.fairtix.orders.domain.OrderStatus;
 import com.fairtix.payments.application.PaymentFailedException;
+import com.fairtix.payments.application.PaymentSimulationService;
 import com.fairtix.payments.application.StripePaymentService;
 import com.fairtix.payments.dto.PaymentIntentRequest;
 import com.fairtix.payments.dto.PaymentIntentResponse;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,6 +42,9 @@ public class PaymentController {
   private final SeatHoldRepository seatHoldRepository;
   private final QueueService queueService;
   private final StripePaymentService stripePaymentService;
+
+  @Autowired(required = false)
+  private PaymentSimulationService paymentSimulationService;
 
   @Value("${fairtix.payment.allow-simulated-outcome:false}")
   private boolean allowSimulatedOutcome;
@@ -141,8 +146,13 @@ public class PaymentController {
     }
 
     // Simulation path
+    if (paymentSimulationService == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Payment simulation is not available in this environment");
+    }
     if (!allowSimulatedOutcome && request.simulatedOutcome() != null) {
-      throw new IllegalArgumentException("simulatedOutcome is not allowed in this environment");
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "simulatedOutcome is not allowed in this environment");
     }
 
     try {
