@@ -117,4 +117,81 @@ class GeoSearchServiceImplTest {
 
         assertThat(result.getContent()).hasSize(1);
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void venueInRangeButNoEvents_returnsEmptyPage() {
+        UUID venueId = UUID.randomUUID();
+        VenueDistance vd = venueDistance(venueId, 8.0);
+        when(venueRepository.findVenuesWithinRadius(0, 0, 50)).thenReturn(List.of(vd));
+        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of());
+
+        Page<NearbyEventResponse> result = geoSearchService.findEventsNear(0, 0, 50, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void pageOffsetBeyondTotalResults_returnsEmptyContent() {
+        UUID venueId = UUID.randomUUID();
+        VenueDistance vd = venueDistance(venueId, 5.0);
+        when(venueRepository.findVenuesWithinRadius(0, 0, 50)).thenReturn(List.of(vd));
+
+        Event e1 = event(venueId, EventStatus.ACTIVE);
+        Event e2 = event(venueId, EventStatus.ACTIVE);
+        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(e1, e2));
+
+        Page<NearbyEventResponse> result = geoSearchService.findEventsNear(0, 0, 50, PageRequest.of(5, 10));
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(2);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void threeVenuesAtDifferentDistances_sortedClosestFirst() {
+        UUID venueA = UUID.randomUUID();
+        UUID venueB = UUID.randomUUID();
+        UUID venueC = UUID.randomUUID();
+
+        when(venueRepository.findVenuesWithinRadius(0, 0, 100)).thenReturn(List.of(
+            venueDistance(venueA, 50.0),
+            venueDistance(venueB, 10.0),
+            venueDistance(venueC, 30.0)
+        ));
+
+        Event eA = event(venueA, EventStatus.ACTIVE);
+        Event eB = event(venueB, EventStatus.ACTIVE);
+        Event eC = event(venueC, EventStatus.ACTIVE);
+        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(eA, eB, eC));
+
+        Page<NearbyEventResponse> result = geoSearchService.findEventsNear(0, 0, 100, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getContent().get(0).distanceKm()).isEqualTo(10.0);
+        assertThat(result.getContent().get(1).distanceKm()).isEqualTo(30.0);
+        assertThat(result.getContent().get(2).distanceKm()).isEqualTo(50.0);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void eventWithUnknownVenueId_sortedToEndWithMaxDistance() {
+        UUID knownVenueId = UUID.randomUUID();
+        UUID unknownVenueId = UUID.randomUUID();
+
+        VenueDistance vd = venueDistance(knownVenueId, 5.0);
+        when(venueRepository.findVenuesWithinRadius(0, 0, 50)).thenReturn(List.of(vd));
+
+        Event knownEvent = event(knownVenueId, EventStatus.ACTIVE);
+        Event unknownEvent = event(unknownVenueId, EventStatus.ACTIVE);
+        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(unknownEvent, knownEvent));
+
+        Page<NearbyEventResponse> result = geoSearchService.findEventsNear(0, 0, 50, PageRequest.of(0, 10));
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent().get(0).distanceKm()).isEqualTo(5.0);
+        assertThat(result.getContent().get(1).distanceKm()).isEqualTo(Double.MAX_VALUE);
+    }
 }

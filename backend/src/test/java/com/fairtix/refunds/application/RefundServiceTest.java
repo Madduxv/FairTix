@@ -7,6 +7,7 @@ import com.fairtix.fraud.domain.RiskScore;
 import com.fairtix.fraud.domain.RiskTier;
 import com.fairtix.fraud.infrastructure.RiskScoreRepository;
 import com.fairtix.inventory.domain.Seat;
+import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.orders.domain.Order;
 import com.fairtix.orders.domain.OrderStatus;
@@ -14,6 +15,7 @@ import com.fairtix.orders.infrastructure.OrderRepository;
 import com.fairtix.refunds.domain.RefundRequest;
 import com.fairtix.refunds.domain.RefundStatus;
 import com.fairtix.tickets.domain.Ticket;
+import com.fairtix.tickets.domain.TicketStatus;
 import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
@@ -118,5 +121,71 @@ class RefundServiceTest {
         RefundRequest refund = refundService.requestRefund(user.getId(), order.getId(), "Test refund");
 
         assertThat(refund.getStatus()).isEqualTo(RefundStatus.REQUESTED);
+    }
+
+    @Test
+    void requestRefund_withPendingOrder_throwsRefundNotEligible() {
+        Order pendingOrder = orderRepository.save(
+            new Order(user, List.of(), new BigDecimal("30.00"), "USD", OrderStatus.PENDING));
+        ticketRepository.save(new Ticket(pendingOrder, user, seat, event, new BigDecimal("30.00")));
+
+        assertThatThrownBy(() -> refundService.requestRefund(user.getId(), pendingOrder.getId(), "Test"))
+            .isInstanceOf(RefundNotEligibleException.class)
+            .hasMessageContaining("completed");
+    }
+
+    @Test
+    void requestRefund_whenPendingRefundExists_throwsRefundNotEligible() {
+        Order highOrder = orderRepository.save(
+            new Order(user, List.of(), new BigDecimal("75.00"), "USD", OrderStatus.COMPLETED));
+        ticketRepository.save(new Ticket(highOrder, user, seat, event, new BigDecimal("75.00")));
+        refundService.requestRefund(user.getId(), highOrder.getId(), "First request");
+
+        assertThatThrownBy(() -> refundService.requestRefund(user.getId(), highOrder.getId(), "Duplicate"))
+            .isInstanceOf(RefundNotEligibleException.class)
+            .hasMessageContaining("already pending");
+    }
+
+    @Test
+    void requestRefund_withUsedTicket_throwsRefundNotEligible() {
+        Ticket usedTicket = ticketRepository.findAllByOrder_Id(order.getId()).get(0);
+        usedTicket.setStatus(TicketStatus.USED);
+        ticketRepository.save(usedTicket);
+
+        assertThatThrownBy(() -> refundService.requestRefund(user.getId(), order.getId(), "Test"))
+            .isInstanceOf(RefundNotEligibleException.class)
+            .hasMessageContaining("used");
+    }
+
+    @Test
+    void reviewRefund_approve_completesRefundAndReleasesSeats() {
+        Order highOrder = orderRepository.save(
+            new Order(user, List.of(), new BigDecimal("75.00"), "USD", OrderStatus.COMPLETED));
+        ticketRepository.save(new Ticket(highOrder, user, seat, event, new BigDecimal("75.00")));
+        seat.setStatus(SeatStatus.SOLD);
+        seatRepository.save(seat);
+
+        RefundRequest refund = refundService.requestRefund(user.getId(), highOrder.getId(), "Please refund");
+        assertThat(refund.getStatus()).isEqualTo(RefundStatus.REQUESTED);
+
+        UUID adminId = UUID.randomUUID();
+        RefundRequest result = refundService.reviewRefund(adminId, refund.getId(), true, "Approved");
+
+        assertThat(result.getStatus()).isEqualTo(RefundStatus.COMPLETED);
+        Seat reloaded = seatRepository.findById(seat.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(SeatStatus.AVAILABLE);
+    }
+
+    @Test
+    void reviewRefund_reject_setsRejectedStatus() {
+        Order highOrder = orderRepository.save(
+            new Order(user, List.of(), new BigDecimal("75.00"), "USD", OrderStatus.COMPLETED));
+        ticketRepository.save(new Ticket(highOrder, user, seat, event, new BigDecimal("75.00")));
+
+        RefundRequest refund = refundService.requestRefund(user.getId(), highOrder.getId(), "Please refund");
+        UUID adminId = UUID.randomUUID();
+        RefundRequest result = refundService.reviewRefund(adminId, refund.getId(), false, "Policy violation");
+
+        assertThat(result.getStatus()).isEqualTo(RefundStatus.REJECTED);
     }
 }
