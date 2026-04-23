@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ public class SmtpEmailService implements EmailService {
             helper.setText(htmlBody, true);
             mailSender.send(message);
             log.info("Email sent to={} subject=\"{}\"", to, subject);
-        } catch (MessagingException e) {
+        } catch (MessagingException | MailException e) {
             log.error("Failed to send email to={} subject=\"{}\" error={}", to, subject, e.getMessage());
             throw new RuntimeException("Email delivery failed", e);
         }
