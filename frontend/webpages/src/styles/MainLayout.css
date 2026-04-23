@@ -1,7 +1,29 @@
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.skip-to-content:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0.5rem 1rem;
+  background: var(--brand-primary);
+  color: var(--text-on-brand);
+  text-decoration: none;
+  display: block;
+}
+
 .main-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: var(--bg-page);
 }
 
 .main-content {
@@ -14,8 +36,8 @@
 
 /* Footer */
 .site-footer {
-  background-color: #1a1a2e;
-  color: #ccc;
+  background-color: var(--nav-bg);
+  color: var(--nav-text-muted);
   padding: 1.25rem 2rem;
   margin-top: auto;
 }
@@ -35,11 +57,27 @@
 }
 
 .footer-links a {
-  color: #ccc;
+  color: var(--nav-text-muted);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .footer-links a:hover {
-  color: white;
+  color: var(--nav-text);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1.5rem 1rem;
+  }
+
+  .site-footer {
+    padding: 1.25rem 1rem;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
 }

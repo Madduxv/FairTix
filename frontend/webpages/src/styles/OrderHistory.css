@@ -1,0 +1,114 @@
+.order-history {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.order-history h2 {
+  margin-bottom: 24px;
+}
+
+.orders-empty {
+  color: var(--text-muted);
+  padding: 32px 0;
+  text-align: center;
+}
+
+.orders-error {
+  text-align: center;
+  color: var(--brand-primary);
+  padding: 24px 0;
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.order-card-skeleton {
+  opacity: 0.5;
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.order-event-title {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.order-status {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pending    { background: var(--warning-bg);  color: var(--warning-text); }
+.status-completed  { background: var(--success-bg);  color: var(--success-dark); }
+.status-cancelled  { background: var(--surface); color: var(--text-secondary); }
+.status-refunded   { background: var(--info-bg); color: var(--info); }
+
+.order-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.order-card-body > div {
+  display: flex;
+  gap: 8px;
+}
+
+.order-card-body .label {
+  font-weight: 600;
+  min-width: 100px;
+  color: var(--text-secondary);
+}
+
+.order-card-body a {
+  color: var(--brand-primary);
+  text-decoration: none;
+}
+
+.order-card-body a:hover {
+  text-decoration: underline;
+}
+
+.order-tickets-list {
+  margin-top: 4px;
+  padding-left: 4px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* Skeleton loading — .skeleton-line comes from _utilities.css */
+
+@media (max-width: 768px) {
+  .order-history {
+    padding: 16px 12px;
+  }
+
+  .order-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

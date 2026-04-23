@@ -7,7 +7,7 @@ async function apiRequest(path, options = {}, isRetry = false) {
     ...options.headers,
   };
 
-  if (options.body) {
+  if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 
@@ -80,7 +80,7 @@ function buildError(response, message) {
 
 const api = {
   get: (path) => apiRequest(path, { method: 'GET' }),
-  post: (path, body) => apiRequest(path, { method: 'POST', body: JSON.stringify(body) }),
+  post: (path, body) => apiRequest(path, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
   put: (path, body) => apiRequest(path, { method: 'PUT', body: JSON.stringify(body) }),
   patch: (path, body) => apiRequest(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path) => apiRequest(path, { method: 'DELETE' }),

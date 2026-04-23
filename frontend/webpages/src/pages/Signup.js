@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
@@ -13,6 +13,7 @@ const PASSWORD_RULES = [
 ];
 
 function Signup() {
+  useEffect(() => { document.title = 'Create Account | FairTix'; }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

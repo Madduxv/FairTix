@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import { AuthContext } from '../auth/AuthContext';
+import { ToastProvider } from '../components/ui/Toast';
 import api from '../api/client';
 
 jest.mock('../api/client', () => ({
@@ -24,9 +25,11 @@ const unverifiedUser = { ...user, emailVerified: false };
 function renderDashboard(currentUser = user) {
   return render(
     <MemoryRouter>
-      <AuthContext.Provider value={{ user: currentUser, logout: jest.fn(), login: jest.fn(), isLoading: false, sessionExpired: false, clearSessionExpired: jest.fn(), refreshUser: jest.fn() }}>
-        <Dashboard />
-      </AuthContext.Provider>
+      <ToastProvider>
+        <AuthContext.Provider value={{ user: currentUser, logout: jest.fn(), login: jest.fn(), isLoading: false, sessionExpired: false, clearSessionExpired: jest.fn(), refreshUser: jest.fn() }}>
+          <Dashboard />
+        </AuthContext.Provider>
+      </ToastProvider>
     </MemoryRouter>
   );
 }

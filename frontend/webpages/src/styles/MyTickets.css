@@ -11,7 +11,7 @@
 .tickets-empty {
   text-align: center;
   padding: 3rem 1rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .tickets-grid {
@@ -21,10 +21,10 @@
 }
 
 .ticket-card {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
-  background: #fff;
+  background: var(--surface-raised);
   transition: box-shadow 0.2s;
 }
 
@@ -54,23 +54,23 @@
 }
 
 .ticket-status.valid {
-  background: #e6f4ea;
-  color: #1e7e34;
+  background: var(--success-bg);
+  color: var(--success-dark);
 }
 
 .ticket-status.used {
-  background: #e8e8e8;
-  color: #666;
+  background: var(--surface);
+  color: var(--text-muted);
 }
 
 .ticket-status.cancelled {
-  background: #fce8e6;
-  color: #c5221f;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .ticket-status.transferred {
-  background: #e8f0fe;
-  color: #1a73e8;
+  background: var(--info-bg);
+  color: var(--info);
 }
 
 .ticket-card-details {
@@ -78,7 +78,7 @@
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.9rem;
-  color: #444;
+  color: var(--text-secondary);
 }
 
 .ticket-card-details > div {
@@ -88,7 +88,7 @@
 }
 
 .ticket-card-details .label {
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
@@ -97,7 +97,7 @@
   gap: 1rem;
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--surface);
 }
 
 .ticket-card-seat span {
@@ -112,37 +112,25 @@
 }
 
 .ticket-event-link:hover {
-  color: #1a73e8;
+  color: var(--info);
 }
 
 .tickets-browse-link {
   display: inline-block;
   margin-top: 1rem;
   padding: 0.5rem 1.25rem;
-  background: #1a1a2e;
-  color: white;
+  background: var(--nav-bg);
+  color: var(--text-on-brand);
   text-decoration: none;
   border-radius: 4px;
   transition: background 0.2s;
 }
 
 .tickets-browse-link:hover {
-  background: #2d2d4e;
+  background: var(--nav-bg-hover);
 }
 
-/* Skeleton loading */
-@keyframes skeleton-shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
-.skeleton-line {
-  border-radius: 4px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 800px 100%;
-  animation: skeleton-shimmer 1.4s infinite;
-}
-
+/* Skeleton loading — .skeleton-line comes from _utilities.css */
 .ticket-card-skeleton {
   display: flex;
   flex-direction: column;
@@ -166,220 +154,78 @@
   margin-top: 0.25rem;
 }
 
-/* Transfer button */
+/* Ticket card action buttons */
 .ticket-card-actions {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--surface);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
-.btn-transfer {
+/* Shared base for all ticket action buttons */
+.btn-qr,
+.btn-calendar,
+.btn-transfer,
+.btn-refund,
+.download-ticket-btn {
+  display: inline-block;
   background: none;
-  border: 1px solid #1a73e8;
-  color: #1a73e8;
   border-radius: 4px;
   padding: 0.35rem 0.9rem;
   font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.2s;
+  text-decoration: none;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.btn-qr {
+  border: 1px solid var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.btn-qr:hover {
+  background: var(--surface);
+}
+
+.btn-calendar {
+  border: 1px solid var(--info);
+  color: var(--info);
+}
+
+.btn-calendar:hover {
+  background: var(--info-bg);
+}
+
+.btn-transfer {
+  border: 1px solid var(--info);
+  color: var(--info);
 }
 
 .btn-transfer:hover {
-  background: #e8f0fe;
+  background: var(--info-bg);
 }
 
 .btn-refund {
-  background: none;
-  border: 1px solid #d93025;
-  color: #d93025;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.2s;
+  border: 1px solid var(--danger);
+  color: var(--danger);
 }
 
 .btn-refund:hover {
-  background: #fce8e6;
+  background: var(--danger-bg);
 }
 
-/* Transfer dialog */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+.download-ticket-btn {
+  border: 1px solid var(--success);
+  color: var(--success);
 }
 
-.dialog {
-  background: #fff;
-  border-radius: 8px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-}
-
-.dialog h3 {
-  margin: 0 0 1rem;
-}
-
-.dialog-ticket-summary {
-  background: #f8f9fa;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
-
-.dialog-ticket-summary p {
-  margin: 0.2rem 0;
-}
-
-.dialog label {
-  display: block;
-  font-size: 0.85rem;
-  color: #555;
-  margin-bottom: 0.35rem;
-}
-
-.dialog input[type="email"] {
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 0.95rem;
-  box-sizing: border-box;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-}
-
-.btn-primary {
-  background: #1a1a2e;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1.1rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2d2d4e;
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: none;
-  color: #444;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.5rem 1.1rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  border-color: #999;
-}
-
-/* Transfer requests page */
-.transfer-requests {
-  padding: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.transfer-requests h2 {
-  margin-bottom: 1.5rem;
-}
-
-.transfer-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #e0e0e0;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  padding: 0.6rem 1.25rem;
-  font-size: 0.95rem;
-  cursor: pointer;
-  color: #666;
-  position: relative;
-  bottom: -2px;
-}
-
-.tab-btn.active {
-  color: #1a73e8;
-  border-bottom: 2px solid #1a73e8;
-  font-weight: 600;
-}
-
-.tab-btn .badge {
-  background: #1a73e8;
-  color: #fff;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  padding: 0.1rem 0.45rem;
-  margin-left: 0.4rem;
-}
-
-.transfers-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.transfer-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  background: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.transfer-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
-
-.transfer-card-info strong {
-  color: #111;
-  font-size: 0.95rem;
-}
-
-.transfer-card-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.transfers-empty {
-  color: #888;
-  padding: 2rem 0;
+.download-ticket-btn:hover {
+  background: var(--success-bg);
 }
 
 /* Error state */
@@ -394,15 +240,38 @@
 
 .tickets-retry {
   background: none;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.4rem 1rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .tickets-retry:hover {
-  border-color: #999;
-  color: #111;
+  border-color: var(--text-muted);
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .my-tickets {
+    padding: 1rem;
+  }
+
+  .tickets-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ticket-card-actions {
+    gap: 0.4rem;
+  }
+
+  .btn-qr,
+  .btn-calendar,
+  .btn-transfer,
+  .btn-refund,
+  .download-ticket-btn {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+  }
 }

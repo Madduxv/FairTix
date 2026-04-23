@@ -8,7 +8,7 @@ function Logo() {
          <img
             style={{ width: '100%', maxWidth: '400px' }}
             src={logo}
-            alt="really cool logo, trust"
+            alt="FairTix"
          />
       </div>
    )

@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import Logo from '../components/Logo';
 import '../styles/Home.css';
 
 function Home() {
+  useEffect(() => { document.title = 'FairTix — Fair-Access Ticketing'; }, []);
   const { user } = useAuth();
   const navigate = useNavigate();
 

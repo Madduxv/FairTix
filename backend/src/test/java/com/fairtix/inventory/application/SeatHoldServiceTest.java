@@ -230,8 +230,11 @@ class SeatHoldServiceTest {
     scheduler.expireHolds();
 
     // All 3 holds must be EXPIRED, all seats back to AVAILABLE
-    List<SeatHold> holds = seatHoldRepository.findAll();
-    assertThat(holds).allMatch(h -> h.getStatus() == HoldStatus.EXPIRED);
+    List<UUID> seatIds = List.of(testSeat.getId(), seat2.getId(), seat3.getId());
+    List<SeatHold> holds = seatHoldRepository.findAll().stream()
+        .filter(h -> seatIds.contains(h.getSeat().getId()))
+        .toList();
+    assertThat(holds).hasSize(3).allMatch(h -> h.getStatus() == HoldStatus.EXPIRED);
     assertThat(seatRepository.findById(testSeat.getId()).orElseThrow().getStatus())
         .isEqualTo(SeatStatus.AVAILABLE);
     assertThat(seatRepository.findById(seat2.getId()).orElseThrow().getStatus())

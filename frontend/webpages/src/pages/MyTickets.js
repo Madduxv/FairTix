@@ -5,6 +5,7 @@ import TicketCard from '../components/TicketCard';
 import '../styles/MyTickets.css';
 
 function MyTickets() {
+  useEffect(() => { document.title = 'My Tickets | FairTix'; }, []);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

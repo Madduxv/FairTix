@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import api from '../api/client';
+import Modal from './ui/Modal';
+import Button from './ui/Button';
+import '../styles/TransferDialog.css';
 
 function TransferDialog({ ticket, onClose, onSuccess }) {
   const [toEmail, setToEmail] = useState('');
@@ -22,34 +25,31 @@ function TransferDialog({ ticket, onClose, onSuccess }) {
   }
 
   return (
-    <div className="dialog-overlay" onClick={onClose}>
-      <div className="dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>Transfer Ticket</h3>
-        <div className="dialog-ticket-summary">
-          <p><strong>{ticket.eventTitle}</strong></p>
-          <p>Section {ticket.seatSection} · Row {ticket.seatRow} · Seat {ticket.seatNumber}</p>
-        </div>
-        <form onSubmit={handleSubmit}>
-          <label htmlFor="transfer-email">Recipient email</label>
-          <input
-            id="transfer-email"
-            type="email"
-            value={toEmail}
-            onChange={(e) => setToEmail(e.target.value)}
-            placeholder="Enter recipient's email"
-            required
-            autoFocus
-          />
-          {error && <p className="error-message">{error}</p>}
-          <div className="dialog-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? 'Sending…' : 'Send Transfer Request'}
-            </button>
-          </div>
-        </form>
+    <Modal onClose={onClose} title="Transfer Ticket">
+      <div className="dialog-ticket-summary">
+        <p><strong>{ticket.eventTitle}</strong></p>
+        <p>Section {ticket.seatSection} · Row {ticket.seatRow} · Seat {ticket.seatNumber}</p>
       </div>
-    </div>
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="transfer-email">Recipient email</label>
+        <input
+          id="transfer-email"
+          type="email"
+          value={toEmail}
+          onChange={(e) => setToEmail(e.target.value)}
+          placeholder="Enter recipient's email"
+          required
+          autoFocus
+        />
+        {error && <p className="error-message">{error}</p>}
+        <div className="dialog-actions">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="nav" size="sm" disabled={submitting}>
+            {submitting ? 'Sending…' : 'Send Transfer Request'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

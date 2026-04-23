@@ -1,8 +1,12 @@
 package com.fairtix.inventory.api;
 
+import com.fairtix.auth.domain.CustomUserPrincipal;
+import com.fairtix.inventory.application.SeatImportService;
 import com.fairtix.inventory.application.SeatService;
 import com.fairtix.inventory.dto.CreateSeatRequest;
+import com.fairtix.inventory.dto.ImportResultResponse;
 import com.fairtix.inventory.dto.SeatMapResponse;
+import com.fairtix.inventory.dto.SeatPositionUpdate;
 import com.fairtix.inventory.dto.SeatResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +19,9 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,9 +41,11 @@ public class SeatController {
 
     private static final Logger log = LoggerFactory.getLogger(SeatController.class);
     private final SeatService seatService;
+    private final SeatImportService seatImportService;
 
-    public SeatController(SeatService seatService) {
+    public SeatController(SeatService seatService, SeatImportService seatImportService) {
         this.seatService = seatService;
+        this.seatImportService = seatImportService;
     }
 
     /**
@@ -109,5 +117,30 @@ public class SeatController {
         log.info("Request to fetch seat map for event {}", eventId);
         var seats = seatService.getSeatsForEvent(eventId);
         return SeatMapResponse.fromSeats(seats);
+    }
+
+    @Operation(summary = "Import seats from CSV")
+    @ApiResponse(responseCode = "200", description = "Import result")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/import")
+    public ImportResultResponse importSeats(
+            @PathVariable UUID eventId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        log.info("CSV import requested for event {} by user {}", eventId, principal.getUserId());
+        return seatImportService.importSeats(eventId, file, principal.getUserId());
+    }
+
+    @Operation(summary = "Bulk update seat positions")
+    @ApiResponse(responseCode = "204", description = "Positions updated")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/positions")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updatePositions(
+            @PathVariable UUID eventId,
+            @Valid @RequestBody List<SeatPositionUpdate> updates,
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        log.info("Bulk position update for event {} ({} seats) by user {}", eventId, updates.size(), principal.getUserId());
+        seatService.bulkUpdatePositions(eventId, updates, principal.getUserId());
     }
 }

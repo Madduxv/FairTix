@@ -6,6 +6,10 @@ import com.fairtix.events.domain.EventStatus;
 import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.HoldStatus;
+import com.fairtix.notifications.application.EmailService;
+import com.fairtix.notifications.application.EmailTemplateService;
+import com.fairtix.notifications.application.NotificationPreferenceService;
+import com.fairtix.notifications.domain.NotificationPreference;
 import com.fairtix.refunds.application.RefundService;
 import com.fairtix.inventory.domain.SeatHold;
 import com.fairtix.inventory.domain.SeatStatus;
@@ -15,6 +19,7 @@ import com.fairtix.tickets.domain.TicketStatus;
 import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.performers.domain.Performer;
 import com.fairtix.performers.infrastructure.PerformerRepository;
+import com.fairtix.users.domain.User;
 import com.fairtix.venues.domain.Venue;
 import com.fairtix.venues.infrastructure.VenueRepository;
 
@@ -22,10 +27,14 @@ import jakarta.transaction.Transactional;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -36,23 +45,34 @@ import java.util.UUID;
 @Transactional
 public class EventService {
 
+  private static final Logger log = LoggerFactory.getLogger(EventService.class);
+
   private final EventRepository repository;
   private final VenueRepository venueRepository;
   private final PerformerRepository performerRepository;
   private final SeatHoldRepository seatHoldRepository;
   private final TicketRepository ticketRepository;
   private final RefundService refundService;
+  private final EmailService emailService;
+  private final EmailTemplateService emailTemplateService;
+  private final NotificationPreferenceService notificationPreferenceService;
 
   public EventService(EventRepository repository, VenueRepository venueRepository,
       PerformerRepository performerRepository,
       SeatHoldRepository seatHoldRepository, TicketRepository ticketRepository,
-      RefundService refundService) {
+      RefundService refundService,
+      EmailService emailService,
+      EmailTemplateService emailTemplateService,
+      NotificationPreferenceService notificationPreferenceService) {
     this.repository = repository;
     this.venueRepository = venueRepository;
     this.performerRepository = performerRepository;
     this.seatHoldRepository = seatHoldRepository;
     this.ticketRepository = ticketRepository;
     this.refundService = refundService;
+    this.emailService = emailService;
+    this.emailTemplateService = emailTemplateService;
+    this.notificationPreferenceService = notificationPreferenceService;
   }
 
   public Event createEvent(String title, Instant startTime, UUID venueId, UUID organizerId,
@@ -131,6 +151,9 @@ public class EventService {
     verifyOwnership(event, callerId);
     event.cancel(reason);
 
+    // Collect ticket holders before any status changes so all are notified
+    List<Ticket> ticketsToNotify = ticketRepository.findAllByEvent_IdAndStatus(eventId, TicketStatus.VALID);
+
     // Release all ACTIVE holds for this event
     List<SeatHold> activeHolds = seatHoldRepository.findAllBySeat_Event_IdAndStatus(eventId, HoldStatus.ACTIVE);
     for (SeatHold hold : activeHolds) {
@@ -149,7 +172,31 @@ public class EventService {
     }
     ticketRepository.saveAll(validTickets);
 
+    // Send cancellation emails after the transaction commits
+    List<Ticket> emailTargets = List.copyOf(ticketsToNotify);
+    String eventTitle = event.getTitle();
+    String eventDate = event.getStartTime().toString();
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        for (Ticket ticket : emailTargets) {
+          sendCancellationEmail(ticket.getUser(), eventTitle, eventDate);
+        }
+      }
+    });
+
     return event;
+  }
+
+  private void sendCancellationEmail(User user, String eventTitle, String eventDate) {
+    try {
+      NotificationPreference prefs = notificationPreferenceService.getPreferences(user.getId());
+      if (!prefs.isEmailTicket()) return;
+      String body = emailTemplateService.buildEventCancelledEmail(user.getEmail(), eventTitle, eventDate);
+      emailService.sendEmail(user.getEmail(), "Event Cancelled: " + eventTitle, body);
+    } catch (Exception ex) {
+      log.warn("Failed to send cancellation email to {}: {}", user.getEmail(), ex.getMessage());
+    }
   }
 
   public Event archiveEvent(UUID eventId, UUID callerId) {

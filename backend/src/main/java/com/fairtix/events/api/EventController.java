@@ -113,6 +113,11 @@ public class EventController {
             @Parameter(description = "Search radius in kilometres (default 50, max 500)") @RequestParam(defaultValue = "50") double radiusKm,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "20") int size) {
+        if (Double.isNaN(lat) || Double.isInfinite(lat) || lat < -90 || lat > 90
+                || Double.isNaN(lon) || Double.isInfinite(lon) || lon < -180 || lon > 180) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "lat must be in [-90,90] and lon in [-180,180]");
+        }
         if (radiusKm <= 0 || radiusKm > 500) {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.BAD_REQUEST, "radiusKm must be between 1 and 500");

@@ -10,6 +10,77 @@ function TicketCard({ ticket, onTransferred, onRefunded }) {
   const statusClass = ticket.status.toLowerCase();
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(ticket.id)}`;
 
+  function downloadTicketArtifact() {
+    const W = 600, H = 320, PAD = 24, QR = 180;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = '#1a73e8';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(2, 2, W - 4, H - 4);
+
+    ctx.fillStyle = '#1a73e8';
+    ctx.fillRect(0, 0, W, 48);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText('FairTix', PAD, 30);
+
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 16px sans-serif';
+    const title = ticket.eventTitle || '';
+    ctx.fillText(title.length > 45 ? title.slice(0, 42) + '…' : title, PAD, 76);
+
+    const textX = PAD;
+    const lineH = 22;
+    let y = 105;
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#555';
+
+    const lines = [
+      ['Venue', ticket.eventVenue],
+      ['Date', ticket.eventStartTime ? new Date(ticket.eventStartTime).toLocaleString() : ''],
+      ['Section', ticket.seatSection],
+      ['Row', ticket.seatRow],
+      ['Seat', ticket.seatNumber],
+      ['Ticket ID', ticket.id],
+      ['Order Ref', ticket.orderId],
+    ];
+    for (const [label, value] of lines) {
+      ctx.fillStyle = '#888';
+      ctx.fillText(label + ':', textX, y);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillText(value ?? '', textX + 90, y);
+      y += lineH;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      ctx.drawImage(img, W - QR - PAD, 56, QR, QR);
+      trigger(canvas);
+    };
+    img.onerror = () => {
+      ctx.strokeStyle = '#ccc';
+      ctx.strokeRect(W - QR - PAD, 56, QR, QR);
+      ctx.fillStyle = '#aaa';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('QR unavailable', W - QR - PAD + 30, 56 + QR / 2);
+      trigger(canvas);
+    };
+    img.src = qrUrl;
+  }
+
+  function trigger(canvas) {
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `fairtix-ticket-${ticket.id}.png`;
+    a.click();
+  }
+
   return (
     <div className="ticket-card">
       <div className="ticket-card-header">
@@ -57,6 +128,9 @@ function TicketCard({ ticket, onTransferred, onRefunded }) {
         <a className="btn-calendar" href={`/api/tickets/${ticket.id}/calendar.ics`} download="fairtix-event.ics">
           Add to Calendar
         </a>
+        <button className="download-ticket-btn" onClick={downloadTicketArtifact}>
+          Download Ticket
+        </button>
         {ticket.status === 'VALID' && (
           <>
             <button className="btn-transfer" onClick={() => setShowTransfer(true)}>

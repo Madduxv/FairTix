@@ -10,18 +10,18 @@
 
 .refunds-loading,
 .refunds-empty {
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   padding: 32px 0;
   text-align: center;
 }
 
 .refunds-empty a {
-  color: var(--accent, #e94560);
+  color: var(--brand-primary);
 }
 
 .refunds-error {
   text-align: center;
-  color: #e94560;
+  color: var(--brand-primary);
   padding: 24px 0;
 }
 
@@ -32,8 +32,8 @@
 }
 
 .refund-card {
-  background: var(--card-bg, #fff);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 20px;
 }
@@ -47,7 +47,7 @@
 
 .refund-order-id {
   font-size: 0.85rem;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   font-family: monospace;
 }
 
@@ -58,11 +58,11 @@
   font-weight: 600;
 }
 
-.status-requested { background: #fff3cd; color: #856404; }
-.status-approved  { background: #d1ecf1; color: #0c5460; }
-.status-completed { background: #d4edda; color: #155724; }
-.status-rejected  { background: #f8d7da; color: #721c24; }
-.status-cancelled { background: #e2e3e5; color: #383d41; }
+.status-requested { background: var(--warning-bg);  color: var(--warning-text); }
+.status-approved  { background: var(--info-bg); color: var(--info); }
+.status-completed { background: var(--success-bg);  color: var(--success-dark); }
+.status-rejected  { background: var(--danger-bg);   color: var(--danger); }
+.status-cancelled { background: var(--surface); color: var(--text-secondary); }
 
 .refund-card-body {
   display: flex;
@@ -79,5 +79,17 @@
 .refund-card-body .label {
   font-weight: 600;
   min-width: 90px;
-  color: var(--text-secondary, #666);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+  .my-refunds {
+    padding: 16px 12px;
+  }
+
+  .refund-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }

@@ -19,6 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -94,9 +96,15 @@ public class HoldExpirationScheduler {
     seatHoldRepository.saveAll(expiredHolds);
     seatRepository.saveAll(seatsToRelease);
 
-    for (SeatHold hold : expiredHolds) {
-      sendHoldExpiryEmail(hold);
-    }
+    List<SeatHold> toEmail = List.copyOf(expiredHolds);
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+      @Override
+      public void afterCommit() {
+        for (SeatHold hold : toEmail) {
+          sendHoldExpiryEmail(hold);
+        }
+      }
+    });
   }
 
   private void sendHoldExpiryEmail(SeatHold hold) {

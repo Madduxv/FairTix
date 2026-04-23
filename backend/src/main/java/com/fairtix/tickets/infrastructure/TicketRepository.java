@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,4 +26,7 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID> {
 
   /** Cancel cascade: find all tickets for a given event with a given status. */
   List<Ticket> findAllByEvent_IdAndStatus(UUID eventId, TicketStatus status);
+
+  @Query(value = "SELECT CAST(issued_at AS DATE), COUNT(*) FROM tickets WHERE status = 'VALID' AND issued_at >= :since GROUP BY CAST(issued_at AS DATE) ORDER BY 1", nativeQuery = true)
+  List<Object[]> soldPerDay(@Param("since") Instant since);
 }

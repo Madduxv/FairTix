@@ -10,7 +10,7 @@ function UsersByRoleChart({ data }) {
   const chartData = Object.entries(data).map(([name, value]) => ({ name, value }));
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper' }}>
+    <Card sx={{ backgroundColor: 'background.paper', height: '100%', width: '100%' }}>
       <CardContent sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Users by Role

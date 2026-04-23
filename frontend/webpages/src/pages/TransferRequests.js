@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
-import '../styles/MyTickets.css';
+import '../styles/TransferDialog.css';
 
 function TransferRequests() {
+  useEffect(() => { document.title = 'Transfer Requests | FairTix'; }, []);
   const [tab, setTab] = useState('incoming');
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);

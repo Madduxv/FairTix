@@ -17,27 +17,27 @@
 
 .my-holds-refresh {
   background: none;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.4rem 0.9rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .my-holds-refresh:hover {
-  border-color: #999;
-  color: #111;
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .holds-empty {
   text-align: center;
   padding: 3rem 1rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .holds-empty a {
-  color: #1a73e8;
+  color: var(--info);
   text-decoration: none;
   font-weight: 600;
 }
@@ -50,7 +50,7 @@
   font-size: 1.05rem;
   margin: 1.5rem 0 0.75rem;
   padding-bottom: 0.4rem;
-  border-bottom: 2px solid #eee;
+  border-bottom: 2px solid var(--border);
 }
 
 .holds-grid {
@@ -60,10 +60,10 @@
 }
 
 .hold-card {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem 1.25rem;
-  background: #fff;
+  background: var(--surface-raised);
   transition: box-shadow 0.2s;
 }
 
@@ -76,8 +76,8 @@
 }
 
 .hold-card-confirmed {
-  border-color: #c8e6c9;
-  background: #f6fdf7;
+  border-color: var(--success-bg);
+  background: var(--success-bg);
 }
 
 .hold-card-header {
@@ -95,12 +95,12 @@
 .hold-card-timer {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #f9a825;
+  color: var(--warning);
   font-variant-numeric: tabular-nums;
 }
 
 .hold-card-timer.expired {
-  color: #c5221f;
+  color: var(--danger);
 }
 
 .hold-card-status {
@@ -113,8 +113,8 @@
 }
 
 .hold-card-status.confirmed {
-  background: #e6f4ea;
-  color: #1e7e34;
+  background: var(--success-bg);
+  color: var(--success-dark);
 }
 
 .hold-card-actions {
@@ -123,8 +123,8 @@
 }
 
 .hold-btn-confirm {
-  background: #1e7e34;
-  color: #fff;
+  background: var(--success-dark);
+  color: var(--text-on-brand);
   border: none;
   border-radius: 6px;
   padding: 0.4rem 1rem;
@@ -134,7 +134,7 @@
 }
 
 .hold-btn-confirm:hover:not(:disabled) {
-  background: #166b2b;
+  background: var(--success-dark-hover);
 }
 
 .hold-btn-confirm:disabled {
@@ -144,17 +144,17 @@
 
 .hold-btn-release {
   background: none;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.4rem 1rem;
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .hold-btn-release:hover:not(:disabled) {
-  border-color: #c5221f;
-  color: #c5221f;
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .hold-btn-release:disabled {
@@ -171,20 +171,20 @@
 }
 
 .hold-page-message.success {
-  background: #e6f4ea;
-  color: #1e7e34;
+  background: var(--success-bg);
+  color: var(--success-dark);
 }
 
 .hold-page-message.error {
-  background: #fce8e6;
-  color: #c5221f;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .checkout-link {
   display: inline-block;
   margin-top: 1rem;
-  background: #1a73e8;
-  color: #fff;
+  background: var(--info);
+  color: var(--text-on-brand);
   text-decoration: none;
   padding: 0.55rem 1.5rem;
   border-radius: 6px;
@@ -193,22 +193,10 @@
 }
 
 .checkout-link:hover {
-  background: #1565c0;
+  background: var(--info-hover);
 }
 
-/* Skeleton loading */
-@keyframes skeleton-shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
-}
-
-.skeleton-line {
-  border-radius: 4px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 800px 100%;
-  animation: skeleton-shimmer 1.4s infinite;
-}
-
+/* Skeleton loading — .skeleton-line comes from _utilities.css */
 .hold-card-skeleton {
   display: flex;
   flex-direction: column;
@@ -240,4 +228,26 @@
 
 .holds-error .error-message {
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .my-holds {
+    padding: 1rem;
+  }
+
+  .holds-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hold-card-actions {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .hold-btn-confirm,
+  .hold-btn-release {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
 }

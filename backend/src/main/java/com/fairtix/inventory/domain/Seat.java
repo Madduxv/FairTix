@@ -112,4 +112,16 @@ public class Seat {
   public Double getRotation() {
     return rotation;
   }
+
+  public void setPosX(Double posX) {
+    this.posX = posX;
+  }
+
+  public void setPosY(Double posY) {
+    this.posY = posY;
+  }
+
+  public void setRotation(Double rotation) {
+    this.rotation = rotation;
+  }
 }

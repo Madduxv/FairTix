@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/MySupportTickets.css';
@@ -13,6 +13,7 @@ const CATEGORIES = [
 ];
 
 function SupportPage() {
+  useEffect(() => { document.title = 'Submit Support Ticket | FairTix'; }, []);
   const [subject, setSubject] = useState('');
   const [category, setCategory] = useState('ORDER_ISSUE');
   const [message, setMessage] = useState('');

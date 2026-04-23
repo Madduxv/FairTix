@@ -172,6 +172,23 @@ test('denying geolocation shows error message', async () => {
   );
 });
 
+test('shows purchase cap badge when maxTicketsPerUser is set', async () => {
+  api.get.mockResolvedValue(eventsPage([
+    { id: 'e1', title: 'Limited Show', venue: { name: 'Arena' }, startTime: '2026-12-01T20:00:00Z', status: 'ACTIVE', maxTicketsPerUser: 2 },
+  ]));
+  renderEvents();
+  await waitFor(() => expect(screen.getByText('Limit: 2 per person')).toBeInTheDocument(), { timeout: 2000 });
+});
+
+test('does not show purchase cap badge when maxTicketsPerUser is not set', async () => {
+  api.get.mockResolvedValue(eventsPage([
+    { id: 'e1', title: 'Open Show', venue: { name: 'Arena' }, startTime: '2026-12-01T20:00:00Z', status: 'ACTIVE' },
+  ]));
+  renderEvents();
+  await waitFor(() => expect(screen.getByText('Open Show')).toBeInTheDocument(), { timeout: 2000 });
+  expect(screen.queryByText(/limit:/i)).not.toBeInTheDocument();
+});
+
 test('nearby events display distance label on card', async () => {
   const getCurrentPosition = jest.fn((success) =>
     success({ coords: { latitude: 40.7128, longitude: -74.006 } })

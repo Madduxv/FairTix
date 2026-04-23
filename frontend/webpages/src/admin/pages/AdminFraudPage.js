@@ -63,6 +63,15 @@ function AdminFraudPage() {
   const [riskLoading, setRiskLoading] = useState(false);
   const [riskError, setRiskError] = useState('');
 
+  const [auditUserId, setAuditUserId] = useState('');
+  const [auditAction, setAuditAction] = useState('');
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [auditPage, setAuditPage] = useState(0);
+  const [auditHasMore, setAuditHasMore] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditSearched, setAuditSearched] = useState(false);
+  const [auditError, setAuditError] = useState('');
+
   const fetchFlags = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -116,6 +125,7 @@ function AdminFraudPage() {
     try {
       const data = await api.get(`/api/admin/fraud/risk/${encodeURIComponent(riskUserId.trim())}`);
       setRiskResult(data);
+      setAuditUserId(riskUserId.trim());
     } catch (err) {
       if (err.status === 404 || (err.message && err.message.includes('404'))) {
         setRiskError('No risk score record found for this user.');
@@ -124,6 +134,28 @@ function AdminFraudPage() {
       }
     } finally {
       setRiskLoading(false);
+    }
+  };
+
+  const fetchAuditLogs = async (reset = true) => {
+    const uid = auditUserId.trim();
+    if (!uid) return;
+    const nextPage = reset ? 0 : auditPage + 1;
+    setAuditLoading(true);
+    setAuditError('');
+    setAuditSearched(true);
+    try {
+      let url = `/api/admin/audit?userId=${encodeURIComponent(uid)}&page=${nextPage}&size=25`;
+      if (auditAction) url += `&action=${encodeURIComponent(auditAction)}`;
+      const data = await api.get(url);
+      const newLogs = data.content || [];
+      setAuditLogs(reset ? newLogs : [...auditLogs, ...newLogs]);
+      setAuditPage(nextPage);
+      setAuditHasMore(!data.last);
+    } catch (err) {
+      setAuditError(err.message || 'Failed to load audit logs.');
+    } finally {
+      setAuditLoading(false);
     }
   };
 
@@ -293,6 +325,95 @@ function AdminFraudPage() {
             </strong>
           </Typography>
         </Paper>
+      )}
+
+      <Divider sx={{ my: 4 }} />
+
+      {/* Section 3: Audit Trail */}
+      <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+        Audit Trail
+      </Typography>
+
+      <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+        <TextField
+          label="User ID"
+          value={auditUserId}
+          onChange={(e) => setAuditUserId(e.target.value)}
+          size="small"
+          sx={{ minWidth: 280 }}
+          placeholder="Enter exact user UUID"
+          onKeyDown={(e) => { if (e.key === 'Enter') fetchAuditLogs(true); }}
+        />
+        <TextField
+          select
+          label="Event Type"
+          value={auditAction}
+          onChange={(e) => setAuditAction(e.target.value)}
+          size="small"
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="">All Events</MenuItem>
+          <MenuItem value="FRAUD_">Fraud</MenuItem>
+          <MenuItem value="STEP_UP_">Step-Up</MenuItem>
+          <MenuItem value="REFUND_">Refund</MenuItem>
+          <MenuItem value="TRANSFER_">Transfer</MenuItem>
+        </TextField>
+        <Button
+          variant="contained"
+          onClick={() => fetchAuditLogs(true)}
+          disabled={auditLoading || !auditUserId.trim()}
+        >
+          {auditLoading && !auditHasMore ? <CircularProgress size={20} /> : 'Load'}
+        </Button>
+      </Box>
+
+      {auditError && <Alert severity="error" sx={{ mb: 2 }}>{auditError}</Alert>}
+
+      {auditLogs.length > 0 && (
+        <TableContainer component={Paper} sx={{ mb: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Timestamp</TableCell>
+                <TableCell>Action</TableCell>
+                <TableCell>Resource Type</TableCell>
+                <TableCell>Resource ID</TableCell>
+                <TableCell>Details</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {auditLogs.map((log) => (
+                <TableRow key={log.id} hover>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                    {log.createdAt ? new Date(log.createdAt).toLocaleString() : '—'}
+                  </TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                    {log.action}
+                  </TableCell>
+                  <TableCell>{log.resourceType || '—'}</TableCell>
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {log.resourceId || '—'}
+                  </TableCell>
+                  <TableCell sx={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {log.details || '—'}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {auditHasMore && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1, mb: 2 }}>
+          <Button variant="outlined" onClick={() => fetchAuditLogs(false)} disabled={auditLoading}>
+            {auditLoading ? <CircularProgress size={20} /> : 'Load More'}
+          </Button>
+        </Box>
+      )}
+
+      {auditSearched && !auditLoading && auditLogs.length === 0 && !auditError && (
+        <Typography color="text.secondary" sx={{ mt: 1 }}>No audit events found.</Typography>
       )}
 
       <ConfirmDialog

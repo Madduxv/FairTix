@@ -1,12 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
+import { useNearbyEvents } from '../hooks/useNearbyEvents';
 import '../styles/Events.css';
 
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function Events() {
+  useEffect(() => { document.title = 'Browse Events | FairTix'; }, []);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [silentCoords, setSilentCoords] = useState(null);
 
   // Filters
   const [titleSearch, setTitleSearch] = useState('');
@@ -14,37 +29,66 @@ function Events() {
   const [performerSearch, setPerformerSearch] = useState('');
   const [showPast, setShowPast] = useState(false);
 
-  // Geolocation
-  const [nearMe, setNearMe] = useState(false);
-  const [userCoords, setUserCoords] = useState(null); // { lat, lon }
-  const [geoError, setGeoError] = useState('');
-  const [geoSupported] = useState(() => Boolean(navigator.geolocation));
-
-  // City/zip fallback (shown when geolocation is denied)
-  const [showCityFallback, setShowCityFallback] = useState(false);
-  const [streetInput, setStreetInput] = useState('');
-  const [cityInput, setCityInput] = useState('');
-  const [stateInput, setStateInput] = useState('');
-  const [zipInput, setZipInput] = useState('');
-  const [countryInput, setCountryInput] = useState('');
-  const [radiusKm, setRadiusKm] = useState(50);
-  const [geocodingError, setGeocodingError] = useState('');
-  const [geocoding, setGeocoding] = useState(false);
-
   // Pagination
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
 
+  const {
+    coords,
+    geoSupported,
+    geoLoading,
+    geoError,
+    showAddressFallback,
+    streetInput, setStreetInput,
+    cityInput, setCityInput,
+    stateInput, setStateInput,
+    zipInput, setZipInput,
+    countryInput, setCountryInput,
+    radiusKm, setRadiusKm,
+    geocodingError,
+    geocoding,
+    requestGeolocation,
+    clearCoords,
+    handleAddressSearch,
+  } = useNearbyEvents({ autoRequest: false, autoFetch: false });
+
+  const nearMe = coords !== null;
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.permissions?.query({ name: 'geolocation' }).then((result) => {
+      if (result.state === 'granted') {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => setSilentCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+          () => {}
+        );
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (coords) setSilentCoords(coords);
+  }, [coords]);
+
+  const handleNearMeToggle = () => {
+    if (nearMe) {
+      clearCoords();
+      setPage(0);
+    } else {
+      requestGeolocation();
+    }
+  };
+
   const fetchEvents = useCallback(() => {
     setLoading(true);
     setError('');
 
-    if (nearMe && userCoords) {
+    if (coords) {
       const params = new URLSearchParams();
-      params.set('lat', userCoords.lat);
-      params.set('lon', userCoords.lon);
+      params.set('lat', coords.lat);
+      params.set('lon', coords.lon);
       params.set('radiusKm', radiusKm);
       params.set('page', page);
       params.set('size', pageSize);
@@ -78,89 +122,12 @@ function Events() {
       .catch((err) => {
         setError(err.message || 'Failed to load events');
       })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [page, pageSize, titleSearch, venueSearch, performerSearch, showPast, nearMe, userCoords, radiusKm]);
-
-  const handleNearMeToggle = () => {
-    if (nearMe) {
-      setNearMe(false);
-      setGeoError('');
-      setShowCityFallback(false);
-      setStreetInput('');
-      setCityInput('');
-      setStateInput('');
-      setZipInput('');
-      setCountryInput('');
-      setGeocodingError('');
-      setPage(0);
-      return;
-    }
-    if (!geoSupported) {
-      setGeoError('Geolocation is not supported by your browser.');
-      setShowCityFallback(true);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        setNearMe(true);
-        setGeoError('');
-        setShowCityFallback(false);
-        setPage(0);
-      },
-      () => {
-        setShowCityFallback(true);
-        setGeoError('');
-      }
-    );
-  };
-
-  async function handleAddressSearch() {
-    if (!cityInput.trim() && !zipInput.trim()) {
-      setGeocodingError('Enter at least a city or ZIP / postal code.');
-      return;
-    }
-    setGeocoding(true);
-    setGeocodingError('');
-    try {
-      const params = new URLSearchParams({ format: 'json', limit: '1' });
-      if (streetInput.trim()) params.set('street', streetInput.trim());
-      if (cityInput.trim()) params.set('city', cityInput.trim());
-      if (stateInput.trim()) params.set('state', stateInput.trim());
-      if (zipInput.trim()) params.set('postalcode', zipInput.trim());
-      if (countryInput.trim()) params.set('country', countryInput.trim());
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params.toString()}`,
-        { headers: { 'User-Agent': 'FairTix/1.0' } }
-      );
-      const results = await res.json();
-      if (!results.length) {
-        setGeocodingError('Address not found. Try removing some fields or check your spelling.');
-        return;
-      }
-      setUserCoords({ lat: parseFloat(results[0].lat), lon: parseFloat(results[0].lon) });
-      setNearMe(true);
-      setShowCityFallback(false);
-      setPage(0);
-    } catch {
-      setGeocodingError('Unable to reach geocoding service. Try again.');
-    } finally {
-      setGeocoding(false);
-    }
-  }
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchEvents();
-    }, 300); // debounce search inputs
-    return () => clearTimeout(timer);
-  }, [fetchEvents]);
+      .finally(() => setLoading(false));
+  }, [page, pageSize, titleSearch, venueSearch, performerSearch, showPast, coords, radiusKm]);
 
   const handleSearchChange = (setter) => (e) => {
     setter(e.target.value);
-    setPage(0); // reset to first page on filter change
+    setPage(0);
   };
 
   const handleShowPastToggle = () => {
@@ -172,6 +139,13 @@ function Events() {
     setPageSize(Number(e.target.value));
     setPage(0);
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchEvents();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [fetchEvents]);
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -224,14 +198,15 @@ function Events() {
             className={`filter-toggle-btn${nearMe ? ' filter-toggle-btn--active' : ''}`}
             onClick={handleNearMeToggle}
             type="button"
+            disabled={geoLoading}
           >
-            {nearMe ? 'Near Me (on)' : 'Near Me'}
+            {geoLoading ? 'Detecting…' : nearMe ? 'Near Me (on)' : 'Near Me'}
           </button>
         )}
       </div>
       {geoError && <div className="error-message">{geoError}</div>}
 
-      {showCityFallback && !nearMe && (
+      {showAddressFallback && (
         <div className="city-fallback">
           <p className="city-fallback-title">Location access denied. Enter your address to find events nearby.</p>
           <div className="city-fallback-form">
@@ -350,15 +325,28 @@ function Events() {
                 <div className="event-card-meta">
                   <span>{event.venue?.name ?? ''}</span>
                   <span>{formatDate(event.startTime)}</span>
-                  {nearMe && event.distanceKm != null && (
-                    <span>{event.distanceKm.toFixed(1)} km away</span>
-                  )}
+                  {(() => {
+                    if (nearMe && event.distanceKm != null) {
+                      return <span>{event.distanceKm.toFixed(1)} km away</span>;
+                    }
+                    const uc = silentCoords || coords;
+                    if (!nearMe && uc && event.venue?.latitude != null && event.venue?.longitude != null) {
+                      const d = haversineKm(uc.lat, uc.lon, event.venue.latitude, event.venue.longitude);
+                      return <span>{d.toFixed(1)} km away</span>;
+                    }
+                    return null;
+                  })()}
                 </div>
                 {event.status === 'PUBLISHED' && (
                   <div className="event-card-status event-card-status--announced">Coming Soon</div>
                 )}
                 {event.status === 'ACTIVE' && (
                   <div className="event-card-status event-card-status--active">On Sale</div>
+                )}
+                {event.maxTicketsPerUser && (
+                  <div className="event-card-status event-card-status--cap">
+                    Limit: {event.maxTicketsPerUser} per person
+                  </div>
                 )}
                 <div className="event-card-action">View details &rarr;</div>
               </Link>

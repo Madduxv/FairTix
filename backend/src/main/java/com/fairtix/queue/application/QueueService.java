@@ -197,13 +197,13 @@ public class QueueService {
     }
 
     @Transactional
-    public void admitNextBatch(UUID eventId) {
+    public List<QueueEntry> admitNextBatch(UUID eventId) {
         long availableSeats = seatRepository.findByEvent_IdAndStatus(eventId, SeatStatus.AVAILABLE).size();
         long currentlyAdmitted = queueRepository.countByEventIdAndStatus(eventId, QueueStatus.ADMITTED);
         long toAdmit = Math.min(availableSeats - currentlyAdmitted, maxAdmissionBatch);
 
         if (toAdmit <= 0) {
-            return;
+            return List.of();
         }
 
         List<QueueEntry> waiting = queueRepository.findByEventIdAndStatusOrderByPositionAsc(
@@ -223,6 +223,7 @@ public class QueueService {
         if (!waiting.isEmpty()) {
             auditService.log(SYSTEM, "QUEUE_ADMITTED", "QUEUE", eventId, "count=" + waiting.size());
         }
+        return List.copyOf(waiting);
     }
 
     @Transactional

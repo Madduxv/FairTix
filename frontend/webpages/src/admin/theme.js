@@ -1,22 +1,25 @@
 import { createTheme } from '@mui/material/styles';
 
+// MUI themes require static values at creation time — CSS vars can't be used here.
+// Each value is annotated with its corresponding tokens.css dark-mode token.
+// When tokens.css dark-mode values change, update the matching lines below.
+const T = {
+  bgPage:       '#0d1117', // --bg-page (dark)
+  surface:      '#1a1a2e', // --surface (dark)
+  surfaceRaised:'#16213e', // --surface-raised (dark)
+  textPrimary:  '#ffffff', // --text-primary (dark)
+  textSecondary:'#b0b0b0', // --text-secondary (dark)
+  brandPrimary: '#e94560', // --brand-primary
+  brandAccent:  '#0f3460', // --brand-accent
+};
+
 const adminTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: {
-      main: '#e94560',
-    },
-    secondary: {
-      main: '#0f3460',
-    },
-    background: {
-      default: '#1a1a2e',
-      paper: '#16213e',
-    },
-    text: {
-      primary: '#ffffff',
-      secondary: '#b0b0b0',
-    },
+    primary:    { main: T.brandPrimary },
+    secondary:  { main: T.brandAccent },
+    background: { default: T.bgPage, paper: T.surfaceRaised },
+    text:       { primary: T.textPrimary, secondary: T.textSecondary },
   },
   typography: {
     fontFamily: "'Roboto', 'Arial', sans-serif",
@@ -25,7 +28,7 @@ const adminTheme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#16213e',
+          backgroundColor: T.surfaceRaised,
           borderRight: '1px solid rgba(255, 255, 255, 0.08)',
         },
       },
@@ -34,15 +37,13 @@ const adminTheme = createTheme({
       styleOverrides: {
         head: {
           fontWeight: 600,
-          backgroundColor: '#0f3460',
+          backgroundColor: T.brandAccent,
         },
       },
     },
     MuiButton: {
       styleOverrides: {
-        root: {
-          textTransform: 'none',
-        },
+        root: { textTransform: 'none' },
       },
     },
   },

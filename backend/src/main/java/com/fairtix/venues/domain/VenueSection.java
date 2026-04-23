@@ -76,4 +76,16 @@ public class VenueSection {
   public String getColor() { return color; }
   public int getSortOrder() { return sortOrder; }
   public Instant getCreatedAt() { return createdAt; }
+
+  public void update(String name, String sectionType, double posX, double posY,
+      double width, double height, String color, int sortOrder) {
+    this.name = name;
+    this.sectionType = sectionType;
+    this.posX = posX;
+    this.posY = posY;
+    this.width = width;
+    this.height = height;
+    this.color = color;
+    this.sortOrder = sortOrder;
+  }
 }

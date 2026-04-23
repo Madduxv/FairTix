@@ -5,6 +5,7 @@ import Recaptcha from '../components/Recaptcha';
 import '../styles/Login.css';
 
 function Login() {
+  useEffect(() => { document.title = 'Sign In | FairTix'; }, []);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

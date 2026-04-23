@@ -244,3 +244,67 @@ test('submitting without completing CAPTCHA shows validation error', async () =>
     expect(screen.getByText('Please complete the CAPTCHA.')).toBeInTheDocument()
   );
 });
+
+test('step-up modal has accessible ARIA attributes', async () => {
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+
+  await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+  const dialog = screen.getByRole('dialog');
+  expect(dialog).toHaveAttribute('aria-modal', 'true');
+  expect(dialog).toHaveAttribute('aria-labelledby', 'step-up-title');
+  expect(screen.getByText('Additional Verification Required').id).toBe('step-up-title');
+});
+
+test('verify button shows Verifying state while request is in flight', async () => {
+  let resolveVerify;
+  api.post.mockImplementation((url) => {
+    if (url === '/auth/step-up/verify') return new Promise((res) => { resolveVerify = res; });
+    return Promise.resolve({ orderId: 'order-1' });
+  });
+
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+  await waitFor(() => expect(screen.getByTestId('mock-captcha')).toBeInTheDocument());
+
+  fireEvent.click(screen.getByTestId('mock-captcha'));
+  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: /verifying/i })).toBeDisabled()
+  );
+
+  act(() => resolveVerify({ status: 'verified' }));
+});
+
+test('429 rate limit response from step-up verify shows error', async () => {
+  renderCheckout();
+  await waitFor(() => expect(screen.getByLabelText('Card Number')).toBeInTheDocument());
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('auth:step-up-required', { detail: { action: 'CHECKOUT' } })
+    );
+  });
+  await waitFor(() => expect(screen.getByTestId('mock-captcha')).toBeInTheDocument());
+
+  api.post.mockRejectedValue({ status: 429, message: 'Too many verification attempts. Please wait 10 minutes before trying again.' });
+  fireEvent.click(screen.getByTestId('mock-captcha'));
+  fireEvent.click(screen.getByRole('button', { name: /verify/i }));
+
+  await waitFor(() =>
+    expect(screen.getByText('Too many verification attempts. Please wait 10 minutes before trying again.')).toBeInTheDocument()
+  );
+});
