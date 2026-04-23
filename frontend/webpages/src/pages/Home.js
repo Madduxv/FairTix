@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import Logo from '../components/Logo';
+import Button from '../components/ui/Button';
 import '../styles/Home.css';
 
 function Home() {
@@ -15,14 +16,14 @@ function Home() {
       <div className="home-actions">
         {user ? (
           <>
-            <button onClick={() => navigate('/events')}>Browse Events</button>
-            <button className="home-btn-secondary" onClick={() => navigate('/dashboard')}>Dashboard</button>
+            <Button variant="primary" size="lg" onClick={() => navigate('/events')}>Browse Events</Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/dashboard')}>Dashboard</Button>
           </>
         ) : (
           <>
-            <button onClick={() => navigate('/login')}>Log In</button>
-            <button onClick={() => navigate('/signup')}>Sign Up</button>
-            <button className="home-btn-secondary" onClick={() => navigate('/events')}>Continue as guest</button>
+            <Button variant="primary" size="lg" onClick={() => navigate('/login')}>Log In</Button>
+            <Button variant="primary" size="lg" onClick={() => navigate('/signup')}>Sign Up</Button>
+            <Button variant="ghost" size="lg" onClick={() => navigate('/events')}>Continue as guest</Button>
           </>
         )}
       </div>
