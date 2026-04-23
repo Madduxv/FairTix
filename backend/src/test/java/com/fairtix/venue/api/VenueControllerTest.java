@@ -83,7 +83,7 @@ class VenueControllerTest {
     }
 
     @Test
-    void createVenue_unauthenticated_returns403() throws Exception {
+    void createVenue_unauthenticated_returns401() throws Exception {
         String body = """
                 {
                   "name": "Test Venue",
@@ -94,7 +94,7 @@ class VenueControllerTest {
         mockMvc.perform(post("/api/venues")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------------------
