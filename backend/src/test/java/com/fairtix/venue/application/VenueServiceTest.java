@@ -34,7 +34,7 @@ class VenueServiceTest {
 
     @BeforeEach
     void setUp() {
-        testVenue = venueRepository.save(new Venue("Test Venue", "Test Address", null, null, null));
+        testVenue = venueRepository.save(new Venue("Test Venue", "Test Address", null, null, null, null, null));
     }
 
     // -------------------------------------------------------------------------
@@ -44,7 +44,7 @@ class VenueServiceTest {
     @Test
     void creatingVenueSucceeds() {
         Venue venue = venueService.createVenue(
-                new CreateVenueRequest("New Venue", "New Address", null, null, null),
+                new CreateVenueRequest("New Venue", "New Address", null, null, null, null, null),
                 ACTOR_ID);
 
         assertThat(venue.getId()).isNotNull();
@@ -79,7 +79,7 @@ class VenueServiceTest {
 
     @Test
     void updatingVenueChangesNameAndAddress() {
-        UpdateVenueRequest request = new UpdateVenueRequest("Updated Venue", "Updated Address", null, null, null);
+        UpdateVenueRequest request = new UpdateVenueRequest("Updated Venue", "Updated Address", null, null, null, null, null);
 
         Venue updated = venueService.updateVenue(testVenue.getId(), request, ACTOR_ID);
 
@@ -89,7 +89,7 @@ class VenueServiceTest {
 
     @Test
     void updatingNonexistentVenueThrowsException() {
-        UpdateVenueRequest request = new UpdateVenueRequest("Updated", "Updated", null, null, null);
+        UpdateVenueRequest request = new UpdateVenueRequest("Updated", "Updated", null, null, null, null, null);
 
         assertThatThrownBy(() -> venueService.updateVenue(UUID.randomUUID(), request, ACTOR_ID))
                 .isInstanceOf(ResourceNotFoundException.class)

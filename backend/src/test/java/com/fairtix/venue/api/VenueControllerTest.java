@@ -103,7 +103,7 @@ class VenueControllerTest {
 
     @Test
     void listVenues_unauthenticated_returns200() throws Exception {
-        venueService.createVenue(new CreateVenueRequest("Test Venue", "105 Collie Way", null, null, null), ADMIN_ID);
+        venueService.createVenue(new CreateVenueRequest("Test Venue", "105 Collie Way", null, null, null, null, null), ADMIN_ID);
 
         mockMvc.perform(get("/api/venues"))
                 .andExpect(status().isOk())
@@ -113,9 +113,9 @@ class VenueControllerTest {
 
     @Test
     void listVenues_pagination_works() throws Exception {
-        venueService.createVenue(new CreateVenueRequest("Venue A", "First Address", null, null, null), ADMIN_ID);
-        venueService.createVenue(new CreateVenueRequest("Venue B", "Second Address", null, null, null), ADMIN_ID);
-        venueService.createVenue(new CreateVenueRequest("Venue C", "Third Address", null, null, null), ADMIN_ID);
+        venueService.createVenue(new CreateVenueRequest("Venue A", "First Address", null, null, null, null, null), ADMIN_ID);
+        venueService.createVenue(new CreateVenueRequest("Venue B", "Second Address", null, null, null, null, null), ADMIN_ID);
+        venueService.createVenue(new CreateVenueRequest("Venue C", "Third Address", null, null, null, null, null), ADMIN_ID);
 
         mockMvc.perform(get("/api/venues")
                         .param("page", "0")
@@ -132,7 +132,7 @@ class VenueControllerTest {
 
     @Test
     void getVenue_existingId_returns200() throws Exception {
-        Venue venue = venueService.createVenue(new CreateVenueRequest("My Venue", "My Address", null, null, null), ADMIN_ID);
+        Venue venue = venueService.createVenue(new CreateVenueRequest("My Venue", "My Address", null, null, null, null, null), ADMIN_ID);
 
         mockMvc.perform(get("/api/venues/{id}", venue.getId()))
                 .andExpect(status().isOk())
