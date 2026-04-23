@@ -16,7 +16,16 @@ import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import MapIcon from '@mui/icons-material/Map';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import CircularProgress from '@mui/material/CircularProgress';
 import SeatFormDialog from '../components/SeatFormDialog';
+import AdminSeatLayoutEditor from '../components/AdminSeatLayoutEditor';
 import api from '../../api/client';
 
 const statusColors = {
@@ -34,6 +43,12 @@ function AdminSeatsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
+  const [csvFile, setCsvFile] = useState(null);
+  const [csvUploading, setCsvUploading] = useState(false);
+  const [csvError, setCsvError] = useState('');
+  const [csvResult, setCsvResult] = useState(null);
+  const [layoutEditorOpen, setLayoutEditorOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -55,6 +70,24 @@ function AdminSeatsPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleCsvUpload = async () => {
+    if (!csvFile) return;
+    setCsvUploading(true);
+    setCsvError('');
+    setCsvResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', csvFile);
+      const result = await api.post(`/api/events/${eventId}/seats/import`, formData);
+      setCsvResult(result);
+      fetchData();
+    } catch (err) {
+      setCsvError(err.message || 'CSV import failed.');
+    } finally {
+      setCsvUploading(false);
+    }
+  };
 
   const statusSummary = seats.reduce((acc, seat) => {
     acc[seat.status] = (acc[seat.status] || 0) + 1;
@@ -104,6 +137,12 @@ function AdminSeatsPage() {
             onClick={() => navigate('/admin/events')}
           >
             Back
+          </Button>
+          <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setCsvDialogOpen(true)}>
+            Import CSV
+          </Button>
+          <Button variant="outlined" startIcon={<MapIcon />} onClick={() => setLayoutEditorOpen(true)}>
+            Edit Layout
           </Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setFormOpen(true)}>
             Add Seat
@@ -159,6 +198,52 @@ function AdminSeatsPage() {
         onClose={() => setFormOpen(false)}
         onSaved={fetchData}
         eventId={eventId}
+      />
+
+      {/* CSV Import Dialog */}
+      <Dialog open={csvDialogOpen} onClose={() => { setCsvDialogOpen(false); setCsvFile(null); setCsvError(''); setCsvResult(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle>Import Seats from CSV</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            CSV format: <code>section,row,seat_number,price[,pos_x,pos_y,rotation]</code>
+          </Typography>
+          <TextField
+            type="file"
+            inputProps={{ accept: '.csv' }}
+            onChange={(e) => setCsvFile(e.target.files[0])}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+          {csvError && <Alert severity="error" sx={{ mb: 1 }}>{csvError}</Alert>}
+          {csvResult && (
+            <Alert severity="success">
+              Imported {csvResult.imported} seat(s).
+              {csvResult.skipped > 0 && ` Skipped ${csvResult.skipped} duplicate(s).`}
+              {csvResult.errors?.length > 0 && ` ${csvResult.errors.length} row error(s).`}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setCsvDialogOpen(false); setCsvFile(null); setCsvError(''); setCsvResult(null); }}>
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCsvUpload}
+            disabled={!csvFile || csvUploading}
+            startIcon={csvUploading ? <CircularProgress size={16} /> : <UploadFileIcon />}
+          >
+            {csvUploading ? 'Uploading...' : 'Upload'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Layout Editor */}
+      <AdminSeatLayoutEditor
+        open={layoutEditorOpen}
+        eventId={eventId}
+        venueId={event?.venueId}
+        onClose={() => { setLayoutEditorOpen(false); fetchData(); }}
       />
     </Box>
   );

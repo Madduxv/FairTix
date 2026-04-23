@@ -7,13 +7,13 @@ import Avatar from '@mui/material/Avatar';
 
 function StatsCard({ title, value, icon, color }) {
   return (
-    <Card sx={{ backgroundColor: 'background.paper' }}>
-      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 3 }}>
-        <Avatar sx={{ backgroundColor: color, width: 56, height: 56 }}>
+    <Card sx={{ backgroundColor: 'background.paper', height: '100%', width: '100%' }}>
+      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, '&:last-child': { pb: 2 } }}>
+        <Avatar sx={{ backgroundColor: color, width: 44, height: 44 }}>
           {icon}
         </Avatar>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700 }}>
             {value}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>

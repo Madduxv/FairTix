@@ -10,6 +10,7 @@ import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatHoldRepository;
 import com.fairtix.inventory.infrastructure.SeatRepository;
 import com.fairtix.orders.application.OrderService;
+import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.users.domain.User;
 import com.fairtix.users.infrastructure.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +52,9 @@ class TicketControllerTest {
 
   @Autowired
   private OrderService orderService;
+
+  @Autowired
+  private TicketRepository ticketRepository;
 
   private MockMvc mockMvc;
   private User testUser;
@@ -141,5 +145,63 @@ class TicketControllerTest {
             .with(WithMockPrincipal.user(otherUser.getId(), otherUser.getEmail())))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  void getCalendar_returns200_withIcsContent() throws Exception {
+    Event event = eventRepository.save(new Event("ICS Concert", null, Instant.now().plusSeconds(86400), null));
+    Seat seat = seatRepository.save(new Seat(event, "A", "1", "101", new BigDecimal("50.00")));
+    seat.setStatus(SeatStatus.BOOKED);
+    seat = seatRepository.save(seat);
+
+    SeatHold hold = new SeatHold(seat, testUser.getId(), Instant.now().plusSeconds(600));
+    hold.setStatus(HoldStatus.CONFIRMED);
+    hold = seatHoldRepository.save(hold);
+
+    orderService.createOrder(testUser.getId(), List.of(hold.getId()));
+
+    java.util.UUID ticketId = ticketRepository.findAllByUser_IdOrderByIssuedAtDesc(testUser.getId())
+        .get(0).getId();
+
+    mockMvc.perform(get("/api/tickets/{ticketId}/calendar.ics", ticketId)
+            .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail())))
+        .andExpect(status().isOk())
+        .andExpect(header().string("Content-Type", org.hamcrest.Matchers.containsString("text/calendar")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("BEGIN:VCALENDAR")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("SUMMARY:ICS Concert")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("@fairtix.com")));
+  }
+
+  @Test
+  void getCalendar_notFound_returns404() throws Exception {
+    mockMvc.perform(get("/api/tickets/{ticketId}/calendar.ics", UUID.randomUUID())
+            .with(WithMockPrincipal.user(testUser.getId(), testUser.getEmail())))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void getCalendar_wrongUser_returns404() throws Exception {
+    User otherUser = new User();
+    otherUser.setEmail("calendar-other@example.com");
+    otherUser.setPassword("$2a$10$dummyhashfortest");
+    otherUser = userRepository.save(otherUser);
+
+    Event event = eventRepository.save(new Event("Private ICS", null, Instant.now().plusSeconds(86400), null));
+    Seat seat = seatRepository.save(new Seat(event, "D", "2", "202", new BigDecimal("25.00")));
+    seat.setStatus(SeatStatus.BOOKED);
+    seat = seatRepository.save(seat);
+
+    SeatHold hold = new SeatHold(seat, testUser.getId(), Instant.now().plusSeconds(600));
+    hold.setStatus(HoldStatus.CONFIRMED);
+    hold = seatHoldRepository.save(hold);
+
+    orderService.createOrder(testUser.getId(), List.of(hold.getId()));
+
+    java.util.UUID ticketId = ticketRepository.findAllByUser_IdOrderByIssuedAtDesc(testUser.getId())
+        .get(0).getId();
+
+    mockMvc.perform(get("/api/tickets/{ticketId}/calendar.ics", ticketId)
+            .with(WithMockPrincipal.user(otherUser.getId(), otherUser.getEmail())))
+        .andExpect(status().isNotFound());
   }
 }

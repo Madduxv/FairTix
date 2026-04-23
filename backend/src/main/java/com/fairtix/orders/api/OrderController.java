@@ -44,9 +44,7 @@ public class OrderController {
     @ApiResponse(responseCode = "200", description = "List of orders")
     @GetMapping("/api/orders")
     public List<OrderResponse> listOrders(@AuthenticationPrincipal CustomUserPrincipal principal) {
-        return orderService.listOrders(principal.getUserId()).stream()
-                .map(OrderResponse::from)
-                .toList();
+        return orderService.listOrdersWithDetails(principal.getUserId());
     }
 
     @Operation(summary = "Get order details")
@@ -56,6 +54,6 @@ public class OrderController {
     public OrderResponse getOrder(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable UUID orderId) {
-        return OrderResponse.from(orderService.getOrder(orderId, principal.getUserId()));
+        return orderService.getOrderWithDetails(orderId, principal.getUserId());
     }
 }

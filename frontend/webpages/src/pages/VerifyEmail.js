@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
 
 function VerifyEmail() {
+  useEffect(() => { document.title = 'Verify Email | FairTix'; }, []);
   const [searchParams] = useSearchParams();
   const { user, isLoading, refreshUser } = useAuth();
   const [status, setStatus] = useState('loading'); // loading | success | error | already

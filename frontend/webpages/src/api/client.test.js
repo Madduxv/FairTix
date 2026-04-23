@@ -94,3 +94,61 @@ test('skips refresh and propagates error for /auth/login 401', async () => {
   await expect(api.post('/auth/login', {})).rejects.toMatchObject({ status: 401 });
   expect(fetch).toHaveBeenCalledTimes(1);
 });
+
+test('428 response dispatches auth:step-up-required with action from body', async () => {
+  const listener = jest.fn();
+  window.addEventListener('auth:step-up-required', listener);
+
+  global.fetch.mockReturnValue(
+    Promise.resolve({
+      ok: false,
+      status: 428,
+      clone: () => ({ json: () => Promise.resolve({ action: 'CHECKOUT' }) }),
+    })
+  );
+
+  await expect(api.post('/api/payments/checkout', {})).rejects.toMatchObject({
+    status: 428,
+    code: 'STEP_UP_REQUIRED',
+  });
+
+  await new Promise((r) => setTimeout(r, 0)); // flush microtasks
+  expect(listener).toHaveBeenCalledTimes(1);
+  expect(listener.mock.calls[0][0].detail).toEqual({ action: 'CHECKOUT' });
+
+  window.removeEventListener('auth:step-up-required', listener);
+});
+
+test('428 response does not trigger token refresh loop', async () => {
+  global.fetch.mockReturnValue(
+    Promise.resolve({
+      ok: false,
+      status: 428,
+      clone: () => ({ json: () => Promise.resolve({ action: 'SEAT_HOLD' }) }),
+    })
+  );
+
+  await expect(api.post('/api/events/1/holds', {})).rejects.toMatchObject({ status: 428 });
+
+  // Only the original request — no refresh call
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test('428 with missing action defaults to UNKNOWN', async () => {
+  const listener = jest.fn();
+  window.addEventListener('auth:step-up-required', listener);
+
+  global.fetch.mockReturnValue(
+    Promise.resolve({
+      ok: false,
+      status: 428,
+      clone: () => ({ json: () => Promise.resolve({}) }),
+    })
+  );
+
+  await expect(api.get('/api/protected')).rejects.toBeDefined();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(listener.mock.calls[0][0].detail).toEqual({ action: 'UNKNOWN' });
+
+  window.removeEventListener('auth:step-up-required', listener);
+});

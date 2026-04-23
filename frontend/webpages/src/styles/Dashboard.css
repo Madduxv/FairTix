@@ -5,8 +5,8 @@
 }
 
 .dashboard-verify-banner {
-  background: #fff8e1;
-  border: 1px solid #f59e0b;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
   border-radius: 6px;
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
@@ -20,8 +20,8 @@
 .dashboard-verify-btn {
   margin-top: 0.6rem;
   padding: 0.4rem 1rem;
-  background: #f59e0b;
-  color: #fff;
+  background: var(--warning);
+  color: var(--text-primary);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -34,13 +34,13 @@
 }
 
 .dashboard-verify-success {
-  color: #16a34a;
+  color: var(--success);
   font-size: 0.85rem;
   margin-top: 0.5rem;
 }
 
 .dashboard-verify-error {
-  color: #dc2626;
+  color: var(--danger);
   font-size: 0.85rem;
   margin-top: 0.5rem;
 }
@@ -60,20 +60,20 @@
 /* Sections */
 .dashboard-section {
   margin-top: 2rem;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1.25rem;
-  background: #fafafa;
+  background: var(--surface);
 }
 
 .dashboard-section h3 {
   margin: 0 0 0.75rem;
   font-size: 1rem;
-  color: #1a1a2e;
+  color: var(--text-primary);
 }
 
 .dashboard-muted {
-  color: #888;
+  color: var(--text-muted);
   font-size: 0.9rem;
   margin: 0.25rem 0;
 }
@@ -101,8 +101,8 @@
 }
 
 .dashboard-save-btn {
-  background: #1a1a2e;
-  color: #fff;
+  background: var(--nav-bg);
+  color: var(--text-on-brand);
   border: none;
   border-radius: 6px;
   padding: 0.5rem 1.25rem;
@@ -111,7 +111,7 @@
 }
 
 .dashboard-save-btn:hover:not(:disabled) {
-  background: #2d2d4e;
+  background: var(--nav-bg-hover);
 }
 
 .dashboard-save-btn:disabled {
@@ -125,17 +125,17 @@
 }
 
 .prefs-message--success {
-  color: #1e7e34;
+  color: var(--success-dark);
 }
 
 .prefs-message--error {
-  color: #c5221f;
+  color: var(--danger);
 }
 
 /* Data export */
 .dashboard-export-btn {
-  background: #1a1a2e;
-  color: #fff;
+  background: var(--nav-bg);
+  color: var(--text-on-brand);
   border: none;
   border-radius: 6px;
   padding: 0.5rem 1.25rem;
@@ -145,7 +145,7 @@
 }
 
 .dashboard-export-btn:hover:not(:disabled) {
-  background: #2d2d4e;
+  background: var(--nav-bg-hover);
 }
 
 .dashboard-export-btn:disabled {
@@ -156,27 +156,27 @@
 /* Danger zone */
 .dashboard-danger-zone {
   margin-top: 3rem;
-  border: 1px solid #e0b4b4;
+  border: 1px solid var(--danger-surface-border);
   border-radius: 8px;
   padding: 1.25rem;
-  background: #fef6f6;
+  background: var(--danger-surface);
 }
 
 .dashboard-danger-zone h3 {
   margin: 0 0 0.5rem;
-  color: #c5221f;
+  color: var(--danger);
   font-size: 1rem;
 }
 
 .dashboard-danger-zone p {
   margin: 0 0 1rem;
-  color: #666;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
 .dashboard-delete-btn {
-  background: #d32f2f;
-  color: #fff;
+  background: var(--danger);
+  color: var(--text-on-brand);
   border: none;
   border-radius: 6px;
   padding: 0.55rem 1.25rem;
@@ -186,14 +186,14 @@
 }
 
 .dashboard-delete-btn:hover {
-  background: #b71c1c;
+  background: var(--danger-hover);
 }
 
 /* Confirmation dialog overlay */
 .dashboard-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -201,30 +201,30 @@
 }
 
 .dashboard-dialog {
-  background: #fff;
+  background: var(--surface-raised);
   border-radius: 10px;
   padding: 1.75rem;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
 }
 
 .dashboard-dialog h3 {
   margin: 0 0 0.75rem;
-  color: #c5221f;
+  color: var(--danger);
 }
 
 .dashboard-dialog p {
   margin: 0 0 0.5rem;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .dashboard-dialog-email {
   font-family: monospace;
   font-weight: 600;
-  color: #333 !important;
-  background: #f5f5f5;
+  color: var(--text-primary) !important;
+  background: var(--surface);
   padding: 0.3rem 0.5rem;
   border-radius: 4px;
   display: inline-block;
@@ -233,22 +233,24 @@
 .dashboard-dialog input {
   width: 100%;
   padding: 0.6rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 0.95rem;
   margin-top: 0.5rem;
   box-sizing: border-box;
+  background: var(--surface-raised);
+  color: var(--text-primary);
 }
 
 .dashboard-dialog input:focus {
   outline: none;
-  border-color: #d32f2f;
+  border-color: var(--danger);
   box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.15);
 }
 
 .dashboard-dialog-error {
-  color: #c5221f;
-  background: #fce8e6;
+  color: var(--danger);
+  background: var(--danger-bg);
   padding: 0.5rem 0.75rem;
   border-radius: 4px;
   font-size: 0.85rem;
@@ -264,22 +266,22 @@
 
 .dashboard-dialog-cancel {
   background: none;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.5rem 1.25rem;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
 .dashboard-dialog-cancel:hover:not(:disabled) {
-  border-color: #999;
-  color: #111;
+  border-color: var(--text-muted);
+  color: var(--text-primary);
 }
 
 .dashboard-dialog-confirm {
-  background: #d32f2f;
-  color: #fff;
+  background: var(--danger);
+  color: var(--text-on-brand);
   border: none;
   border-radius: 6px;
   padding: 0.5rem 1.25rem;
@@ -289,10 +291,38 @@
 }
 
 .dashboard-dialog-confirm:hover:not(:disabled) {
-  background: #b71c1c;
+  background: var(--danger-hover);
 }
 
 .dashboard-dialog-confirm:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 1rem;
+  }
+
+  .dashboard-dialog {
+    padding: 1.25rem;
+  }
+
+  .dashboard-dialog-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
+
+  .dashboard-dialog-cancel,
+  .dashboard-dialog-confirm {
+    width: 100%;
+    text-align: center;
+  }
+
+  .dashboard-save-btn,
+  .dashboard-export-btn,
+  .dashboard-delete-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

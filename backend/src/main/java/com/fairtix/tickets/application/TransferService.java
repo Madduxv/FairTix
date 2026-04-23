@@ -2,6 +2,9 @@ package com.fairtix.tickets.application;
 
 import com.fairtix.audit.application.AuditService;
 import com.fairtix.common.ResourceNotFoundException;
+import com.fairtix.fraud.application.RiskScoringService;
+import com.fairtix.fraud.application.UserFlaggedForAbuseException;
+import com.fairtix.fraud.domain.RiskTier;
 import com.fairtix.notifications.application.EmailService;
 import com.fairtix.notifications.application.EmailTemplateService;
 import com.fairtix.tickets.domain.TicketStatus;
@@ -10,12 +13,16 @@ import com.fairtix.tickets.domain.TransferStatus;
 import com.fairtix.tickets.infrastructure.TicketRepository;
 import com.fairtix.tickets.infrastructure.TicketTransferRequestRepository;
 import com.fairtix.users.infrastructure.UserRepository;
+import org.redisson.api.RScoredSortedSet;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -26,6 +33,7 @@ public class TransferService {
 
     private static final Logger log = LoggerFactory.getLogger(TransferService.class);
     private static final int TRANSFER_EXPIRY_DAYS = 7;
+    private static final String VELOCITY_KEY_PREFIX = "transfer:velocity:";
 
     private final TicketRepository ticketRepository;
     private final TicketTransferRequestRepository transferRepository;
@@ -33,23 +41,45 @@ public class TransferService {
     private final AuditService auditService;
     private final EmailService emailService;
     private final EmailTemplateService emailTemplateService;
+    private final RedissonClient redissonClient;
+    private final RiskScoringService riskScoringService;
+
+    @Value("${fairtix.transfer.velocity.max-per-window:5}")
+    private int velocityMaxPerWindow;
+
+    @Value("${fairtix.transfer.velocity.window-hours:24}")
+    private int velocityWindowHours;
 
     public TransferService(TicketRepository ticketRepository,
                            TicketTransferRequestRepository transferRepository,
                            UserRepository userRepository,
                            AuditService auditService,
                            EmailService emailService,
-                           EmailTemplateService emailTemplateService) {
+                           EmailTemplateService emailTemplateService,
+                           RedissonClient redissonClient,
+                           RiskScoringService riskScoringService) {
         this.ticketRepository = ticketRepository;
         this.transferRepository = transferRepository;
         this.userRepository = userRepository;
         this.auditService = auditService;
         this.emailService = emailService;
         this.emailTemplateService = emailTemplateService;
+        this.redissonClient = redissonClient;
+        this.riskScoringService = riskScoringService;
     }
 
     @Transactional
     public TicketTransferRequest createTransferRequest(UUID ticketId, UUID fromUserId, String toEmail) {
+        // Transfers carry no additional price — anti-scalping by design; face value is preserved.
+        RiskTier tier = riskScoringService.getTier(fromUserId);
+        if (tier == RiskTier.CRITICAL) {
+            auditService.log(fromUserId, "TRANSFER_BLOCKED_FRAUD_RISK", "TICKET", ticketId,
+                    "tier=" + tier);
+            throw new UserFlaggedForAbuseException();
+        }
+
+        checkVelocity(fromUserId);
+
         var ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + ticketId));
 
@@ -187,6 +217,21 @@ public class TransferService {
 
     public List<TicketTransferRequest> listOutgoing(UUID userId) {
         return transferRepository.findByFromUser_Id(userId);
+    }
+
+    private void checkVelocity(UUID userId) {
+        RScoredSortedSet<String> velocitySet = redissonClient.getScoredSortedSet(
+                VELOCITY_KEY_PREFIX + userId);
+        long windowStartMillis = Instant.now()
+                .minus(velocityWindowHours, ChronoUnit.HOURS)
+                .toEpochMilli();
+        velocitySet.removeRangeByScore(Double.NEGATIVE_INFINITY, false,
+                (double) windowStartMillis, true);
+        if (velocitySet.size() >= velocityMaxPerWindow) {
+            throw new TransferVelocityExceededException(velocityMaxPerWindow, velocityWindowHours);
+        }
+        velocitySet.add((double) Instant.now().toEpochMilli(), UUID.randomUUID().toString());
+        velocitySet.expire(Duration.ofHours(velocityWindowHours + 1));
     }
 
     @Scheduled(fixedDelay = 60_000)

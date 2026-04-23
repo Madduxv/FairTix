@@ -16,6 +16,8 @@ import com.fairtix.events.dto.CancelEventRequest;
 import com.fairtix.events.dto.CreateEventRequest;
 import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.dto.EventResponse;
+import com.fairtix.events.dto.NearbyEventResponse;
+import com.fairtix.venues.application.GeoSearchService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,10 +42,12 @@ public class EventController {
 
     private final EventService service;
     private final AuditService auditService;
+    private final GeoSearchService geoSearchService;
 
-    public EventController(EventService service, AuditService auditService) {
+    public EventController(EventService service, AuditService auditService, GeoSearchService geoSearchService) {
         this.service = service;
         this.auditService = auditService;
+        this.geoSearchService = geoSearchService;
     }
 
     @Operation(summary = "Create an event", description = "Admin-only. Creates a new event owned by the caller.")
@@ -80,6 +84,7 @@ public class EventController {
     public Page<EventResponse> search(
             @Parameter(description = "Filter by venue name") @RequestParam(required = false) String venueName,
             @Parameter(description = "Filter by title (contains)") @RequestParam(required = false) String title,
+            @Parameter(description = "Filter by performer name (contains)") @RequestParam(required = false) String performerName,
             @Parameter(description = "Only future events") @RequestParam(required = false) Boolean upcoming,
             @Parameter(description = "Filter by lifecycle status (ADMIN-only)") @RequestParam(required = false) EventStatus status,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
@@ -89,9 +94,35 @@ public class EventController {
         boolean adminView = principal != null && principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
         EventStatus effectiveStatus = adminView ? status : null;
-        Page<Event> events = service.search(venueName, title, upcoming, effectiveStatus, adminView,
+        Page<Event> events = service.search(venueName, title, performerName, upcoming, effectiveStatus, adminView,
                 PageRequest.of(page, Math.min(size, 100)));
         return events.map(EventResponse::from);
+    }
+
+    @Operation(summary = "Events near a location",
+            description = "Public. Returns paginated events whose venue is within the given radius. " +
+                    "Only PUBLISHED and ACTIVE events are returned. Max radius is 500 km.")
+    @ApiResponse(responseCode = "200", description = "Page of nearby events")
+    @ApiResponse(responseCode = "400", description = "Invalid coordinates or radius exceeds 500 km")
+    @SecurityRequirements
+    @PermitAll
+    @GetMapping("/nearby")
+    public Page<NearbyEventResponse> nearby(
+            @Parameter(description = "Latitude of search origin") @RequestParam double lat,
+            @Parameter(description = "Longitude of search origin") @RequestParam double lon,
+            @Parameter(description = "Search radius in kilometres (default 50, max 500)") @RequestParam(defaultValue = "50") double radiusKm,
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size (max 100)") @RequestParam(defaultValue = "20") int size) {
+        if (Double.isNaN(lat) || Double.isInfinite(lat) || lat < -90 || lat > 90
+                || Double.isNaN(lon) || Double.isInfinite(lon) || lon < -180 || lon > 180) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "lat must be in [-90,90] and lon in [-180,180]");
+        }
+        if (radiusKm <= 0 || radiusKm > 500) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "radiusKm must be between 1 and 500");
+        }
+        return geoSearchService.findEventsNear(lat, lon, radiusKm, PageRequest.of(page, Math.min(size, 100)));
     }
 
     @Operation(summary = "Get event by ID", description = "Public. Returns a single event.")

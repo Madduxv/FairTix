@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
+import Modal from '../components/ui/Modal';
+import { useToast } from '../components/ui/Toast';
 import '../styles/Dashboard.css';
 
 function EmailVerificationBanner({ email }) {
@@ -47,7 +49,9 @@ function EmailVerificationBanner({ email }) {
 }
 
 function Dashboard() {
+  useEffect(() => { document.title = 'Dashboard | FairTix'; }, []);
   const { user, logout } = useAuth();
+  const toast = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
   const [deleting, setDeleting] = useState(false);
@@ -106,7 +110,7 @@ function Dashboard() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
-      alert(err.message || 'Failed to export data.');
+      toast({ message: err.message || 'Failed to export data.', type: 'error' });
     } finally {
       setExporting(false);
     }
@@ -198,41 +202,40 @@ function Dashboard() {
         </button>
       </div>
 
-      {showDeleteDialog && (
-        <div className="dashboard-overlay" onClick={() => !deleting && setShowDeleteDialog(false)}>
-          <div className="dashboard-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Account</h3>
-            <p>This action is <strong>permanent</strong> and cannot be undone. All your data will be removed.</p>
-            <p>Type your email to confirm:</p>
-            <p className="dashboard-dialog-email">{user.email}</p>
-            <input
-              type="email"
-              value={confirmEmail}
-              onChange={(e) => setConfirmEmail(e.target.value)}
-              placeholder="Enter your email"
-              disabled={deleting}
-              autoFocus
-            />
-            {error && <div className="dashboard-dialog-error">{error}</div>}
-            <div className="dashboard-dialog-actions">
-              <button
-                className="dashboard-dialog-cancel"
-                onClick={() => { setShowDeleteDialog(false); setConfirmEmail(''); setError(''); }}
-                disabled={deleting}
-              >
-                Cancel
-              </button>
-              <button
-                className="dashboard-dialog-confirm"
-                onClick={handleDeleteAccount}
-                disabled={confirmEmail !== user.email || deleting}
-              >
-                {deleting ? 'Deleting...' : 'Delete My Account'}
-              </button>
-            </div>
-          </div>
+      <Modal
+        isOpen={showDeleteDialog}
+        onClose={() => { if (!deleting) { setShowDeleteDialog(false); setConfirmEmail(''); setError(''); } }}
+        title="Delete Account"
+      >
+        <p>This action is <strong>permanent</strong> and cannot be undone. All your data will be removed.</p>
+        <p>Type your email to confirm:</p>
+        <p className="dashboard-dialog-email">{user.email}</p>
+        <input
+          type="email"
+          value={confirmEmail}
+          onChange={(e) => setConfirmEmail(e.target.value)}
+          placeholder="Enter your email"
+          disabled={deleting}
+          autoFocus
+        />
+        {error && <div className="dashboard-dialog-error">{error}</div>}
+        <div className="dashboard-dialog-actions">
+          <button
+            className="dashboard-dialog-cancel"
+            onClick={() => { setShowDeleteDialog(false); setConfirmEmail(''); setError(''); }}
+            disabled={deleting}
+          >
+            Cancel
+          </button>
+          <button
+            className="dashboard-dialog-confirm"
+            onClick={handleDeleteAccount}
+            disabled={confirmEmail !== user.email || deleting}
+          >
+            {deleting ? 'Deleting...' : 'Delete My Account'}
+          </button>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

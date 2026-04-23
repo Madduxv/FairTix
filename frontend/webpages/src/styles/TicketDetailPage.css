@@ -1,0 +1,173 @@
+.ticket-detail-page {
+  padding: 2rem;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.ticket-detail-back {
+  margin-bottom: 1.25rem;
+}
+
+.ticket-detail-back-link {
+  color: var(--info);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.ticket-detail-back-link:hover {
+  text-decoration: underline;
+}
+
+.ticket-detail-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.75rem;
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-sm);
+}
+
+.ticket-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--surface);
+}
+
+.ticket-detail-header h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.4rem;
+}
+
+.ticket-detail-venue {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ticket-detail-body {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.ticket-detail-sections {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ticket-detail-section {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--surface);
+}
+
+.ticket-detail-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ticket-detail-section h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.ticket-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.ticket-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.ticket-detail-row .label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.ticket-detail-seat-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ticket-detail-id {
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.ticket-detail-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.ticket-detail-qr-img {
+  width: 180px;
+  height: 180px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.ticket-detail-actions {
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--surface);
+}
+
+/* Skeleton — .skeleton-line comes from _utilities.css */
+.ticket-detail-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.skeleton-detail-title {
+  height: 1.6rem;
+  width: 55%;
+}
+
+.skeleton-detail-meta {
+  height: 0.9rem;
+  width: 35%;
+}
+
+.ticket-detail-error {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .ticket-detail-body {
+    flex-direction: column-reverse;
+  }
+
+  .ticket-detail-qr-img {
+    width: 140px;
+    height: 140px;
+  }
+
+  .ticket-detail-seat-row {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}

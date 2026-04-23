@@ -1,9 +1,13 @@
 package com.fairtix.config;
 
 import com.fairtix.auth.application.JwtAuthenticationFilter;
+import com.fairtix.fraud.api.StepUpFilter;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,9 +27,18 @@ import org.springframework.web.cors.CorsConfiguration;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtFilter;
+  private final StepUpFilter stepUpFilter;
+  private final List<String> allowedOrigins;
 
-  public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+  public SecurityConfig(
+      JwtAuthenticationFilter jwtFilter,
+      StepUpFilter stepUpFilter,
+      @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173}") String allowedOriginsRaw) {
     this.jwtFilter = jwtFilter;
+    this.stepUpFilter = stepUpFilter;
+    this.allowedOrigins = Arrays.stream(allowedOriginsRaw.split(","))
+        .map(String::trim)
+        .collect(Collectors.toList());
   }
 
   @Bean
@@ -45,7 +58,7 @@ public class SecurityConfig {
     http
         .cors(cors -> cors.configurationSource(request -> {
           CorsConfiguration config = new CorsConfiguration();
-          config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+          config.setAllowedOrigins(allowedOrigins);
           config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
           config.setAllowedHeaders(List.of("*"));
           config.setAllowCredentials(true);
@@ -57,6 +70,7 @@ public class SecurityConfig {
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
             .requestMatchers(HttpMethod.GET, "/api/venues/**").permitAll()
+            .requestMatchers("/api/webhooks/**").permitAll()
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated())
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -67,7 +81,8 @@ public class SecurityConfig {
                 response.getWriter().write(
                     "{\"status\":401,\"code\":\"UNAUTHORIZED\",\"message\":\"Authentication required\"}");
             }))
-        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterAfter(stepUpFilter, JwtAuthenticationFilter.class);
 
     return http.build();
   }

@@ -1,6 +1,8 @@
 package com.fairtix.refunds.application;
 
 import com.fairtix.audit.application.AuditService;
+import com.fairtix.fraud.application.RiskScoringService;
+import com.fairtix.fraud.domain.RiskTier;
 import com.fairtix.inventory.domain.Seat;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatRepository;
@@ -48,6 +50,7 @@ public class RefundService {
   private final AuditService auditService;
   private final EmailService emailService;
   private final EmailTemplateService emailTemplateService;
+  private final RiskScoringService riskScoringService;
 
   @Value("${fairtix.refund.enabled:true}")
   private boolean refundEnabled;
@@ -66,7 +69,8 @@ public class RefundService {
       UserRepository userRepository,
       AuditService auditService,
       EmailService emailService,
-      EmailTemplateService emailTemplateService) {
+      EmailTemplateService emailTemplateService,
+      RiskScoringService riskScoringService) {
     this.refundRepository = refundRepository;
     this.orderRepository = orderRepository;
     this.ticketRepository = ticketRepository;
@@ -76,6 +80,7 @@ public class RefundService {
     this.auditService = auditService;
     this.emailService = emailService;
     this.emailTemplateService = emailTemplateService;
+    this.riskScoringService = riskScoringService;
   }
 
   @Transactional
@@ -98,7 +103,7 @@ public class RefundService {
 
     // Check no pending refund exists for this order
     refundRepository.findByOrderIdAndStatusIn(orderId,
-        List.of(RefundStatus.REQUESTED, RefundStatus.APPROVED))
+        List.of(RefundStatus.REQUESTED, RefundStatus.PENDING_MANUAL, RefundStatus.APPROVED))
         .ifPresent(existing -> {
           throw new RefundNotEligibleException(
               "A refund request is already pending for this order (status: " + existing.getStatus() + ")");
@@ -125,6 +130,15 @@ public class RefundService {
     auditService.log(userId, "REFUND_REQUESTED", "REFUND", refund.getId(),
         "Refund requested for order " + orderId + ", amount=" + amount);
 
+    RiskTier tier = riskScoringService.getTier(userId);
+    if (tier == RiskTier.HIGH || tier == RiskTier.CRITICAL) {
+      refund.holdForManualReview();
+      refundRepository.save(refund);
+      auditService.log(userId, "REFUND_HELD_FRAUD_RISK", "REFUND", refund.getId(),
+          "tier=" + tier);
+      return refund;
+    }
+
     // Auto-approve if amount is below the configured threshold
     if (amount.compareTo(autoApproveThreshold) <= 0) {
       refund.approve(userId, "Auto-approved: amount within threshold");
@@ -143,9 +157,9 @@ public class RefundService {
     RefundRequest refund = refundRepository.findById(refundId)
         .orElseThrow(() -> new IllegalArgumentException("Refund request not found: " + refundId));
 
-    if (refund.getStatus() != RefundStatus.REQUESTED) {
+    if (refund.getStatus() != RefundStatus.REQUESTED && refund.getStatus() != RefundStatus.PENDING_MANUAL) {
       throw new IllegalStateException(
-          "Refund is not in REQUESTED status (current: " + refund.getStatus() + ")");
+          "Refund is not in REQUESTED or PENDING_MANUAL status (current: " + refund.getStatus() + ")");
     }
 
     if (approved) {

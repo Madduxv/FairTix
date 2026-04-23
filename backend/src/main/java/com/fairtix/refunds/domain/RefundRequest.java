@@ -86,6 +86,11 @@ public class RefundRequest {
     this.updatedAt = Instant.now();
   }
 
+  public void holdForManualReview() {
+    this.status = RefundStatus.PENDING_MANUAL;
+    this.updatedAt = Instant.now();
+  }
+
   public void reject(UUID adminId, String notes) {
     this.status = RefundStatus.REJECTED;
     this.reviewedBy = adminId;

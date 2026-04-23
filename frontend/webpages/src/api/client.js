@@ -7,7 +7,7 @@ async function apiRequest(path, options = {}, isRetry = false) {
     ...options.headers,
   };
 
-  if (options.body) {
+  if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 
@@ -16,6 +16,20 @@ async function apiRequest(path, options = {}, isRetry = false) {
     headers,
     credentials: 'include',
   });
+
+  if (response.status === 428) {
+    let action = 'UNKNOWN';
+    try {
+      const body = await response.clone().json();
+      action = body.action || action;
+    } catch (_) {}
+    window.dispatchEvent(new CustomEvent('auth:step-up-required', { detail: { action } }));
+    const error = new Error('Step-up verification required');
+    error.status = 428;
+    error.code = 'STEP_UP_REQUIRED';
+    error.action = action;
+    throw error;
+  }
 
   if ((response.status === 401 || response.status === 403) && !isRetry && path !== '/auth/refresh' && path !== '/auth/login') {
     if (!refreshPromise) {
@@ -66,7 +80,7 @@ function buildError(response, message) {
 
 const api = {
   get: (path) => apiRequest(path, { method: 'GET' }),
-  post: (path, body) => apiRequest(path, { method: 'POST', body: JSON.stringify(body) }),
+  post: (path, body) => apiRequest(path, { method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
   put: (path, body) => apiRequest(path, { method: 'PUT', body: JSON.stringify(body) }),
   patch: (path, body) => apiRequest(path, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (path) => apiRequest(path, { method: 'DELETE' }),

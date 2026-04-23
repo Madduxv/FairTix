@@ -31,6 +31,8 @@ function VenueFormDialog({ open, onClose, onSaved, venue }) {
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
   const [capacity, setCapacity] = useState('');
+  const [latitude, setLatitude] = useState('');
+  const [longitude, setLongitude] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -41,12 +43,16 @@ function VenueFormDialog({ open, onClose, onSaved, venue }) {
       setCity(venue.city || '');
       setCountry(venue.country || '');
       setCapacity(venue.capacity != null ? String(venue.capacity) : '');
+      setLatitude(venue.latitude != null ? String(venue.latitude) : '');
+      setLongitude(venue.longitude != null ? String(venue.longitude) : '');
     } else {
       setName('');
       setAddress('');
       setCity('');
       setCountry('');
       setCapacity('');
+      setLatitude('');
+      setLongitude('');
     }
     setError('');
   }, [venue, open]);
@@ -66,6 +72,8 @@ function VenueFormDialog({ open, onClose, onSaved, venue }) {
         city: city.trim() || null,
         country: country.trim() || null,
         capacity: capacity !== '' ? parseInt(capacity, 10) : null,
+        latitude: latitude !== '' ? parseFloat(latitude) : null,
+        longitude: longitude !== '' ? parseFloat(longitude) : null,
       };
       if (isEdit) {
         await api.put(`/api/venues/${venue.id}`, payload);
@@ -99,6 +107,24 @@ function VenueFormDialog({ open, onClose, onSaved, venue }) {
               onChange={(e) => setCapacity(e.target.value)}
               fullWidth
               inputProps={{ min: 1 }}
+            />
+            <TextField
+              label="Latitude (optional)"
+              type="number"
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+              fullWidth
+              inputProps={{ step: 'any', min: -90, max: 90 }}
+              helperText="WGS84 decimal degrees, e.g. 40.750504"
+            />
+            <TextField
+              label="Longitude (optional)"
+              type="number"
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+              fullWidth
+              inputProps={{ step: 'any', min: -180, max: 180 }}
+              helperText="WGS84 decimal degrees, e.g. -73.993439"
             />
           </Box>
         </DialogContent>

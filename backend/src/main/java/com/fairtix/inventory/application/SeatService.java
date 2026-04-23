@@ -3,7 +3,9 @@ package com.fairtix.inventory.application;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.Seat;
 import com.fairtix.inventory.domain.SeatStatus;
+import com.fairtix.inventory.dto.SeatPositionUpdate;
 import com.fairtix.inventory.infrastructure.SeatRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -93,5 +95,20 @@ public class SeatService {
 
     log.info("Found {} available seats for event {}", seats.size(), eventId);
     return seats;
+  }
+
+  public void bulkUpdatePositions(UUID eventId, List<SeatPositionUpdate> updates, UUID userId) {
+    log.info("Bulk updating {} seat positions for event {} by user {}", updates.size(), eventId, userId);
+    for (SeatPositionUpdate update : updates) {
+      Seat seat = seatRepository.findById(update.id())
+          .orElseThrow(() -> new EntityNotFoundException("Seat not found: " + update.id()));
+      if (!seat.getEvent().getId().equals(eventId)) {
+        throw new IllegalArgumentException("Seat " + update.id() + " does not belong to event " + eventId);
+      }
+      seat.setPosX(update.posX());
+      seat.setPosY(update.posY());
+      seat.setRotation(update.rotation());
+      seatRepository.save(seat);
+    }
   }
 }

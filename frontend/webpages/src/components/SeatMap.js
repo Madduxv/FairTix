@@ -19,10 +19,42 @@ const STATUS_COLORS = {
 
 /**
  * Builds layout data from a flat seat list grouped by section → row.
+ * When seats have posX/posY (from /seats/map), those are used directly.
+ * Otherwise positions are auto-computed via grid layout.
  * Returns { sections, seats: [{...seat, cx, cy}], totalWidth, totalHeight }
  */
 function buildLayout(seats) {
-  // Group: section → row → seats
+  const useStoredPositions = seats.length > 0 && seats.some(s => s.posX != null && s.posY != null);
+
+  if (useStoredPositions) {
+    const layoutSeats = seats.map(seat => ({
+      ...seat,
+      cx: (seat.posX ?? 0) + SEAT_SIZE / 2,
+      cy: (seat.posY ?? 0) + SEAT_SIZE / 2,
+    }));
+
+    // Section labels: placed just above the topmost seat in each section
+    const sectionMinY = new Map();
+    for (const seat of layoutSeats) {
+      const sec = seat.section || 'General';
+      const top = seat.cy - SEAT_SIZE / 2;
+      if (!sectionMinY.has(sec) || top < sectionMinY.get(sec)) {
+        sectionMinY.set(sec, top);
+      }
+    }
+    const sections = [...sectionMinY.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, minY]) => ({ name, y: Math.max(0, minY - SECTION_LABEL_HEIGHT) }));
+
+    const maxX = layoutSeats.reduce((m, s) => Math.max(m, s.cx + SEAT_SIZE / 2), 0);
+    const maxY = layoutSeats.reduce((m, s) => Math.max(m, s.cy + SEAT_SIZE / 2), 0);
+    const totalWidth = Math.max(maxX + 16, 300);
+    const totalHeight = maxY + PADDING_Y;
+
+    return { sections, seats: layoutSeats, totalWidth, totalHeight };
+  }
+
+  // Auto-layout: group by section → row → seats
   const sectionMap = new Map();
   for (const seat of seats) {
     const sec = seat.section || 'General';
@@ -32,7 +64,6 @@ function buildLayout(seats) {
     rowMap.get(seat.rowLabel).push(seat);
   }
 
-  // Sort rows and seats within each section
   for (const rowMap of sectionMap.values()) {
     for (const rowSeats of rowMap.values()) {
       rowSeats.sort((a, b) => naturalCompare(a.seatNumber, b.seatNumber));

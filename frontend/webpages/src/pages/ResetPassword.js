@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/Login.css';
@@ -12,6 +12,7 @@ const PASSWORD_RULES = [
 ];
 
 function ResetPassword() {
+  useEffect(() => { document.title = 'Reset Password | FairTix'; }, []);
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
   const navigate = useNavigate();

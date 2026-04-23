@@ -2,6 +2,9 @@ package com.fairtix.queue.application;
 
 import com.fairtix.audit.application.AuditService;
 import com.fairtix.common.ResourceNotFoundException;
+import com.fairtix.fraud.application.RiskScoringService;
+import com.fairtix.fraud.application.UserFlaggedForAbuseException;
+import com.fairtix.fraud.domain.RiskTier;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.infrastructure.EventRepository;
 import com.fairtix.inventory.domain.SeatStatus;
@@ -38,6 +41,7 @@ public class QueueService {
     private final TicketRepository ticketRepository;
     private final RedissonClient redissonClient;
     private final AuditService auditService;
+    private final RiskScoringService riskScoringService;
 
     @Value("${queue.admission-window-minutes:15}")
     private int admissionWindowMinutes;
@@ -50,13 +54,15 @@ public class QueueService {
                         SeatRepository seatRepository,
                         TicketRepository ticketRepository,
                         RedissonClient redissonClient,
-                        AuditService auditService) {
+                        AuditService auditService,
+                        RiskScoringService riskScoringService) {
         this.queueRepository = queueRepository;
         this.eventRepository = eventRepository;
         this.seatRepository = seatRepository;
         this.ticketRepository = ticketRepository;
         this.redissonClient = redissonClient;
         this.auditService = auditService;
+        this.riskScoringService = riskScoringService;
     }
 
     @Transactional
@@ -66,6 +72,10 @@ public class QueueService {
 
         if (!event.isQueueRequired()) {
             throw new IllegalArgumentException("This event does not require a queue");
+        }
+
+        if (riskScoringService.getTier(userId) == RiskTier.CRITICAL) {
+            throw new UserFlaggedForAbuseException();
         }
 
         if (event.getMaxTicketsPerUser() != null) {
@@ -187,13 +197,13 @@ public class QueueService {
     }
 
     @Transactional
-    public void admitNextBatch(UUID eventId) {
+    public List<QueueEntry> admitNextBatch(UUID eventId) {
         long availableSeats = seatRepository.findByEvent_IdAndStatus(eventId, SeatStatus.AVAILABLE).size();
         long currentlyAdmitted = queueRepository.countByEventIdAndStatus(eventId, QueueStatus.ADMITTED);
         long toAdmit = Math.min(availableSeats - currentlyAdmitted, maxAdmissionBatch);
 
         if (toAdmit <= 0) {
-            return;
+            return List.of();
         }
 
         List<QueueEntry> waiting = queueRepository.findByEventIdAndStatusOrderByPositionAsc(
@@ -213,6 +223,7 @@ public class QueueService {
         if (!waiting.isEmpty()) {
             auditService.log(SYSTEM, "QUEUE_ADMITTED", "QUEUE", eventId, "count=" + waiting.size());
         }
+        return List.copyOf(waiting);
     }
 
     @Transactional

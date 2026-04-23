@@ -10,6 +10,11 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Alert from '@mui/material/Alert';
 import MenuItem from '@mui/material/MenuItem';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import Chip from '@mui/material/Chip';
 import api from '../../api/client';
 
 function EventFormDialog({ open, onClose, onSaved, event }) {
@@ -21,6 +26,8 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
   const [queueCapacity, setQueueCapacity] = useState('');
   const [maxTicketsPerUser, setMaxTicketsPerUser] = useState('');
   const [venues, setVenues] = useState([]);
+  const [performerOptions, setPerformerOptions] = useState([]);
+  const [selectedPerformerIds, setSelectedPerformerIds] = useState([]);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -28,6 +35,9 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
     if (!open) return;
     api.get('/api/venues?size=100').then((data) => {
       setVenues(data.content || []);
+    }).catch(() => {});
+    api.get('/api/performers?page=0&size=100').then((data) => {
+      setPerformerOptions(data.content || []);
     }).catch(() => {});
   }, [open]);
 
@@ -45,6 +55,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
       setQueueRequired(event.queueRequired || false);
       setQueueCapacity(event.queueCapacity != null ? String(event.queueCapacity) : '');
       setMaxTicketsPerUser(event.maxTicketsPerUser != null ? String(event.maxTicketsPerUser) : '');
+      setSelectedPerformerIds((event.performers || []).map((p) => p.id));
     } else {
       setTitle('');
       setVenueId('');
@@ -52,6 +63,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
       setQueueRequired(false);
       setQueueCapacity('');
       setMaxTicketsPerUser('');
+      setSelectedPerformerIds([]);
     }
     setError('');
   }, [event, open]);
@@ -80,6 +92,7 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
           queueRequired,
           queueCapacity: capacity,
           maxTicketsPerUser: cap,
+          performerIds: selectedPerformerIds,
         });
       } else {
         await api.post('/api/events', {
@@ -164,6 +177,27 @@ function EventFormDialog({ open, onClose, onSaved, event }) {
               fullWidth
               inputProps={{ min: 1 }}
             />
+            <FormControl fullWidth>
+              <InputLabel>Performers</InputLabel>
+              <Select
+                multiple
+                value={selectedPerformerIds}
+                onChange={(e) => setSelectedPerformerIds(e.target.value)}
+                input={<OutlinedInput label="Performers" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((id) => {
+                      const p = performerOptions.find((o) => o.id === id);
+                      return <Chip key={id} label={p ? p.name : id} size="small" />;
+                    })}
+                  </Box>
+                )}
+              >
+                {performerOptions.map((p) => (
+                  <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>

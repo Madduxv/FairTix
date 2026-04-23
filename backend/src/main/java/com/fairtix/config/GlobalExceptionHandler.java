@@ -12,9 +12,12 @@ import com.fairtix.auth.application.InvalidCaptchaException;
 import com.fairtix.auth.application.RecaptchaUnavailableException;
 import com.fairtix.auth.application.WeakPasswordException;
 import com.fairtix.payments.api.PaymentProcessingException;
+import com.fairtix.payments.application.PaymentDeclinedException;
 import com.fairtix.payments.application.PaymentFailedException;
+import com.fairtix.fraud.application.UserFlaggedForAbuseException;
 import com.fairtix.queue.application.QueueConflictException;
 import com.fairtix.refunds.application.RefundNotEligibleException;
+import com.fairtix.tickets.application.TransferVelocityExceededException;
 import com.fairtix.support.application.SupportTicketNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -60,6 +63,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleConflict(
       SeatHoldConflictException ex, HttpServletRequest req) {
     return error(HttpStatus.CONFLICT, "HOLD_CONFLICT", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(UserFlaggedForAbuseException.class)
+  public ResponseEntity<Map<String, Object>> handleUserFlagged(
+      UserFlaggedForAbuseException ex, HttpServletRequest req) {
+    return error(HttpStatus.FORBIDDEN, "USER_FLAGGED_FOR_ABUSE", ex.getMessage(), req);
   }
 
   @ExceptionHandler(QueueConflictException.class)
@@ -190,6 +199,12 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(ex.getPaymentResponse());
   }
 
+  @ExceptionHandler(TransferVelocityExceededException.class)
+  public ResponseEntity<Map<String, Object>> handleTransferVelocity(
+      TransferVelocityExceededException ex, HttpServletRequest req) {
+    return error(HttpStatus.TOO_MANY_REQUESTS, "TRANSFER_VELOCITY_EXCEEDED", ex.getMessage(), req);
+  }
+
   @ExceptionHandler(RefundNotEligibleException.class)
   public ResponseEntity<Map<String, Object>> handleRefundNotEligible(
       RefundNotEligibleException ex, HttpServletRequest req) {
@@ -200,6 +215,12 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handlePaymentFailed(
       PaymentFailedException ex, HttpServletRequest req) {
     return error(HttpStatus.PAYMENT_REQUIRED, "PAYMENT_FAILED", ex.getMessage(), req);
+  }
+
+  @ExceptionHandler(PaymentDeclinedException.class)
+  public ResponseEntity<Map<String, Object>> handleCardDeclined(
+      PaymentDeclinedException ex, HttpServletRequest req) {
+    return error(HttpStatus.UNPROCESSABLE_ENTITY, "CARD_DECLINED", ex.getMessage(), req);
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)

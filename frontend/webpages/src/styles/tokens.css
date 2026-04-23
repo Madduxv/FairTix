@@ -1,0 +1,133 @@
+/* ─── Light mode (default) ─── */
+:root {
+  color-scheme: light;
+
+  /* Page & surface */
+  --bg-page: #ffffff;
+  --surface: #f5f7fa;
+  --surface-raised: #ffffff;
+
+  /* Text */
+  --text-primary: #1a1a2e;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --text-on-brand: #ffffff;
+
+  /* Navigation (stays dark in both modes) */
+  --nav-bg: #1a1a2e;
+  --nav-text: #ffffff;
+  --nav-text-muted: #cccccc;
+
+  /* Brand */
+  --brand-primary: #e94560;
+  --brand-accent: #0f3460;
+
+  /* Semantic */
+  --success: #28a745;
+  --success-dark: #1e7e34;
+  --success-dark-hover: #166b2b;
+  --success-bg: #e6f4ea;
+  --danger: #dc3545;
+  --danger-bg: #fce8e6;
+  --warning: #ffc107;
+  --warning-bg: #fff3cd;
+  --warning-text: #856404;
+  --warning-border: #ffc107;
+
+  /* Action / info */
+  --info: #1a73e8;
+  --info-hover: #1565c0;
+  --info-bg: #e8f0fe;
+
+  /* Hover shades */
+  --nav-bg-hover: #2d2d4e;
+  --danger-hover: #b71c1c;
+  --brand-primary-hover: #c73652;
+
+  /* Danger zone surface (lighter than --danger-bg, for section backgrounds) */
+  --danger-surface: #fef6f6;
+  --danger-surface-border: rgba(220, 53, 69, 0.25);
+
+  /* Status badge: waiting */
+  --badge-waiting-bg: #f3e5f5;
+  --badge-waiting-text: #6a1b9a;
+
+  /* Event completed status banner */
+  --event-completed-bg: #f3e5f5;
+  --event-completed-text: #4a148c;
+  --event-completed-border: rgba(206, 147, 216, 0.6);
+
+  /* Staff message bubble (support chat) */
+  --staff-msg-bg: #eefbf2;
+  --staff-msg-border: rgba(40, 167, 69, 0.3);
+
+  /* Borders & overlays */
+  --border: rgba(0, 0, 0, 0.12);
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  /* Breakpoints (reference only — cannot be used inside @media) */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+}
+
+/* ─── Dark mode ─── */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-page: #0d1117;
+  --surface: #1a1a2e;
+  --surface-raised: #16213e;
+
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-muted: #777777;
+
+  --border: rgba(255, 255, 255, 0.1);
+
+  --success-bg: rgba(40, 167, 69, 0.15);
+  --danger-bg: rgba(220, 53, 69, 0.15);
+  --info-bg: rgba(26, 115, 232, 0.15);
+
+  --warning-bg: #3a2c00;
+  --warning-text: #ffd54f;
+  --warning-border: #ffc107;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+
+  --danger-surface: rgba(220, 53, 69, 0.08);
+
+  --badge-waiting-bg: #2a1a4a;
+  --badge-waiting-text: #ce93d8;
+
+  --event-completed-bg: rgba(74, 20, 140, 0.15);
+  --event-completed-text: #ce93d8;
+  --event-completed-border: rgba(206, 147, 216, 0.3);
+
+  --staff-msg-bg: #1a2e1a;
+  --staff-msg-border: #2a4a2a;
+}
+
+/* ─── Focus visible ─── */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}

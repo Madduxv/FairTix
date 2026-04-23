@@ -2,6 +2,7 @@ package com.fairtix.analytics.api;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -16,7 +17,11 @@ public record AnalyticsResponse(
         @Schema(description = "Hold confirmation rate as a percentage (0-100)", example = "75.0")
         double holdConfirmationRate,
         List<DailyHoldCount> holdsPerDay,
-        Map<String, Long> usersByRole) {
+        Map<String, Long> usersByRole,
+        @Schema(description = "Total completed revenue across all orders") BigDecimal totalRevenue,
+        @Schema(description = "Daily revenue for the last 30 days") List<DailyRevenue> revenuePerDay,
+        @Schema(description = "Daily tickets sold for the last 30 days") List<DailyHoldCount> ticketsSoldPerDay,
+        @Schema(description = "Daily refund requests for the last 30 days") List<DailyHoldCount> refundsPerDay) {
 
     @Schema(description = "High-level platform statistics")
     public record OverviewStats(
@@ -49,5 +54,11 @@ public record AnalyticsResponse(
     public record DailyHoldCount(
             @Schema(example = "2026-03-25") String date,
             @Schema(example = "34") long count) {
+    }
+
+    @Schema(description = "Revenue total for a single day")
+    public record DailyRevenue(
+            @Schema(example = "2026-03-25") String date,
+            @Schema(example = "1250.00") BigDecimal amount) {
     }
 }

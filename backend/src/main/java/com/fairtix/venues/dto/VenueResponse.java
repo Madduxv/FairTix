@@ -20,6 +20,10 @@ public record VenueResponse(
         String country,
         @Schema(description = "Maximum seating capacity")
         Integer capacity,
+        @Schema(description = "Latitude (WGS84)", example = "40.750504")
+        Double latitude,
+        @Schema(description = "Longitude (WGS84)", example = "-73.993439")
+        Double longitude,
         @Schema(description = "Created at")
         Instant createdAt,
         @Schema(description = "Last updated at")
@@ -33,6 +37,8 @@ public record VenueResponse(
                 venue.getCity(),
                 venue.getCountry(),
                 venue.getCapacity(),
+                venue.getLatitude(),
+                venue.getLongitude(),
                 venue.getCreatedAt(),
                 venue.getUpdatedAt());
     }

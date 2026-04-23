@@ -15,24 +15,24 @@
 
 .home-actions button {
   padding: 0.6rem 1.5rem;
-  border: 1px solid #1a1a2e;
+  border: 1px solid var(--nav-bg);
   border-radius: 4px;
-  background: #1a1a2e;
-  color: white;
+  background: var(--nav-bg);
+  color: var(--text-on-brand);
   cursor: pointer;
   font-size: 1rem;
   transition: background 0.2s;
 }
 
 .home-actions button:hover {
-  background: #2d2d4e;
+  background: var(--nav-bg-hover);
 }
 
 .home-actions .home-btn-secondary {
   background: transparent;
-  color: #1a1a2e;
+  color: var(--text-primary);
 }
 
 .home-actions .home-btn-secondary:hover {
-  background: #f0f0f5;
+  background: var(--surface);
 }

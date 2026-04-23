@@ -5,6 +5,8 @@ import com.fairtix.events.application.EventService;
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.dto.UpdateEventRequest;
 import com.fairtix.events.infrastructure.EventRepository;
+import com.fairtix.performers.domain.Performer;
+import com.fairtix.performers.infrastructure.PerformerRepository;
 import com.fairtix.venues.domain.Venue;
 import com.fairtix.venues.infrastructure.VenueRepository;
 
@@ -36,12 +38,15 @@ class EventServiceTest {
   @Autowired
   private VenueRepository venueRepository;
 
+  @Autowired
+  private PerformerRepository performerRepository;
+
   private Event testEvent;
   private Venue testVenue;
 
   @BeforeEach
   void setUp() {
-    testVenue = venueRepository.save(new Venue("Test Venue", null, null, null, null));
+    testVenue = venueRepository.save(new Venue("Test Venue", null, null, null, null, null, null));
     testEvent = eventRepository.save(
         new Event(
             "Test Event",
@@ -56,7 +61,7 @@ class EventServiceTest {
 
   @Test
   void creatingEventSucceeds() {
-    Venue venue = venueRepository.save(new Venue("New Venue", null, null, null, null));
+    Venue venue = venueRepository.save(new Venue("New Venue", null, null, null, null, null, null));
 
     Event event = eventService.createEvent(
         "New Event",
@@ -101,7 +106,7 @@ class EventServiceTest {
 
     Instant newStart = Instant.now().plusSeconds(7200);
 
-    UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart, null, null, null);
+    UpdateEventRequest request = new UpdateEventRequest("Updated Event", newStart, null, null, null, null);
 
     Event updated = eventService.update(testEvent.getId(), request, null);
 
@@ -112,7 +117,7 @@ class EventServiceTest {
   @Test
   void updatingNonexistentEventThrowsException() {
 
-    UpdateEventRequest request = new UpdateEventRequest("Updated", Instant.now(), null, null, null);
+    UpdateEventRequest request = new UpdateEventRequest("Updated", Instant.now(), null, null, null, null);
 
     assertThatThrownBy(() -> eventService.update(UUID.randomUUID(), request, null))
         .isInstanceOf(ResourceNotFoundException.class)
@@ -150,13 +155,14 @@ class EventServiceTest {
   @Test
   void searchingByVenueReturnsMatchingEvents() {
 
-    Venue anotherVenue = venueRepository.save(new Venue("Another Venue", null, null, null, null));
+    Venue anotherVenue = venueRepository.save(new Venue("Another Venue", null, null, null, null, null, null));
     eventRepository.save(
         new Event("Another Event", anotherVenue,
             Instant.now().plusSeconds(3600), null));
 
     Page<Event> results = eventService.search(
         "Test Venue",
+        null,
         null,
         true,
         null,
@@ -174,6 +180,7 @@ class EventServiceTest {
     Page<Event> results = eventService.search(
         null,
         "Test",
+        null,
         true,
         null,
         false,
@@ -192,6 +199,7 @@ class EventServiceTest {
             Instant.now().minusSeconds(3600), null));
 
     Page<Event> results = eventService.search(
+        null,
         null,
         null,
         true,
@@ -213,11 +221,43 @@ class EventServiceTest {
     Page<Event> results = eventService.search(
         null,
         null,
+        null,
         false,
         null,
         true,
         PageRequest.of(0, 10));
 
     assertThat(results.getContent()).isNotEmpty();
+  }
+
+  // -------------------------------------------------------------------------
+  // Performer Search
+  // -------------------------------------------------------------------------
+
+  @Test
+  void searchingByPerformerNameReturnsMatchingEventsAndExcludesOthers() {
+
+    Performer performer = performerRepository.save(
+        new Performer("Famous Artist", "Rock", null, null));
+    testEvent.getPerformers().add(performer);
+    eventRepository.save(testEvent);
+
+    eventRepository.save(
+        new Event("Unrelated Event", testVenue,
+            Instant.now().plusSeconds(3600), null));
+
+    Page<Event> results = eventService.search(
+        null,
+        null,
+        "Famous",
+        true,
+        null,
+        true,
+        PageRequest.of(0, 10));
+
+    assertThat(results.getContent())
+        .extracting(Event::getTitle)
+        .contains("Test Event")
+        .doesNotContain("Unrelated Event");
   }
 }

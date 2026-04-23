@@ -20,6 +20,7 @@ const STATUS_CLASS = {
 };
 
 function MySupportTickets() {
+  useEffect(() => { document.title = 'My Support Tickets | FairTix'; }, []);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,7 +68,7 @@ function MySupportTickets() {
       {!loading && error && (
         <div className="support-error">
           <p className="error-message">{error}</p>
-          <button className="tickets-retry" onClick={fetchTickets}>Retry</button>
+          <button className="tickets-retry" onClick={() => fetchTickets(page)}>Retry</button>
         </div>
       )}
 

@@ -1,0 +1,166 @@
+/* Dialog form internals (used inside Modal wrapper) */
+.dialog-ticket-summary {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.dialog-ticket-summary p {
+  margin: 0.2rem 0;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.btn-primary {
+  background: var(--nav-bg);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--nav-bg-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: none;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1.1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--text-muted);
+}
+
+/* Transfer requests page */
+.transfer-requests {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.transfer-requests h2 {
+  margin-bottom: 1.5rem;
+}
+
+.transfer-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-btn.active {
+  color: var(--info);
+  border-bottom: 2px solid var(--info);
+  font-weight: 600;
+}
+
+.tab-btn .badge {
+  background: var(--info);
+  color: var(--text-on-brand);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  margin-left: 0.4rem;
+}
+
+.transfers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transfer-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  background: var(--surface-raised);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.transfer-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.transfer-card-info strong {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.transfer-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.transfers-empty {
+  color: var(--text-muted);
+  padding: 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .transfer-requests {
+    padding: 1rem;
+  }
+
+  .transfer-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .transfer-card-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-actions .btn-primary,
+  .dialog-actions .btn-secondary {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+  }
+}

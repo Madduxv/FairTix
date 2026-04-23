@@ -3,6 +3,7 @@ package com.fairtix.events.domain;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.fairtix.performers.domain.Performer;
 import com.fairtix.venues.domain.Venue;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,9 +14,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "Events")
@@ -65,6 +71,13 @@ public class Event {
 
   @Column(name = "cancellation_reason")
   private String cancellationReason;
+
+  @ManyToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+      name = "event_performers",
+      joinColumns = @JoinColumn(name = "event_id"),
+      inverseJoinColumns = @JoinColumn(name = "performer_id"))
+  private List<Performer> performers = new ArrayList<>();
 
   @Version
   private long version;
@@ -200,5 +213,9 @@ public class Event {
 
   public long getVersion() {
     return version;
+  }
+
+  public List<Performer> getPerformers() {
+    return performers;
   }
 }

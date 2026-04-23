@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -51,6 +51,8 @@ const ALL_PRIORITIES = ['LOW', 'NORMAL', 'HIGH', 'URGENT'];
 
 function AdminSupportPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const userIdFilter = searchParams.get('userId') || '';
   const [tickets, setTickets] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
@@ -69,6 +71,7 @@ function AdminSupportPage() {
     setError('');
     const params = new URLSearchParams({ page });
     if (statusFilter) params.set('status', statusFilter);
+    if (userIdFilter) params.set('userId', userIdFilter);
     api.get(`/api/admin/support/tickets?${params}`)
       .then((data) => {
         setTickets(data?.content || []);
@@ -76,7 +79,7 @@ function AdminSupportPage() {
       })
       .catch((err) => setError(err.message || 'Failed to load support tickets'))
       .finally(() => setLoading(false));
-  }, [page, statusFilter]);
+  }, [page, statusFilter, userIdFilter]);
 
   useEffect(() => {
     fetchTickets();

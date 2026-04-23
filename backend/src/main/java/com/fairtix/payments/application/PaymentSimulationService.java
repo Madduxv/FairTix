@@ -4,6 +4,7 @@ import com.fairtix.audit.application.AuditService;
 import com.fairtix.payments.domain.PaymentRecord;
 import com.fairtix.payments.domain.PaymentStatus;
 import com.fairtix.payments.infrastructure.PaymentRecordRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
+@Profile("!prod")
 public class PaymentSimulationService {
 
   private final PaymentRecordRepository paymentRecordRepository;

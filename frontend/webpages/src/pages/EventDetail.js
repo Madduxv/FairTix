@@ -36,6 +36,9 @@ function EventDetail() {
   const { eventId } = useParams();
   const { user } = useAuth();
   const [event, setEvent] = useState(null);
+  useEffect(() => {
+    document.title = event ? `${event.title} | FairTix` : 'Event Details | FairTix';
+  }, [event]);
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -147,7 +150,7 @@ function EventDetail() {
     try {
       const [eventData, seatsData] = await Promise.all([
         api.get(`/api/events/${eventId}`),
-        api.get(`/api/events/${eventId}/seats`),
+        api.get(`/api/events/${eventId}/seats/map`),
       ]);
       setEvent(eventData);
       if (user && eventData.maxTicketsPerUser != null) {
@@ -291,6 +294,16 @@ function EventDetail() {
           <span>{event.venue?.name ?? ''}</span>
           <span>{new Date(event.startTime).toLocaleString()}</span>
         </div>
+        {event.performers && event.performers.length > 0 && (
+          <div className="event-detail-performers">
+            <span className="event-detail-performers-label">Featuring: </span>
+            {event.performers.map((p, i) => (
+              <span key={p.id} className="event-detail-performer">
+                {p.name}{p.genre ? ` (${p.genre})` : ''}{i < event.performers.length - 1 ? ', ' : ''}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Status banners */}

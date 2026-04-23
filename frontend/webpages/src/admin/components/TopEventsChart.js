@@ -16,7 +16,7 @@ function TopEventsChart({ data }) {
   const barHeight = Math.max(380, chartData.length * 50 + 80);
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper' }}>
+    <Card sx={{ backgroundColor: 'background.paper', height: '100%', width: '100%' }}>
       <CardContent sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Top Events by Bookings

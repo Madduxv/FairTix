@@ -35,6 +35,9 @@ public class User {
   @Column(name = "email_verified", nullable = false)
   private boolean emailVerified = false;
 
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt = Instant.now();
+
   @Column(name = "deleted_at")
   private Instant deletedAt;
 
@@ -68,6 +71,10 @@ public class User {
 
   public void setRole(Role role) {
     this.role = role;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
   }
 
   public Instant getDeletedAt() {

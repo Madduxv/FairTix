@@ -136,6 +136,19 @@ class PaymentControllerTest {
   }
 
   @Test
+  void createIntent_returns501WhenStripeDisabled() throws Exception {
+    String body = """
+        { "holdIds": ["%s"] }
+        """.formatted(confirmedHold.getId());
+
+    mockMvc.perform(post("/api/payments/intent")
+            .with(WithMockPrincipal.user(user.getId(), user.getEmail()))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isNotImplemented());
+  }
+
+  @Test
   void checkout_emptyHoldIds_returns400() throws Exception {
     String body = """
         {

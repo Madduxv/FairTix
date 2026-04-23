@@ -1,10 +1,13 @@
 package com.fairtix.events.dto;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.fairtix.events.domain.Event;
 import com.fairtix.events.domain.EventStatus;
+import com.fairtix.performers.dto.PerformerResponse;
 import com.fairtix.venues.dto.VenueResponse;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -48,7 +51,9 @@ public record EventResponse(
         @Schema(description = "When the event was archived (null if not archived)")
         Instant archivedAt,
         @Schema(description = "Reason for cancellation (null if not cancelled)")
-        String cancellationReason) {
+        String cancellationReason,
+        @Schema(description = "Performers appearing at this event")
+        List<PerformerResponse> performers) {
 
     public static EventResponse from(Event event) {
         return new EventResponse(
@@ -65,6 +70,7 @@ public record EventResponse(
                 event.getCancelledAt(),
                 event.getCompletedAt(),
                 event.getArchivedAt(),
-                event.getCancellationReason());
+                event.getCancellationReason(),
+                event.getPerformers().stream().map(PerformerResponse::from).collect(Collectors.toList()));
     }
 }

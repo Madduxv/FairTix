@@ -32,29 +32,41 @@ public class Venue {
 
   private Integer capacity;
 
+  @Column(columnDefinition = "numeric(9,6)")
+  private Double latitude;
+
+  @Column(columnDefinition = "numeric(9,6)")
+  private Double longitude;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt = Instant.now();
 
-  public Venue(String name, String address, String city, String country, Integer capacity) {
+  public Venue(String name, String address, String city, String country, Integer capacity,
+               Double latitude, Double longitude) {
     this.name = name;
     this.address = address;
     this.city = city;
     this.country = country;
     this.capacity = capacity;
+    this.latitude = latitude;
+    this.longitude = longitude;
   }
 
   protected Venue() {
   }
 
-  public void update(String name, String address, String city, String country, Integer capacity) {
+  public void update(String name, String address, String city, String country, Integer capacity,
+                     Double latitude, Double longitude) {
     this.name = name;
     this.address = address;
     this.city = city;
     this.country = country;
     this.capacity = capacity;
+    this.latitude = latitude;
+    this.longitude = longitude;
     this.updatedAt = Instant.now();
   }
 
@@ -64,6 +76,8 @@ public class Venue {
   public String getCity() { return city; }
   public String getCountry() { return country; }
   public Integer getCapacity() { return capacity; }
+  public Double getLatitude() { return latitude; }
+  public Double getLongitude() { return longitude; }
   public Instant getCreatedAt() { return createdAt; }
   public Instant getUpdatedAt() { return updatedAt; }
 }

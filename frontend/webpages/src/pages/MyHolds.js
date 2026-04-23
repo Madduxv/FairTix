@@ -12,6 +12,7 @@ function formatTimeLeft(expiresAt) {
 }
 
 function MyHolds() {
+  useEffect(() => { document.title = 'My Holds | FairTix'; }, []);
   const [holds, setHolds] = useState([]);
   const [seatMap, setSeatMap] = useState({});
   const [loading, setLoading] = useState(true);

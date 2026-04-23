@@ -37,7 +37,8 @@ public class VenueService {
     if (venueRepository.findByName(request.name()).isPresent()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Venue name already exists: " + request.name());
     }
-    Venue venue = new Venue(request.name(), request.address(), request.city(), request.country(), request.capacity());
+    Venue venue = new Venue(request.name(), request.address(), request.city(), request.country(), request.capacity(),
+        request.latitude(), request.longitude());
     venue = venueRepository.save(venue);
     auditService.log(actorId, "CREATE", "VENUE", venue.getId(), "Created venue: " + venue.getName());
     return venue;
@@ -58,7 +59,8 @@ public class VenueService {
     if (venueRepository.existsByNameAndIdNot(request.name(), id)) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Venue name already exists: " + request.name());
     }
-    venue.update(request.name(), request.address(), request.city(), request.country(), request.capacity());
+    venue.update(request.name(), request.address(), request.city(), request.country(), request.capacity(),
+        request.latitude(), request.longitude());
     auditService.log(actorId, "UPDATE", "VENUE", id, "Updated venue: " + venue.getName());
     return venue;
   }

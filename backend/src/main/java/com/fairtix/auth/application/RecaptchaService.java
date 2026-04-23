@@ -16,6 +16,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class RecaptchaService {
 
@@ -40,6 +42,13 @@ public class RecaptchaService {
     this.enabled = enabled;
     this.failureThreshold = failureThreshold;
     this.secret = secret;
+  }
+
+  @PostConstruct
+  void warnIfMisconfigured() {
+    if (enabled && (secret == null || secret.isBlank())) {
+      log.warn("reCAPTCHA is enabled (RECAPTCHA_ENABLED=true) but RECAPTCHA_SECRET is blank — all verification calls will fail");
+    }
   }
 
   // returns true if the reCAPTCHA is enabled and has a valid secret key

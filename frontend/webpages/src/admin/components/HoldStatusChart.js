@@ -10,12 +10,12 @@ function HoldStatusChart({ data }) {
   const chartData = Object.entries(data).map(([name, value]) => ({ name, value }));
 
   return (
-    <Card sx={{ backgroundColor: 'background.paper' }}>
+    <Card sx={{ backgroundColor: 'background.paper', height: '100%', width: '100%' }}>
       <CardContent sx={{ p: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
           Holds by Status
         </Typography>
-        <div style={{ width: '100%', height: 300 }}>
+        <div style={{ width: '100%', height: 320 }}>
           <ResponsiveContainer>
             <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
               <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="45%" outerRadius="70%" label={false}>
