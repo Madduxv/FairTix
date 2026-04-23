@@ -1,14 +1,18 @@
 package com.fairtix.venues.dto;
 
-import java.time.Instant;
-
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 
+@Schema(description = "Payload for updating a venue")
 public record UpdateVenueRequest(
-        @NotBlank @Size(max = 500) String name,
-        @NotBlank @Size(max = 500) String address)
-       {
-
+        @Schema(description = "Venue name", example = "Madison Square Garden")
+        @NotBlank String name,
+        @Schema(description = "Street address")
+        String address,
+        @Schema(description = "City")
+        String city,
+        @Schema(description = "Country")
+        String country,
+        @Schema(description = "Maximum seating capacity")
+        Integer capacity) {
 }

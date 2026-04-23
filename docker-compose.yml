@@ -30,6 +30,13 @@ services:
       timeout: 3s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: fairtix-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   backend:
     build: ./backend
     container_name: fairtix-backend
@@ -43,6 +50,16 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+      RECAPTCHA_SECRET: ${RECAPTCHA_SECRET}
+      RECAPTCHA_ENABLED: ${RECAPTCHA_ENABLED:-false}
+      SPRING_PROFILES_ACTIVE: dev
+      MAIL_HOST: ${MAIL_HOST:-mailhog}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_FROM: ${MAIL_FROM:-noreply@fairtix.com}
     depends_on:
       postgres:
         condition: service_healthy

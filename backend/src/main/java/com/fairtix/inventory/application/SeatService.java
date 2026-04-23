@@ -5,8 +5,10 @@ import com.fairtix.inventory.domain.Seat;
 import com.fairtix.inventory.domain.SeatStatus;
 import com.fairtix.inventory.infrastructure.SeatRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,14 +39,28 @@ public class SeatService {
    * @return the newly created {@link Seat}
    * @throws IllegalArgumentException if the event is not found
    */
-  public Seat createSeat(UUID eventId, String section, String rowLabel, String seatNumber) {
+  public Seat createSeat(UUID eventId, String section, String rowLabel, String seatNumber, BigDecimal price) {
 
-    log.info("Creating seat for event {} section={} row={} seat={}",
-            eventId, section, rowLabel, seatNumber);
+    log.info("Creating seat for event {} section={} row={} seat={} price={}",
+            eventId, section, rowLabel, seatNumber, price);
 
     var event = eventRepository.findById(eventId)
         .orElseThrow(() -> new IllegalArgumentException("Event not found: " + eventId));
-    return seatRepository.save(new Seat(event, section, rowLabel, seatNumber));
+
+    if (seatRepository.existsByEvent_IdAndSectionAndRowLabelAndSeatNumber(
+            eventId, section, rowLabel, seatNumber)) {
+      throw new DuplicateSeatException(
+          "Seat already exists: section=%s row=%s seat=%s for event %s"
+              .formatted(section, rowLabel, seatNumber, eventId));
+    }
+
+    try {
+      return seatRepository.save(new Seat(event, section, rowLabel, seatNumber, price));
+    } catch (DataIntegrityViolationException e) {
+      throw new DuplicateSeatException(
+          "Seat already exists: section=%s row=%s seat=%s for event %s"
+              .formatted(section, rowLabel, seatNumber, eventId));
+    }
   }
 
   /**

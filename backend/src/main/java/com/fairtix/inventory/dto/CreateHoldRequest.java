@@ -1,7 +1,7 @@
 package com.fairtix.inventory.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
@@ -12,22 +12,26 @@ import java.util.UUID;
  * Request payload for creating a seat hold.
  *
  * <p>Bean-validation enforces a hard upper bound of 10 seats per request.
- * The service also enforces {@code holds.max-seats-per-hold} and
+ * The service also enforces {@code holds.max-active-per-holder} and
  * {@code holds.max-duration-minutes} so the limits hold even for direct calls.
  *
- * @param seatIds         the seats to hold (1–10 items)
- * @param holderId        opaque identifier for the holder (session/user id)
+ * <p>The hold owner is derived from the authenticated user's JWT — it is
+ * never accepted from the client.
+ *
+ * @param seatIds         the seats to hold (1-10 items)
  * @param durationMinutes how long the hold lasts; server default when null
  */
+@Schema(description = "Payload for creating a temporary seat hold")
 public record CreateHoldRequest(
 
-    @NotEmpty(message = "At least one seat is required")
-    @Size(max = 10, message = "Cannot request more than 10 seats per hold")
-    List<UUID> seatIds,
+        @Schema(description = "Seat IDs to hold (1-10)",
+                example = "[\"a1b2c3d4-e5f6-7890-abcd-ef1234567890\"]")
+        @NotEmpty(message = "At least one seat is required")
+        @Size(max = 10, message = "Cannot request more than 10 seats per hold")
+        List<UUID> seatIds,
 
-    @NotBlank(message = "holderId must not be blank")
-    String holderId,
-
-    @Min(value = 1, message = "durationMinutes must be at least 1")
-    Integer durationMinutes) {
+        @Schema(description = "Hold duration in minutes (server default if omitted, max 60)",
+                example = "10")
+        @Min(value = 1, message = "durationMinutes must be at least 1")
+        Integer durationMinutes) {
 }

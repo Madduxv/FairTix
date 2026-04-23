@@ -3,13 +3,18 @@ package com.fairtix.inventory.domain;
 import com.fairtix.events.domain.Event;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "seats", indexes = {
-    @Index(name = "idx_seat_event_id", columnList = "event_id"),
-    @Index(name = "idx_seat_status", columnList = "status")
-})
+@Table(name = "seats",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_seat_event_section_row_number",
+        columnNames = {"event_id", "section", "row_label", "seat_number"}),
+    indexes = {
+        @Index(name = "idx_seat_event_id", columnList = "event_id"),
+        @Index(name = "idx_seat_status", columnList = "status")
+    })
 public class Seat {
 
   @Id
@@ -29,18 +34,31 @@ public class Seat {
   @Column(nullable = false, name = "seat_number")
   private String seatNumber;
 
+  @Column(nullable = false, precision = 10, scale = 2)
+  private BigDecimal price;
+
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private SeatStatus status = SeatStatus.AVAILABLE;
 
+  @Column(name = "pos_x")
+  private Double posX;
+
+  @Column(name = "pos_y")
+  private Double posY;
+
+  @Column(name = "rotation")
+  private Double rotation;
+
   @Version
   private long version;
 
-  public Seat(Event event, String section, String rowLabel, String seatNumber) {
+  public Seat(Event event, String section, String rowLabel, String seatNumber, BigDecimal price) {
     this.event = event;
     this.section = section;
     this.rowLabel = rowLabel;
     this.seatNumber = seatNumber;
+    this.price = price;
     this.status = SeatStatus.AVAILABLE;
   }
 
@@ -67,6 +85,10 @@ public class Seat {
     return seatNumber;
   }
 
+  public BigDecimal getPrice() {
+    return price;
+  }
+
   public SeatStatus getStatus() {
     return status;
   }
@@ -77,5 +99,17 @@ public class Seat {
 
   public void setStatus(SeatStatus status) {
     this.status = status;
+  }
+
+  public Double getPosX() {
+    return posX;
+  }
+
+  public Double getPosY() {
+    return posY;
+  }
+
+  public Double getRotation() {
+    return rotation;
   }
 }

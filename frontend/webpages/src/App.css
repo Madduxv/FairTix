@@ -11,3 +11,30 @@ body {
    padding: 0;
    margin: 0;
 }
+
+.session-expired-banner {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 1rem;
+   padding: 0.75rem 1rem;
+   background-color: #fff3cd;
+   color: #856404;
+   border-bottom: 1px solid #ffc107;
+   font-size: 0.95rem;
+}
+
+.session-expired-dismiss {
+   background: none;
+   border: 1px solid #856404;
+   color: #856404;
+   border-radius: 4px;
+   padding: 0.25rem 0.75rem;
+   cursor: pointer;
+   font-size: 0.85rem;
+}
+
+.session-expired-dismiss:hover {
+   background-color: #856404;
+   color: #fff;
+}

@@ -3,6 +3,7 @@ package com.fairtix.venue.application;
 import com.fairtix.common.ResourceNotFoundException;
 import com.fairtix.venues.application.VenueService;
 import com.fairtix.venues.domain.Venue;
+import com.fairtix.venues.dto.CreateVenueRequest;
 import com.fairtix.venues.dto.UpdateVenueRequest;
 import com.fairtix.venues.infrastructure.VenueRepository;
 
@@ -11,11 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 
 import java.util.UUID;
 
@@ -24,6 +21,9 @@ import static org.assertj.core.api.Assertions.*;
 @SpringBootTest
 @Transactional
 class VenueServiceTest {
+
+    private static final UUID ACTOR_ID = UUID.randomUUID();
+
     @Autowired
     private VenueService venueService;
 
@@ -33,8 +33,8 @@ class VenueServiceTest {
     private Venue testVenue;
 
     @BeforeEach
-    void setUp(){
-        testVenue = venueRepository.save(new Venue("Test Venue", "Test Address"));
+    void setUp() {
+        testVenue = venueRepository.save(new Venue("Test Venue", "Test Address", null, null, null));
     }
 
     // -------------------------------------------------------------------------
@@ -43,13 +43,12 @@ class VenueServiceTest {
 
     @Test
     void creatingVenueSucceeds() {
-
         Venue venue = venueService.createVenue(
-                "New Venue",
-                "New Address");
+                new CreateVenueRequest("New Venue", "New Address", null, null, null),
+                ACTOR_ID);
 
         assertThat(venue.getId()).isNotNull();
-        assertThat(venue.getName()).isEqualTo("New Vnue");
+        assertThat(venue.getName()).isEqualTo("New Venue");
         assertThat(venue.getAddress()).isEqualTo("New Address");
     }
 
@@ -59,16 +58,14 @@ class VenueServiceTest {
 
     @Test
     void gettingExistingVenueReturnsVenue() {
-
         Venue venue = venueService.getVenue(testVenue.getId());
 
         assertThat(venue.getId()).isEqualTo(testVenue.getId());
-        assertThat(venue.getAddress()).isEqualTo("Test Venue");
+        assertThat(venue.getAddress()).isEqualTo("Test Address");
     }
 
     @Test
     void gettingNonexistentVenueThrowsException() {
-
         UUID id = UUID.randomUUID();
 
         assertThatThrownBy(() -> venueService.getVenue(id))
@@ -82,80 +79,42 @@ class VenueServiceTest {
 
     @Test
     void updatingVenueChangesNameAndAddress() {
+        UpdateVenueRequest request = new UpdateVenueRequest("Updated Venue", "Updated Address", null, null, null);
 
-        UpdateVenueRequest request = new UpdateVenueRequest("Updated Venue", "Updated Address");
+        Venue updated = venueService.updateVenue(testVenue.getId(), request, ACTOR_ID);
 
-        Venue updated = venueService.update(testVenue.getId(), request);
-
-        assertThat(updated.getName()).isEqualTo("Updated Event");
+        assertThat(updated.getName()).isEqualTo("Updated Venue");
         assertThat(updated.getAddress()).isEqualTo("Updated Address");
     }
 
     @Test
-    void updatingNonexistentEventThrowsException() {
+    void updatingNonexistentVenueThrowsException() {
+        UpdateVenueRequest request = new UpdateVenueRequest("Updated", "Updated", null, null, null);
 
-        UpdateVenueRequest request = new UpdateVenueRequest("Updated", "Updated");
-
-        assertThatThrownBy(() -> venueService.update(UUID.randomUUID(), request))
+        assertThatThrownBy(() -> venueService.updateVenue(UUID.randomUUID(), request, ACTOR_ID))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Venue not found");
     }
+
     // -------------------------------------------------------------------------
     // Delete Venue
     // -------------------------------------------------------------------------
 
     @Test
     void deletingExistingVenueRemovesIt() {
-
         UUID id = testVenue.getId();
 
-        venueService.delete(id);
+        venueService.deleteVenue(id, ACTOR_ID);
 
         assertThat(venueRepository.findById(id)).isEmpty();
     }
 
     @Test
     void deletingNonexistentVenueThrowsException() {
-
         UUID id = UUID.randomUUID();
 
-        assertThatThrownBy(() -> venueService.delete(id))
+        assertThatThrownBy(() -> venueService.deleteVenue(id, ACTOR_ID))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Venue not found");
     }
-
-    // -------------------------------------------------------------------------
-    // Search
-    // -------------------------------------------------------------------------
-
-    @Test
-    void searchingByVenueReturnsMatchingVenue() {
-
-        venueRepository.save(
-                new Venue("Another Venue", "Another Address"));
-
-        Page<Venue> results = venueService.search(
-                "Test Venue",
-                null,
-                PageRequest.of(0, 10));
-
-        assertThat(results.getContent())
-                .extracting(Venue::getName)
-                .allMatch(v -> v.toLowerCase().contains("test venue"));
-    }
-
-    @Test
-    void searchingByTitleReturnsMatchingEvents() {
-
-        Page<Venue> results = venueService.search(
-                null,
-                "Test",
-                PageRequest.of(0, 10));
-
-        assertThat(results.getContent())
-                .extracting(Venue::getName)
-                .allMatch(t -> t.toLowerCase().contains("test"));
-
-    }
-
 }

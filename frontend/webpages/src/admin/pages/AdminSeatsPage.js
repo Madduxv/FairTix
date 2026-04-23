@@ -23,6 +23,7 @@ const statusColors = {
   AVAILABLE: 'success',
   HELD: 'warning',
   BOOKED: 'error',
+  SOLD: 'primary',
 };
 
 function AdminSeatsPage() {
@@ -119,17 +120,18 @@ function AdminSeatsPage() {
               <TableCell>Section</TableCell>
               <TableCell>Row</TableCell>
               <TableCell>Seat Number</TableCell>
+              <TableCell>Price</TableCell>
               <TableCell>Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">Loading...</TableCell>
+                <TableCell colSpan={5} align="center">Loading...</TableCell>
               </TableRow>
             ) : seats.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">No seats added yet.</TableCell>
+                <TableCell colSpan={5} align="center">No seats added yet.</TableCell>
               </TableRow>
             ) : (
               seats.map((seat) => (
@@ -137,6 +139,7 @@ function AdminSeatsPage() {
                   <TableCell>{seat.section}</TableCell>
                   <TableCell>{seat.rowLabel}</TableCell>
                   <TableCell>{seat.seatNumber}</TableCell>
+                  <TableCell>${seat.price?.toFixed(2) ?? '0.00'}</TableCell>
                   <TableCell>
                     <Chip
                       label={seat.status}

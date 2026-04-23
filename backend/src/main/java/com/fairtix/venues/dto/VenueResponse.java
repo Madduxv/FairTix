@@ -1,26 +1,39 @@
-
 package com.fairtix.venues.dto;
+
+import com.fairtix.venues.domain.Venue;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.Instant;
 import java.util.UUID;
 
-import com.fairtix.venues.domain.Venue;
+@Schema(description = "Venue details")
+public record VenueResponse(
+        @Schema(description = "Venue ID")
+        UUID id,
+        @Schema(description = "Venue name", example = "Madison Square Garden")
+        String name,
+        @Schema(description = "Street address")
+        String address,
+        @Schema(description = "City")
+        String city,
+        @Schema(description = "Country")
+        String country,
+        @Schema(description = "Maximum seating capacity")
+        Integer capacity,
+        @Schema(description = "Created at")
+        Instant createdAt,
+        @Schema(description = "Last updated at")
+        Instant updatedAt) {
 
-/**
- * A response payload for a venue
- *
- * Returns by venue api endpoints.
- * @param id the unique id of a venue
- * @param name the name of the venue
- * @param address the address of the venue.
- */
-
-public record VenueResponse (UUID id, String name, String address) {
-    /**
-     * Maps a {@link Venue} object to an API response.
-     * @param venue the venue entity
-     * @return the corresponding {@link VenueResponse}
-     */
-    public static VenueResponse from(Venue venue){
-        return new VenueResponse(venue.getId(), venue.getName(), venue.getAddress());
+    public static VenueResponse from(Venue venue) {
+        return new VenueResponse(
+                venue.getId(),
+                venue.getName(),
+                venue.getAddress(),
+                venue.getCity(),
+                venue.getCountry(),
+                venue.getCapacity(),
+                venue.getCreatedAt(),
+                venue.getUpdatedAt());
     }
 }

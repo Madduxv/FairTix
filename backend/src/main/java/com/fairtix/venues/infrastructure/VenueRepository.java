@@ -1,13 +1,14 @@
 package com.fairtix.venues.infrastructure;
 
 import com.fairtix.venues.domain.Venue;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
-@Repository
-public interface VenueRepository extends JpaRepository<Venue, UUID>,
-        JpaSpecificationExecutor<Venue> {
+public interface VenueRepository extends JpaRepository<Venue, UUID> {
+
+  Optional<Venue> findByName(String name);
+
+  boolean existsByNameAndIdNot(String name, UUID id);
 }

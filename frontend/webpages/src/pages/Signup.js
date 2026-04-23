@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+import api from '../api/client';
 import '../styles/Login.css';
+
+const PASSWORD_RULES = [
+  { key: 'length', label: 'At least 8 characters', test: (p) => p.length >= 8 },
+  { key: 'upper', label: 'Uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { key: 'lower', label: 'Lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { key: 'digit', label: 'A digit', test: (p) => /\d/.test(p) },
+  { key: 'special', label: 'Special character', test: (p) => /[^A-Za-z0-9]/.test(p) },
+];
 
 function Signup() {
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [birthday, setBirthday] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
   const { signup, user } = useAuth();
   const navigate = useNavigate();
+
+  const passwordChecks = useMemo(
+    () => PASSWORD_RULES.map((rule) => ({ ...rule, passed: rule.test(password) })),
+    [password]
+  );
+  const allPasswordRequirementsMet = passwordChecks.every((c) => c.passed);
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -22,35 +38,68 @@ function Signup() {
     e.preventDefault();
     setError('');
 
+    if (!allPasswordRequirementsMet) {
+      setError('Password does not meet all requirements.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
     }
 
-    if (birthday) {
-      const [y, m, d] = birthday.split('-').map(Number);
-      const birthDate = new Date(y, m - 1, d);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        setError('You must be at least 18 years old to sign up.');
-        return;
-      }
-    }
-
     setLoading(true);
     try {
       await signup(email, password);
-      navigate('/dashboard', { replace: true });
+      setRegistered(true);
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      if (err.status === 409) {
+        setError('Email already exists.');
+      } else if (err.status === 400) {
+        setError('Invalid registration details.');
+      } else if (err.status >= 500) {
+        setError('Server error. Please try again later.');
+      } else if (err.status) {
+        setError('Registration failed. Please try again.');
+      } else {
+        setError('Network error. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResend() {
+    setResendLoading(true);
+    setResendMessage('');
+    try {
+      await api.post('/auth/resend-verification');
+      setResendMessage('Verification email sent. Please check your inbox.');
+    } catch {
+      setResendMessage('Could not send email. Please try again later.');
+    } finally {
+      setResendLoading(false);
+    }
+  }
+
+  if (registered) {
+    return (
+      <div className="login-page">
+        <h2>Check your email</h2>
+        <p>We sent a verification link to <strong>{email}</strong>. Click it to activate your account.</p>
+        <p>Didn't receive it?{' '}
+          <button
+            onClick={handleResend}
+            disabled={resendLoading}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+          >
+            {resendLoading ? 'Sending...' : 'Resend'}
+          </button>
+        </p>
+        {resendMessage && <p>{resendMessage}</p>}
+        <p><Link to="/dashboard">Continue to dashboard</Link></p>
+      </div>
+    );
   }
 
   return (
@@ -69,24 +118,6 @@ function Signup() {
           />
         </div>
         <div className="form-group">
-          <label htmlFor="phone">Phone number</label>
-          <input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="birthday">Birthday</label>
-          <input
-            id="birthday"
-            type="date"
-            value={birthday}
-            onChange={(e) => setBirthday(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
           <label htmlFor="password">Password</label>
           <input
             id="password"
@@ -94,8 +125,17 @@ function Signup() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
+            minLength={8}
           />
+          {password.length > 0 && (
+            <ul className="password-strength">
+              {passwordChecks.map((check) => (
+                <li key={check.key} className={check.passed ? 'met' : 'unmet'}>
+                  {check.passed ? '\u2713' : '\u2717'} {check.label}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
         <div className="form-group">
           <label htmlFor="confirmPassword">Confirm password</label>
@@ -107,7 +147,7 @@ function Signup() {
             required
           />
         </div>
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || !allPasswordRequirementsMet}>
           {loading ? 'Signing up...' : 'Sign Up'}
         </button>
       </form>

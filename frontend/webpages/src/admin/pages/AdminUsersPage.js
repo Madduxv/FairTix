@@ -13,10 +13,13 @@ import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ConfirmDialog from '../components/ConfirmDialog';
 import api from '../../api/client';
+import { useAuth } from '../../auth/useAuth';
 
 function AdminUsersPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [page, setPage] = useState(0);
@@ -27,6 +30,9 @@ function AdminUsersPage() {
 
   const [promoteOpen, setPromoteOpen] = useState(false);
   const [promotingUser, setPromotingUser] = useState(null);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -61,6 +67,24 @@ function AdminUsersPage() {
     } catch (err) {
       setError(err.message || 'Failed to promote user.');
       setPromoteOpen(false);
+    }
+  };
+
+  const handleDeleteClick = (user) => {
+    setDeletingUser(user);
+    setDeleteOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await api.delete(`/api/admin/users/${deletingUser.id}`);
+      setSuccess(`${deletingUser.email} has been deleted.`);
+      setDeleteOpen(false);
+      setDeletingUser(null);
+      fetchUsers();
+    } catch (err) {
+      setError(err.message || 'Failed to delete user.');
+      setDeleteOpen(false);
     }
   };
 
@@ -102,7 +126,7 @@ function AdminUsersPage() {
                       color={user.role === 'ADMIN' ? 'primary' : 'default'}
                     />
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
                     {user.role !== 'ADMIN' && (
                       <Button
                         size="small"
@@ -111,6 +135,17 @@ function AdminUsersPage() {
                         onClick={() => handlePromoteClick(user)}
                       >
                         Promote to Admin
+                      </Button>
+                    )}
+                    {user.id !== currentUser.userId && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDeleteClick(user)}
+                      >
+                        Delete
                       </Button>
                     )}
                   </TableCell>
@@ -139,6 +174,14 @@ function AdminUsersPage() {
         onConfirm={handlePromoteConfirm}
         title="Promote User"
         message={`Are you sure you want to promote "${promotingUser?.email}" to Admin? This action cannot be undone.`}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        message={`Are you sure you want to delete "${deletingUser?.email}"? This action is permanent and cannot be undone.`}
       />
     </Box>
   );

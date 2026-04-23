@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -51,7 +52,7 @@ class SeatControllerTest {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
-    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), "Arena");
+    testEvent = eventService.createEvent("Seat Test Event", Instant.parse("2026-08-01T19:00:00Z"), null, null, false, null, null);
   }
 
   // -------------------------------------------------------------------------
@@ -64,7 +65,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -78,6 +80,7 @@ class SeatControllerTest {
         .andExpect(jsonPath("$.section").value("Floor"))
         .andExpect(jsonPath("$.rowLabel").value("A"))
         .andExpect(jsonPath("$.seatNumber").value("101"))
+        .andExpect(jsonPath("$.price").value(49.99))
         .andExpect(jsonPath("$.status").value("AVAILABLE"));
   }
 
@@ -87,7 +90,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -99,19 +103,42 @@ class SeatControllerTest {
   }
 
   @Test
-  void createSeat_unauthenticated_returns403() throws Exception {
+  void createSeat_unauthenticated_returns401() throws Exception {
     String body = """
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
     mockMvc.perform(post("/api/events/{eventId}/seats", testEvent.getId())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void createSeat_duplicate_returns409() throws Exception {
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "101", new BigDecimal("49.99"));
+
+    String body = """
+        {
+          "section":    "Floor",
+          "rowLabel":   "A",
+          "seatNumber": "101",
+          "price":      49.99
+        }
+        """;
+
+    mockMvc.perform(post("/api/events/{eventId}/seats", testEvent.getId())
+            .with(user("admin@test.com").roles("ADMIN"))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("DUPLICATE_SEAT"))
+        .andExpect(jsonPath("$.message").value(containsString("Seat already exists")));
   }
 
   @Test
@@ -120,7 +147,8 @@ class SeatControllerTest {
         {
           "section":    "Floor",
           "rowLabel":   "A",
-          "seatNumber": "101"
+          "seatNumber": "101",
+          "price":      49.99
         }
         """;
 
@@ -139,9 +167,9 @@ class SeatControllerTest {
 
   @Test
   void getSeats_returnsAllSeats() throws Exception {
-    seatService.createSeat(testEvent.getId(), "Floor", "A", "1");
-    seatService.createSeat(testEvent.getId(), "Floor", "A", "2");
-    seatService.createSeat(testEvent.getId(), "Balcony", "B", "1");
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "1", new BigDecimal("25.00"));
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "2", new BigDecimal("25.00"));
+    seatService.createSeat(testEvent.getId(), "Balcony", "B", "1", new BigDecimal("15.00"));
 
     mockMvc.perform(get("/api/events/{eventId}/seats", testEvent.getId()))
         .andExpect(status().isOk())
@@ -159,8 +187,8 @@ class SeatControllerTest {
 
   @Test
   void getSeats_availableOnly_filtersCorrectly() throws Exception {
-    Seat seat1 = seatService.createSeat(testEvent.getId(), "Floor", "A", "1");
-    seatService.createSeat(testEvent.getId(), "Floor", "A", "2");
+    Seat seat1 = seatService.createSeat(testEvent.getId(), "Floor", "A", "1", new BigDecimal("25.00"));
+    seatService.createSeat(testEvent.getId(), "Floor", "A", "2", new BigDecimal("25.00"));
 
     // Mark seat1 as held to make it unavailable
     // Entity is managed within @Transactional so the change is auto-flushed

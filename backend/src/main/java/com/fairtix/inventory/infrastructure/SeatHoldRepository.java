@@ -5,6 +5,8 @@ import com.fairtix.inventory.domain.SeatHold;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,7 +15,13 @@ import java.util.UUID;
 
 public interface SeatHoldRepository extends JpaRepository<SeatHold, UUID> {
 
-  Optional<SeatHold> findByIdAndHolderId(UUID id, String holderId);
+  @Query("SELECT sh.status, COUNT(sh) FROM SeatHold sh GROUP BY sh.status")
+  List<Object[]> countByStatusGrouped();
+
+  @Query(value = "SELECT CAST(sh.created_at AS DATE) AS hold_date, COUNT(*) FROM seat_holds sh WHERE sh.created_at >= :since GROUP BY CAST(sh.created_at AS DATE) ORDER BY hold_date", nativeQuery = true)
+  List<Object[]> countHoldsPerDay(@Param("since") Instant since);
+
+  Optional<SeatHold> findByIdAndOwnerId(UUID id, UUID ownerId);
 
   Optional<SeatHold> findBySeat_IdAndStatus(UUID seatId, HoldStatus status);
 
@@ -24,9 +32,15 @@ public interface SeatHoldRepository extends JpaRepository<SeatHold, UUID> {
    */
   Page<SeatHold> findAllByStatusAndExpiresAtBefore(HoldStatus status, Instant now, Pageable pageable);
 
-  /** Soft-limit: count how many active holds a holder currently has. */
-  long countByHolderIdAndStatus(String holderId, HoldStatus status);
+  /** Soft-limit: count how many active holds an owner currently has. */
+  long countByOwnerIdAndStatus(UUID ownerId, HoldStatus status);
 
-  /** List-holds endpoint: all holds for a holder filtered by status. */
-  List<SeatHold> findAllByHolderIdAndStatus(String holderId, HoldStatus status);
+  /** List-holds endpoint: all holds for an owner filtered by status. */
+  List<SeatHold> findAllByOwnerIdAndStatus(UUID ownerId, HoldStatus status);
+
+  /** Cancel cascade: find all active holds for seats belonging to a given event. */
+  List<SeatHold> findAllBySeat_Event_IdAndStatus(UUID eventId, HoldStatus status);
+
+  /** Purchase-cap hold gate: count active holds a user already has for a specific event. */
+  long countByOwnerIdAndSeat_Event_IdAndStatus(UUID ownerId, UUID eventId, HoldStatus status);
 }

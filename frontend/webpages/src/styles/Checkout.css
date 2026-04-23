@@ -1,0 +1,243 @@
+.checkout {
+  padding: 2rem;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.checkout h2 {
+  margin: 0 0 1.5rem;
+}
+
+.checkout-summary {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fff;
+  margin-bottom: 1.5rem;
+}
+
+.checkout-summary h3 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.checkout-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.checkout-table th,
+.checkout-table td {
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+}
+
+.checkout-table th {
+  background: #fafafa;
+  font-size: 0.8rem;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.checkout-table tr:not(:last-child) td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.checkout-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 2px solid #eee;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.checkout-price {
+  color: #1e7e34;
+}
+
+.checkout-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.checkout-btn-primary {
+  background: #1a73e8;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.checkout-btn-primary:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.checkout-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.checkout-btn-secondary {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.checkout-btn-secondary:hover:not(:disabled) {
+  border-color: #999;
+  color: #111;
+}
+
+.checkout-error {
+  background: #fce8e6;
+  color: #c5221f;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.checkout-warning {
+  background: #fef7e0;
+  color: #b45309;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+
+.checkout-error-page {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+.checkout-error-page p {
+  margin-bottom: 1.5rem;
+}
+
+.checkout-success {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.checkout-success h2 {
+  color: #1e7e34;
+  margin-bottom: 0.75rem;
+}
+
+.checkout-success p {
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+
+.checkout-order-id {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.checkout-success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+/* Payment form */
+.checkout-payment-form {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fff;
+}
+
+.checkout-payment-form h3 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.checkout-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.checkout-field label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.checkout-field input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+.checkout-field input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+}
+
+.checkout-field-hint {
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* Processing state */
+.checkout-processing {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.checkout-processing p {
+  margin-top: 1rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.checkout-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #1a73e8;
+  border-radius: 50%;
+  margin: 0 auto;
+  animation: checkout-spin 0.8s linear infinite;
+}
+
+@keyframes checkout-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Failed state */
+.checkout-payment-failed {
+  text-align: center;
+}

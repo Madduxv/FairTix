@@ -14,9 +14,18 @@ import java.util.UUID;
 
 public interface SeatRepository extends JpaRepository<Seat, UUID> {
 
+  @Query("SELECT s.status, COUNT(s) FROM Seat s GROUP BY s.status")
+  List<Object[]> countByStatusGrouped();
+
+  @Query("SELECT s.event.id, s.event.title, s.status, COUNT(s) FROM Seat s GROUP BY s.event.id, s.event.title, s.status")
+  List<Object[]> countByEventAndStatus();
+
   List<Seat> findByEvent_Id(UUID eventId);
 
   List<Seat> findByEvent_IdAndStatus(UUID eventId, SeatStatus status);
+
+  boolean existsByEvent_IdAndSectionAndRowLabelAndSeatNumber(
+      UUID eventId, String section, String rowLabel, String seatNumber);
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   @Query("SELECT s FROM Seat s WHERE s.id = ?1")

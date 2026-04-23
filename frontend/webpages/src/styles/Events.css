@@ -1,0 +1,239 @@
+.events-page {
+  padding: 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.events-page h2 {
+  margin-bottom: 1.5rem;
+}
+
+/* Filters */
+.events-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Grid */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+}
+
+.event-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fff;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.event-card:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-color: #bbb;
+}
+
+.event-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.event-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.event-card-action {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #1a73e8;
+  font-weight: 500;
+}
+
+.events-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+}
+
+/* Skeleton loading */
+@keyframes skeleton-pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
+
+.event-card-skeleton {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #fff;
+}
+
+.skeleton-line {
+  background: #e0e0e0;
+  border-radius: 4px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-title {
+  height: 1.1rem;
+  width: 70%;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-meta {
+  height: 0.9rem;
+  width: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-action {
+  height: 0.85rem;
+  width: 30%;
+  margin-top: 0.75rem;
+}
+
+/* Filters */
+.events-filters {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.15);
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Pagination */
+.events-pagination {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.pagination-info {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-controls button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-page {
+  font-size: 0.85rem;
+  color: #555;
+  padding: 0 0.25rem;
+}
+
+.page-size-select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #fff;
+}
+
+.event-card-status {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  margin-bottom: 0.4rem;
+}
+
+.event-card-status--announced {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.event-card-status--active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}

@@ -1,12 +1,13 @@
 package com.fairtix.event.api;
 
+import com.fairtix.auth.WithMockPrincipal;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -25,12 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * Focuses on HTTP-layer behavior including:
  * validation errors, response structure, and status codes.
- *
- * Uses a full Spring context (H2) so that:
- * - validation annotations
- * - GlobalExceptionHandler
- * - request mapping
- * are all active.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @Transactional
@@ -41,12 +37,15 @@ class EventControllerTest {
 
   private MockMvc mockMvc;
 
+  private static final UUID ADMIN_ID = UUID.randomUUID();
   private static final String EVENTS_URL = "/api/events";
   private static final String EVENT_URL = "/api/events/{id}";
 
   @BeforeEach
   void setUpMockMvc() {
-    mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+    mockMvc = MockMvcBuilders.webAppContextSetup(context)
+        .apply(springSecurity())
+        .build();
   }
 
   // -------------------------------------------------------------------------
@@ -54,17 +53,17 @@ class EventControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void createEvent_missingTitle_returns400ValidationError() throws Exception {
 
     String body = """
         {
           "startTime": "%s",
-          "venue": "Test Venue"
+          "venueId": "%s"
         }
-        """.formatted(Instant.now());
+        """.formatted(Instant.now(), UUID.randomUUID());
 
     mockMvc.perform(post(EVENTS_URL)
+        .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -75,37 +74,36 @@ class EventControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "ADMIN")
-  void createEvent_blankVenue_returns400ValidationError() throws Exception {
+  void createEvent_missingVenueId_returns400ValidationError() throws Exception {
 
     String body = """
         {
           "title": "Test Event",
-          "startTime": "%s",
-          "venue": "   "
+          "startTime": "%s"
         }
         """.formatted(Instant.now());
 
     mockMvc.perform(post(EVENTS_URL)
+        .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-        .andExpect(jsonPath("$.message").value(containsString("venue")));
+        .andExpect(jsonPath("$.message").value(containsString("venueId")));
   }
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void createEvent_missingStartTime_returns400ValidationError() throws Exception {
 
     String body = """
         {
           "title": "Test Event",
-          "venue": "Test Venue"
+          "venueId": "%s"
         }
-        """;
+        """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(EVENTS_URL)
+        .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -118,7 +116,6 @@ class EventControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser
   void search_events_returns200() throws Exception {
 
     mockMvc.perform(get(EVENTS_URL)
@@ -129,7 +126,6 @@ class EventControllerTest {
   }
 
   @Test
-  @WithMockUser
   void search_sizeGreaterThan100_isCappedButStillReturns200() throws Exception {
 
     mockMvc.perform(get(EVENTS_URL)
@@ -142,7 +138,6 @@ class EventControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser
   void getEvent_nonexistentEvent_returns404() throws Exception {
 
     mockMvc.perform(get(EVENT_URL, UUID.randomUUID()))
@@ -156,7 +151,6 @@ class EventControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void updateEvent_blankTitle_returns400ValidationError() throws Exception {
 
     String body = """
@@ -167,6 +161,7 @@ class EventControllerTest {
         """.formatted(Instant.now());
 
     mockMvc.perform(put(EVENT_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -179,10 +174,10 @@ class EventControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void deleteEvent_nonexistentEvent_returns404() throws Exception {
 
-    mockMvc.perform(delete(EVENT_URL, UUID.randomUUID()))
+    mockMvc.perform(delete(EVENT_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com")))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
         .andExpect(jsonPath("$.message").value(containsString("Event")));
@@ -193,18 +188,18 @@ class EventControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void errorResponse_alwaysContainsRequiredFields() throws Exception {
 
     String body = """
         {
           "title": "",
           "startTime": "%s",
-          "venue": ""
+          "venueId": null
         }
         """.formatted(Instant.now());
 
     mockMvc.perform(post(EVENTS_URL)
+        .with(WithMockPrincipal.admin(ADMIN_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())

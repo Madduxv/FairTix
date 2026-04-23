@@ -1,20 +1,24 @@
 package com.fairtix.inventory.api;
 
+import com.fairtix.auth.WithMockPrincipal;
+import com.fairtix.events.application.EventService;
+import com.fairtix.inventory.application.SeatService;
+import com.fairtix.inventory.domain.Seat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -37,15 +41,53 @@ class SeatHoldControllerTest {
   @Autowired
   private WebApplicationContext context;
 
+  @Autowired
+  private EventService eventService;
+
+  @Autowired
+  private SeatService seatService;
+
   private MockMvc mockMvc;
+  private Seat testSeat;
+  private UUID testEventId;
 
   private static final String CREATE_URL = "/api/events/{eventId}/holds";
+  private static final UUID TEST_USER_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
 
   @BeforeEach
   void setUpMockMvc() {
     mockMvc = MockMvcBuilders.webAppContextSetup(context)
         .apply(springSecurity())
         .build();
+    var event = eventService.createEvent("Hold Test Event", Instant.parse("2026-08-01T19:00:00Z"), null, null, false, null, null);
+    testEventId = event.getId();
+    testSeat = seatService.createSeat(testEventId, "Floor", "A", "1", new BigDecimal("25.00"));
+  }
+
+  // -------------------------------------------------------------------------
+  // Happy path → 201 Created
+  // -------------------------------------------------------------------------
+
+  @Test
+  void createHold_validRequest_returns201WithHoldData() throws Exception {
+    String body = """
+        {
+          "seatIds": ["%s"]
+        }
+        """.formatted(testSeat.getId());
+
+    mockMvc.perform(post(CREATE_URL, testEventId)
+        .with(WithMockPrincipal.user(TEST_USER_ID, "user@test.com"))
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(body))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$").isArray())
+        .andExpect(jsonPath("$", hasSize(1)))
+        .andExpect(jsonPath("$[0].id").value(notNullValue()))
+        .andExpect(jsonPath("$[0].seatId").value(testSeat.getId().toString()))
+        .andExpect(jsonPath("$[0].eventId").value(testEventId.toString()))
+        .andExpect(jsonPath("$[0].ownerId").value(TEST_USER_ID.toString()))
+        .andExpect(jsonPath("$[0].status").value("ACTIVE"));
   }
 
   // -------------------------------------------------------------------------
@@ -53,16 +95,15 @@ class SeatHoldControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void createHold_emptySeatIds_returns400WithValidationError() throws Exception {
     String body = """
         {
-          "seatIds":  [],
-          "holderId": "user-1"
+          "seatIds":  []
         }
         """;
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(TEST_USER_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -73,15 +114,13 @@ class SeatHoldControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void createHold_missingSeatIds_returns400WithValidationError() throws Exception {
     String body = """
-        {
-          "holderId": "user-1"
-        }
+        {}
         """;
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(TEST_USER_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -89,35 +128,16 @@ class SeatHoldControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "ADMIN")
-  void createHold_blankHolderId_returns400WithValidationError() throws Exception {
-    String body = """
-        {
-          "seatIds":  ["%s"],
-          "holderId": "   "
-        }
-        """.formatted(UUID.randomUUID());
-
-    mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(body))
-        .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
-        .andExpect(jsonPath("$.message").value(containsString("holderId")));
-  }
-
-  @Test
-  @WithMockUser(roles = "ADMIN")
   void createHold_durationZero_returns400WithValidationError() throws Exception {
     String body = """
         {
           "seatIds":         ["%s"],
-          "holderId":        "user-1",
           "durationMinutes": 0
         }
         """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(TEST_USER_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -126,18 +146,15 @@ class SeatHoldControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void createHold_nonExistentEvent_returns400WithBadRequest() throws Exception {
-    // Valid body but event doesn't exist → IllegalArgumentException → 400
-    // BAD_REQUEST
     String body = """
         {
-          "seatIds":  ["%s"],
-          "holderId": "user-1"
+          "seatIds":  ["%s"]
         }
         """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(TEST_USER_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -147,16 +164,15 @@ class SeatHoldControllerTest {
   }
 
   @Test
-  @WithMockUser(roles = "ADMIN")
   void errorResponse_alwaysContainsRequiredFields() throws Exception {
     String body = """
         {
-          "seatIds":  [],
-          "holderId": "user-1"
+          "seatIds":  []
         }
         """;
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
+        .with(WithMockPrincipal.admin(TEST_USER_ID, "admin@test.com"))
         .contentType(MediaType.APPLICATION_JSON)
         .content(body))
         .andExpect(status().isBadRequest())
@@ -172,17 +188,16 @@ class SeatHoldControllerTest {
   // -------------------------------------------------------------------------
 
   @Test
-  void createHold_unauthenticated_returns403() throws Exception {
+  void createHold_unauthenticated_returns401() throws Exception {
     String body = """
         {
-          "seatIds":  ["%s"],
-          "holderId": "user-1"
+          "seatIds":  ["%s"]
         }
         """.formatted(UUID.randomUUID());
 
     mockMvc.perform(post(CREATE_URL, UUID.randomUUID())
             .contentType(MediaType.APPLICATION_JSON)
             .content(body))
-        .andExpect(status().isForbidden());
+        .andExpect(status().isUnauthorized());
   }
 }
