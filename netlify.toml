@@ -1,0 +1,7 @@
+[build]
+  base    = "frontend/webpages"
+  command = "npm run build"
+  publish = "frontend/webpages/build"
+
+[build.environment]
+  NODE_VERSION = "20"
