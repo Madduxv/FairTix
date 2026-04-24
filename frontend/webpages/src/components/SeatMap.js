@@ -80,7 +80,7 @@ function buildLayout(seats) {
     currentY += SECTION_LABEL_HEIGHT;
 
     const sortedRows = [...rowMap.entries()].sort(([a], [b]) => a.localeCompare(b));
-    for (const [rowLabel, rowSeats] of sortedRows) {
+    for (const [, rowSeats] of sortedRows) {
       const rowStartX = LABEL_WIDTH;
       let cx = rowStartX;
       for (const seat of rowSeats) {

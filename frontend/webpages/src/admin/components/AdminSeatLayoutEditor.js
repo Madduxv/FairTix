@@ -179,6 +179,7 @@ export default function AdminSeatLayoutEditor({ open, onClose, eventId, venueId 
     positionsRef.current = next;
     setPositions({ ...next });
     pushHistory(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seats]);
 
   const resetToSaved = useCallback(() => {
@@ -293,6 +294,7 @@ export default function AdminSeatLayoutEditor({ open, onClose, eventId, venueId 
       isPanning.current = false;
       if (e.currentTarget) e.currentTarget.style.cursor = 'grab';
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [venueId]);
 
   const handleWheel = useCallback((e) => {
