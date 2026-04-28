@@ -11,18 +11,25 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RedisConfig {
 
-    @Value("${spring.redis.host:localhost}")
+    @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
 
-    @Value("${spring.redis.port:6379}")
+    @Value("${spring.data.redis.port:6379}")
     private int redisPort;
+
+    @Value("${spring.data.redis.password:}")
+    private String redisPassword;
 
     @Bean
     @ConditionalOnMissingBean(RedissonClient.class)
     public RedissonClient redissonClient() {
         Config config = new Config();
-        config.useSingleServer()
+        var server = config.useSingleServer()
               .setAddress("redis://" + redisHost + ":" + redisPort);
+
+        if (redisPassword != null && !redisPassword.isBlank()) {
+            server.setPassword(redisPassword);
+        }
 
         return Redisson.create(config);
     }
