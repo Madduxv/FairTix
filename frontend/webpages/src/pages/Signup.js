@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import api from '../api/client';
 import '../styles/Login.css';
@@ -23,7 +23,6 @@ function Signup() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
   const { signup, user } = useAuth();
-  const navigate = useNavigate();
 
   const passwordChecks = useMemo(
     () => PASSWORD_RULES.map((rule) => ({ ...rule, passed: rule.test(password) })),

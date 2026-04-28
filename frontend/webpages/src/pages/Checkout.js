@@ -76,6 +76,7 @@ function Checkout() {
   const stepUpCaptchaRef = useRef(null);
   const stepUpModalRef = useRef(null);
   const pendingPayloadRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars
   const [tick, setTick] = useState(0);
   const tickRef = useRef(null);
   const holdIdsRef = useRef(location.state?.holdIds || []);
